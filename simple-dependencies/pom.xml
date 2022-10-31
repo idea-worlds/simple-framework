@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>simple-dependencies</artifactId>
+    <groupId>dev.simpleframework</groupId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Simple Dependencies</name>
+    <description>Simple Dependencies</description>
+
+    <properties>
+        <simple-framework.version>0.1-SNAPSHOT</simple-framework.version>
+
+        <guava.version>31.1-jre</guava.version>
+        <mybatis.version>3.5.11</mybatis.version>
+        <mybatis-spring-boot-starter.version>2.2.2</mybatis-spring-boot-starter.version>
+        <pagehelper.version>5.3.2</pagehelper.version>
+        <pagehelper-spring-boot-starter.version>1.4.5</pagehelper-spring-boot-starter.version>
+
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+        <project.build.encoding>UTF-8</project.build.encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>dev.simpleframework</groupId>
+                <artifactId>simple-dto</artifactId>
+                <version>${simple-framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.simpleframework</groupId>
+                <artifactId>simple-util</artifactId>
+                <version>${simple-framework.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.simpleframework</groupId>
+                <artifactId>simple-crud</artifactId>
+                <version>${simple-framework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                <version>${mybatis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis-spring-boot-starter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.pagehelper</groupId>
+                <artifactId>pagehelper</artifactId>
+                <version>${pagehelper.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.pagehelper</groupId>
+                <artifactId>pagehelper-spring-boot-starter</artifactId>
+                <version>${pagehelper-spring-boot-starter.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+</project>
