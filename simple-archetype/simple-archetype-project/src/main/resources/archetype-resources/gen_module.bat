@@ -20,8 +20,9 @@ set module_version=-Dversion=${version}
 set module_package=-Dpackage=${package}.%packageName%
 set module_sample=-Dsample=%sampleName%
 set module_project=-Dproject=${artifactId}
+set module_db=-Ddb=${db}
 
-mvn archetype:generate %archetype_group% %archetype_artifact% %archetype_version% %module_group% %module_artifact% %module_version% %module_package% %module_sample% %module_project%
+mvn archetype:generate %archetype_group% %archetype_artifact% %archetype_version% %module_group% %module_artifact% %module_version% %module_package% %module_sample% %module_project% %module_db%
 
 :setModuleName
 if "%moduleName%" == "" (

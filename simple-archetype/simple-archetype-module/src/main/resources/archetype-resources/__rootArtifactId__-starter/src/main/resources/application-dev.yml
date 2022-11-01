@@ -1,6 +1,13 @@
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/${rootArtifactId}?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false&serverTimezone=PRC
-    username: root
+    username: work
     password: 123456
+db:
+  name: ${rootArtifactId}
+  host: 127.0.0.1
+#if (${db} == "postgresql")
+  port: 5432
+#end
+#if (${db} == "mysql")
+  port: 3306
+#end

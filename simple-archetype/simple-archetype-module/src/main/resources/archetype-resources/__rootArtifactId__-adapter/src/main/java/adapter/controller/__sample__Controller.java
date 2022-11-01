@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/${sample.toLowerCase()}")
+@RequestMapping("/sample")
 @RequiredArgsConstructor
 public class ${sample}Controller {
     private final ${sample}Api api;

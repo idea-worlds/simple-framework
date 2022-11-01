@@ -12,6 +12,9 @@
         <requiredProperty key="sample">
             <defaultValue>Sample</defaultValue>
         </requiredProperty>
+        <requiredProperty key="db">
+            <defaultValue>mysql</defaultValue>
+        </requiredProperty>
     </requiredProperties>
 
     <modules>

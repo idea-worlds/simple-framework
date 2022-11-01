@@ -29,5 +29,6 @@ module_version="-Dversion=${version}"
 module_package="-Dpackage=${package}.$packageName"
 module_sample="-Dsample=$sampleName"
 module_project="-Dproject=${artifactId}"
+module_db="-Ddb=${db}"
 
-mvn archetype:generate $archetype_group $archetype_artifact $archetype_version $module_group $module_artifact $module_version $module_package $module_sample $module_project
+mvn archetype:generate $archetype_group $archetype_artifact $archetype_version $module_group $module_artifact $module_version $module_package $module_sample $module_project $module_db

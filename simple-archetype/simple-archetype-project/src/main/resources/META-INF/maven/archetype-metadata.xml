@@ -8,6 +8,9 @@
         <requiredProperty key="gitignore">
             <defaultValue>.gitignore</defaultValue>
         </requiredProperty>
+        <requiredProperty key="db">
+            <defaultValue>mysql</defaultValue>
+        </requiredProperty>
     </requiredProperties>
 
     <fileSets>

@@ -1,5 +1,28 @@
+server:
+  servlet:
+    context-path: /${sample.toLowerCase()}
 spring:
   application:
     name: ${rootArtifactId}
   profiles:
     active: dev
+  datasource:
+#if (${db} == "postgresql")
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${db.host}:${db.port}/${db.name}?ssl=false&options=-c%20timezone=PRC
+#end
+#if (${db} == "mysql")
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${db.host}:${db.port}/${db.name}?useUnicode=true&characterEncoding=utf8&autoReconnect=true&&failOverReadOnly=false&useSSL=false&zeroDateTimeBehavior=convertToNull&serverTimezone=PRC
+#end
+    username: work
+    password: 123456
+db:
+  name: ${rootArtifactId}
+  host: db
+#if (${db} == "postgresql")
+  port: 5432
+#end
+#if (${db} == "mysql")
+  port: 3306
+#end
