@@ -10,7 +10,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <revision>1.0-SNAPSHOT</revision>
+        <revision>${version}</revision>
         <simple-framework.version>0.1-SNAPSHOT</simple-framework.version>
         <spring-boot.version>2.7.5</spring-boot.version>
 
