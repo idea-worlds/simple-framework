@@ -46,7 +46,7 @@ final class MybatisUpdateHelper {
                 String script = info.getUpdateFields().stream()
                         .map(field -> MybatisScripts.wrapperIf(field, MybatisScripts.columnEqual(field) + ","))
                         .collect(Collectors.joining("\n"));
-                return String.format("<script>UPDATE `%s` \n<set>%s</set>\n WHERE %s</script>",
+                return String.format("<script>UPDATE %s \n<set>%s</set>\n WHERE %s</script>",
                         info.name(), script, MybatisScripts.columnEqual(idField));
             });
 
@@ -57,12 +57,12 @@ final class MybatisUpdateHelper {
                 String column = info.getUpdateFields().stream()
                         .map(field -> {
                             String fieldName = "model." + field.fieldName();
-                            String tmp = String.format("`%s` = #{%s},", field.columnName(), fieldName);
+                            String tmp = String.format("%s = #{%s},", field.columnName(), fieldName);
                             return MybatisScripts.wrapperIf(fieldName, tmp);
                         })
                         .collect(Collectors.joining("\n"));
                 String condition = MybatisScripts.conditionScript(info.getAllFields(), conditions);
-                return String.format("<script>UPDATE `%s` \n<set>%s</set>\n %s</script>",
+                return String.format("<script>UPDATE %s \n<set>%s</set>\n %s</script>",
                         info.name(), column, condition);
             });
 

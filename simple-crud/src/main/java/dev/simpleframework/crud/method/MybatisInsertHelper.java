@@ -49,7 +49,7 @@ final class MybatisInsertHelper {
                         .collect(Collectors.joining("\n"));
                 fieldScript = String.format("<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">%s</trim>", fieldScript);
 
-                return String.format("<script>INSERT INTO `%s` \n%s\n VALUES \n%s\n</script>",
+                return String.format("<script>INSERT INTO %s \n%s\n VALUES \n%s\n</script>",
                         info.name(), columnScript, fieldScript);
             });
 
@@ -65,7 +65,7 @@ final class MybatisInsertHelper {
                         .collect(Collectors.joining(","));
                 fieldScript = String.format("<foreach collection=\"list\" item=\"et\" separator=\",\">(%s)</foreach>", fieldScript);
 
-                return String.format("<script>INSERT INTO `%s` \n(%s)\n VALUES \n%s\n</script>",
+                return String.format("<script>INSERT INTO %s \n(%s)\n VALUES \n%s\n</script>",
                         info.name(), columnScript, fieldScript);
             });
 

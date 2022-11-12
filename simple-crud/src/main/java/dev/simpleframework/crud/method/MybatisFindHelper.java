@@ -115,7 +115,7 @@ final class MybatisFindHelper {
             MybatisHelper.buildSqlSource(info, config, () -> {
                 ModelField<?> idField = info.id();
                 String column = MybatisScripts.columnScript(info.getSelectFields());
-                return String.format("<script>SELECT %s FROM `%s` WHERE `%s` = #{id}</script>",
+                return String.format("<script>SELECT %s FROM %s WHERE %s = #{id}</script>",
                         column, info.name(), idField.columnName());
             });
 
@@ -125,14 +125,14 @@ final class MybatisFindHelper {
                 Map<String, Object> param = (Map<String, Object>) p;
                 QueryFields fields = (QueryFields) param.get("config");
                 String column = MybatisScripts.columnScript(fields.find(info.getSelectFields()));
-                return String.format("<script>SELECT %s FROM `%s` WHERE `%s` = #{id}</script>",
+                return String.format("<script>SELECT %s FROM %s WHERE %s = #{id}</script>",
                         column, info.name(), idField.columnName());
             });
 
     private static final BiFunction<ModelInfo<?>, Configuration, SqlSource> COUNT_BY_CONS = (info, config) ->
             MybatisHelper.buildSqlSource(info, config, () -> {
                 String condition = MybatisScripts.conditionScript(info.getAllFields());
-                return String.format("<script>SELECT COUNT(*) FROM `%s` %s</script>",
+                return String.format("<script>SELECT COUNT(*) FROM %s %s</script>",
                         info.name(), condition);
             });
 
@@ -141,7 +141,7 @@ final class MybatisFindHelper {
                 Map<String, Object> param = (Map<String, Object>) p;
                 QueryConditions conditions = (QueryConditions) param.get("config");
                 String condition = MybatisScripts.conditionScript(info.getAllFields(), conditions);
-                return String.format("<script>SELECT COUNT(*) FROM `%s` %s</script>",
+                return String.format("<script>SELECT COUNT(*) FROM %s %s</script>",
                         info.name(), condition);
             });
 
@@ -150,7 +150,7 @@ final class MybatisFindHelper {
                 ModelField<?> idField = info.id();
                 String column = MybatisScripts.columnScript(info.getSelectFields());
                 String condition = MybatisScripts.foreach("ids", "id");
-                return String.format("<script>SELECT %s FROM `%s` WHERE \n `%s` IN \n %s </script>",
+                return String.format("<script>SELECT %s FROM %s WHERE \n %s IN \n %s </script>",
                         column, info.name(), idField.columnName(), condition);
             });
 
@@ -161,7 +161,7 @@ final class MybatisFindHelper {
                 QueryFields fields = (QueryFields) param.get("config");
                 String column = MybatisScripts.columnScript(fields.find(info.getSelectFields()));
                 String condition = MybatisScripts.foreach("ids", "id");
-                return String.format("<script>SELECT %s FROM `%s` WHERE \n `%s` IN \n %s </script>",
+                return String.format("<script>SELECT %s FROM %s WHERE \n %s IN \n %s </script>",
                         column, info.name(), idField.columnName(), condition);
             });
 
@@ -169,7 +169,7 @@ final class MybatisFindHelper {
             MybatisHelper.buildSqlSource(info, config, () -> {
                 String column = MybatisScripts.columnScript(info.getSelectFields());
                 String condition = MybatisScripts.conditionScript(info.getAllFields());
-                return String.format("<script>SELECT %s FROM `%s` %s </script>",
+                return String.format("<script>SELECT %s FROM %s %s </script>",
                         column, info.name(), condition);
             });
 
@@ -181,7 +181,7 @@ final class MybatisFindHelper {
                 String column = MybatisScripts.columnScript(queryConfig.getFields().find(info.getSelectFields()));
                 String condition = MybatisScripts.conditionScript(allFields, queryConfig.getConditions());
                 String sort = MybatisScripts.sortScript(allFields, queryConfig.getSorters());
-                return String.format("<script>SELECT %s FROM `%s` %s %s</script>",
+                return String.format("<script>SELECT %s FROM %s %s %s</script>",
                         column, info.name(), condition, sort);
             });
 

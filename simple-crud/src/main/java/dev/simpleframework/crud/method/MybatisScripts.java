@@ -55,7 +55,7 @@ public final class MybatisScripts {
      * @return 表字段名 = #{类字段名}
      */
     public static String columnEqual(ModelField<?> field) {
-        return String.format("`%s` = #{%s}", field.columnName(), field.fieldName());
+        return String.format("%s = #{%s}", field.columnName(), field.fieldName());
     }
 
     /**
@@ -68,7 +68,9 @@ public final class MybatisScripts {
                 .map(field -> {
                     String column = field.columnName();
                     String fieldName = field.fieldName();
-                    return String.format("`%s` AS %s", column, fieldName);
+                    return column.equals(fieldName) ?
+                            column :
+                            String.format("%s AS %s", column, fieldName);
                 })
                 .collect(Collectors.joining(","));
     }
@@ -90,7 +92,7 @@ public final class MybatisScripts {
                 continue;
             }
             String sortType = entry.getValue() ? "asc" : "desc";
-            scripts.add(String.format("`%s` %s", column, sortType));
+            scripts.add(String.format("%s %s", column, sortType));
         }
         if (scripts.isEmpty()) {
             return "";
@@ -140,7 +142,7 @@ public final class MybatisScripts {
     private static final BiFunction<ModelField<?>, QueryConditions.ConditionInfo, String> CONDITION_SCRIPT_PROVIDER =
             (field, condition) -> {
                 String script;
-                String column = "`" + field.columnName() + "`";
+                String column = field.columnName();
                 String fieldName = field.fieldName();
                 String paramKey;
                 if (condition.getValue() == null) {

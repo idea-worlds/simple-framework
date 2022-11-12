@@ -62,7 +62,7 @@ final class MybatisDeleteHelper {
     private static final BiFunction<ModelInfo<?>, Configuration, SqlSource> DEL_BY_ID = (info, config) ->
             MybatisHelper.buildSqlSource(info, config, () -> {
                 ModelField<?> idField = info.id();
-                return String.format("<script>DELETE FROM `%s` WHERE `%s` = #{id}</script>",
+                return String.format("<script>DELETE FROM %s WHERE %s = #{id}</script>",
                         info.name(), idField.columnName());
             });
 
@@ -70,14 +70,14 @@ final class MybatisDeleteHelper {
             MybatisHelper.buildSqlSource(info, config, () -> {
                 ModelField<?> idField = info.id();
                 String condition = MybatisScripts.foreach("ids", "id");
-                return String.format("<script>DELETE FROM `%s` WHERE `%s` IN %s</script>",
+                return String.format("<script>DELETE FROM %s WHERE %s IN %s</script>",
                         info.name(), idField.columnName(), condition);
             });
 
     private static final BiFunction<ModelInfo<?>, Configuration, SqlSource> DEL_BY_CONS = (info, config) ->
             MybatisHelper.buildDynamicSqlSource(config, p -> {
                 String condition = MybatisScripts.conditionScript(info.getAllFields());
-                return String.format("<script>DELETE FROM `%s` %s</script>",
+                return String.format("<script>DELETE FROM %s %s</script>",
                         info.name(), condition);
             });
 
@@ -86,7 +86,7 @@ final class MybatisDeleteHelper {
                 Map<String, Object> param = (Map<String, Object>) p;
                 QueryConditions conditions = (QueryConditions) param.get("config");
                 String condition = MybatisScripts.conditionScript(info.getAllFields(), conditions);
-                return String.format("<script>DELETE FROM `%s` %s</script>",
+                return String.format("<script>DELETE FROM %s %s</script>",
                         info.name(), condition);
             });
 
