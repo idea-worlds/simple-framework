@@ -29,5 +29,9 @@ public enum ConditionType {
      * 包含，不包含
      */
     in, not_in,
+    /**
+     * 包含，被包含，相交
+     */
+    array_contains, array_contained_by, array_overlap
 
 }

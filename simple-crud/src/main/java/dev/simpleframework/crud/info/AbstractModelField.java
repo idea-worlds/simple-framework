@@ -19,6 +19,10 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
      */
     private Class<?> fieldType;
     /**
+     * 类字段实际类型
+     */
+    private Class<?> fieldComponentType;
+    /**
      * 是否可 insert
      */
     private boolean insertable;
@@ -44,6 +48,11 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
     @Override
     public Class<?> fieldType() {
         return this.fieldType;
+    }
+
+    @Override
+    public Class<?> fieldComponentType() {
+        return this.fieldComponentType;
     }
 
     @Override
@@ -73,10 +82,11 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
         this.selectable = selectable;
     }
 
-    protected void setColumn(String column, String fieldName, Class<?> fieldType) {
+    protected void setColumn(String column, String fieldName, Class<?> fieldType, Class<?> fieldComponentType) {
         this.column = column;
         this.fieldName = fieldName;
         this.fieldType = fieldType;
+        this.fieldComponentType = fieldComponentType == null ? fieldType.getComponentType() : fieldComponentType;
     }
 
 }

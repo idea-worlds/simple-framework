@@ -4,6 +4,7 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.util.MybatisHelper;
+import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
@@ -44,10 +45,14 @@ final class MybatisUpdateHelper {
             MybatisHelper.buildSqlSource(info, config, () -> {
                 ModelField<?> idField = info.id();
                 String script = info.getUpdateFields().stream()
-                        .map(field -> MybatisScripts.wrapperIf(field, MybatisScripts.columnEqual(field) + ","))
+                        .map(field -> {
+                            String fieldName = MybatisTypeHandler.resolveFieldName(field, field.fieldName());
+                            String tmp = String.format("%s = #{%s},", field.columnName(), fieldName);
+                            return MybatisScripts.wrapperIf(field, tmp);
+                        })
                         .collect(Collectors.joining("\n"));
-                return String.format("<script>UPDATE %s \n<set>%s</set>\n WHERE %s</script>",
-                        info.name(), script, MybatisScripts.columnEqual(idField));
+                return String.format("<script>UPDATE %s \n<set>\n%s\n</set>\n WHERE %s = #{%s}</script>",
+                        info.name(), script, idField.columnName(), idField.fieldName());
             });
 
     private static final BiFunction<ModelInfo<?>, Configuration, SqlSource> UPDATE_BY_CONS = (info, config) ->
@@ -57,12 +62,12 @@ final class MybatisUpdateHelper {
                 String column = info.getUpdateFields().stream()
                         .map(field -> {
                             String fieldName = "model." + field.fieldName();
-                            String tmp = String.format("%s = #{%s},", field.columnName(), fieldName);
+                            String tmp = String.format("%s = #{%s},", field.columnName(), MybatisTypeHandler.resolveFieldName(field, fieldName));
                             return MybatisScripts.wrapperIf(fieldName, tmp);
                         })
                         .collect(Collectors.joining("\n"));
                 String condition = MybatisScripts.conditionScript(info.getAllFields(), conditions);
-                return String.format("<script>UPDATE %s \n<set>%s</set>\n %s</script>",
+                return String.format("<script>UPDATE %s \n<set>\n%s\n</set>\n %s</script>",
                         info.name(), column, condition);
             });
 

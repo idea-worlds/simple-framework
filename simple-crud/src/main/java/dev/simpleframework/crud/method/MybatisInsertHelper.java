@@ -3,6 +3,7 @@ package dev.simpleframework.crud.method;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.util.MybatisHelper;
+import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
@@ -42,14 +43,17 @@ final class MybatisInsertHelper {
                 String columnScript = fields.stream()
                         .map(field -> MybatisScripts.wrapperIf(field, field.columnName() + ","))
                         .collect(Collectors.joining("\n"));
-                columnScript = String.format("<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">%s</trim>", columnScript);
+                columnScript = String.format("\n<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">\n%s\n</trim>\n", columnScript);
 
                 String fieldScript = fields.stream()
-                        .map(field -> MybatisScripts.wrapperIf(field, "#{" + field.fieldName() + "},"))
+                        .map(field -> {
+                            String fieldName = MybatisTypeHandler.resolveFieldName(field, field.fieldName());
+                            return MybatisScripts.wrapperIf(field, String.format("#{%s},", fieldName));
+                        })
                         .collect(Collectors.joining("\n"));
-                fieldScript = String.format("<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">%s</trim>", fieldScript);
+                fieldScript = String.format("\n<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">\n%s\n</trim>\n", fieldScript);
 
-                return String.format("<script>INSERT INTO %s \n%s\n VALUES \n%s\n</script>",
+                return String.format("<script>INSERT INTO %s %s VALUES %s</script>",
                         info.name(), columnScript, fieldScript);
             });
 
@@ -61,11 +65,14 @@ final class MybatisInsertHelper {
                         .collect(Collectors.joining(","));
 
                 String fieldScript = fields.stream()
-                        .map(field -> "#{et." + field.fieldName() + "}")
+                        .map(field -> {
+                            String fieldName = MybatisTypeHandler.resolveFieldName(field, field.fieldName());
+                            return MybatisScripts.wrapperIf(field, String.format("#{et.%s}", fieldName));
+                        })
                         .collect(Collectors.joining(","));
-                fieldScript = String.format("<foreach collection=\"list\" item=\"et\" separator=\",\">(%s)</foreach>", fieldScript);
+                fieldScript = String.format("\n<foreach collection=\"list\" item=\"et\" separator=\",\">(%s)</foreach>\n", fieldScript);
 
-                return String.format("<script>INSERT INTO %s \n(%s)\n VALUES \n%s\n</script>",
+                return String.format("<script>INSERT INTO %s \n(%s)\n VALUES %s</script>",
                         info.name(), columnScript, fieldScript);
             });
 

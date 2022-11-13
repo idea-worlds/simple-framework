@@ -45,6 +45,13 @@ public interface ModelField<T> {
     Class<?> fieldType();
 
     /**
+     * 类字段实际类型
+     *
+     * @return 类字段实际类型
+     */
+    Class<?> fieldComponentType();
+
+    /**
      * 字段是否可新增
      *
      * @return 字段是否可新增

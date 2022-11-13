@@ -5,6 +5,7 @@ import dev.simpleframework.crud.core.ConditionType;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.core.QuerySorters;
 import dev.simpleframework.crud.exception.SimpleCrudException;
+import dev.simpleframework.crud.util.MybatisTypeHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,18 +45,17 @@ public final class MybatisScripts {
      * 循环的脚本片段
      */
     public static String foreach(String collection, String item) {
-        return String.format(
-                "<foreach collection=\"%s\" item=\"%s\" open=\"(\" separator=\",\" close=\")\">#{%s}</foreach>",
-                collection, item, item);
+        return foreach(collection, item, null);
     }
 
     /**
-     * 字段转为相等的脚本
-     *
-     * @return 表字段名 = #{类字段名}
+     * 循环的脚本片段
      */
-    public static String columnEqual(ModelField<?> field) {
-        return String.format("%s = #{%s}", field.columnName(), field.fieldName());
+    public static String foreach(String collection, String item, ModelField<?> field) {
+        String itemValue = field == null ? item : MybatisTypeHandler.resolveFieldName(field, item);
+        return String.format(
+                "<foreach collection=\"%s\" item=\"%s\" open=\"(\" separator=\",\" close=\")\">#{%s}</foreach>",
+                collection, item, itemValue);
     }
 
     /**
@@ -106,9 +106,9 @@ public final class MybatisScripts {
      * @param fields 模型字段
      */
     public static String conditionScript(List<? extends ModelField<?>> fields) {
-        QueryConditions.ConditionInfo condition = QueryConditions.ConditionInfo.of(ConditionType.equal, null);
+        QueryConditions.ConditionInfo defaultCondition = QueryConditions.ConditionInfo.of(ConditionType.equal, null);
         String script = fields.stream()
-                .map(field -> CONDITION_SCRIPT_PROVIDER.apply(field, condition))
+                .map(field -> CONDITION_SCRIPT_PROVIDER.apply(field, defaultCondition))
                 .collect(Collectors.joining("\n"));
         return " \n<where>\n" + script + "\n</where> ";
     }
@@ -144,40 +144,41 @@ public final class MybatisScripts {
                 String script;
                 String column = field.columnName();
                 String fieldName = field.fieldName();
-                String paramKey;
+                String fieldKey;
                 if (condition.getValue() == null) {
-                    paramKey = String.format("%s.%s", "model", fieldName);
+                    fieldKey = String.format("%s.%s", "model", fieldName);
                 } else {
-                    paramKey = String.format("%s.%s", "data", condition.getKey(fieldName));
+                    fieldKey = String.format("%s.%s", "data", condition.getKey(fieldName));
                 }
+                String fieldParam = MybatisTypeHandler.resolveFieldName(field, fieldKey);
                 boolean needWrapIf = true;
                 switch (condition.getType()) {
                     case equal:
-                        script = String.format("%s = #{%s}", column, paramKey);
+                        script = String.format("%s = #{%s}", column, fieldParam);
                         break;
                     case not_equal:
-                        script = String.format("%s <![CDATA[ <> ]]> #{%s}", column, paramKey);
+                        script = String.format("%s <![CDATA[ <> ]]> #{%s}", column, fieldParam);
                         break;
                     case like_all:
-                        script = String.format("%s LIKE concat('%%', #{%s}, '%%')", column, paramKey);
+                        script = String.format("%s LIKE concat('%%', #{%s}, '%%')", column, fieldParam);
                         break;
                     case like_left:
-                        script = String.format("%s LIKE concat('%%', #{%s})", column, paramKey);
+                        script = String.format("%s LIKE concat('%%', #{%s})", column, fieldParam);
                         break;
                     case like_right:
-                        script = String.format("%s LIKE concat(#{%s}, '%%')", column, paramKey);
+                        script = String.format("%s LIKE concat(#{%s}, '%%')", column, fieldParam);
                         break;
                     case greater_than:
-                        script = String.format("%s <![CDATA[ > ]]> #{%s}", column, paramKey);
+                        script = String.format("%s <![CDATA[ > ]]> #{%s}", column, fieldParam);
                         break;
                     case great_equal:
-                        script = String.format("%s <![CDATA[ >= ]]> #{%s}", column, paramKey);
+                        script = String.format("%s <![CDATA[ >= ]]> #{%s}", column, fieldParam);
                         break;
                     case less_than:
-                        script = String.format("%s <![CDATA[ < ]]> #{%s}", column, paramKey);
+                        script = String.format("%s <![CDATA[ < ]]> #{%s}", column, fieldParam);
                         break;
                     case less_equal:
-                        script = String.format("%s <![CDATA[ <= ]]> #{%s}", column, paramKey);
+                        script = String.format("%s <![CDATA[ <= ]]> #{%s}", column, fieldParam);
                         break;
                     case is_null:
                         script = String.format("%s IS NULL", column);
@@ -188,10 +189,19 @@ public final class MybatisScripts {
                         needWrapIf = false;
                         break;
                     case in:
-                        script = String.format("%s IN %s", column, foreach(paramKey, "_" + fieldName));
+                        script = String.format("%s IN %s", column, foreach(fieldKey, "_" + fieldName, field));
                         break;
                     case not_in:
-                        script = String.format("%s NOT IN %s", column, foreach(paramKey, "_" + fieldName));
+                        script = String.format("%s NOT IN %s", column, foreach(fieldKey, "_" + fieldName, field));
+                        break;
+                    case array_contains:
+                        script = String.format("%s <![CDATA[ @> ]]> #{%s}", column, fieldParam);
+                        break;
+                    case array_contained_by:
+                        script = String.format("%s <![CDATA[ <@ ]]> #{%s}", column, fieldParam);
+                        break;
+                    case array_overlap:
+                        script = String.format("%s <![CDATA[ && ]]> #{%s}", column, fieldParam);
                         break;
                     default:
                         throw new SimpleCrudException("Not support conditionType [" + condition.getType() + "]");
@@ -200,7 +210,7 @@ public final class MybatisScripts {
                 if (field.fieldType().isPrimitive()) {
                     return script;
                 }
-                return needWrapIf ? wrapperIf(paramKey, script) : script;
+                return needWrapIf ? wrapperIf(fieldKey, script) : script;
             };
 
 }

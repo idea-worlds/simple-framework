@@ -4,6 +4,7 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.util.MybatisHelper;
+import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
@@ -69,7 +70,7 @@ final class MybatisDeleteHelper {
     private static final BiFunction<ModelInfo<?>, Configuration, SqlSource> DEL_BY_IDS = (info, config) ->
             MybatisHelper.buildSqlSource(info, config, () -> {
                 ModelField<?> idField = info.id();
-                String condition = MybatisScripts.foreach("ids", "id");
+                String condition = MybatisScripts.foreach("ids", "_id");
                 return String.format("<script>DELETE FROM %s WHERE %s IN %s</script>",
                         info.name(), idField.columnName(), condition);
             });

@@ -149,7 +149,7 @@ final class MybatisFindHelper {
             MybatisHelper.buildSqlSource(info, config, () -> {
                 ModelField<?> idField = info.id();
                 String column = MybatisScripts.columnScript(info.getSelectFields());
-                String condition = MybatisScripts.foreach("ids", "id");
+                String condition = MybatisScripts.foreach("ids", "_id");
                 return String.format("<script>SELECT %s FROM %s WHERE \n %s IN \n %s </script>",
                         column, info.name(), idField.columnName(), condition);
             });
@@ -160,7 +160,7 @@ final class MybatisFindHelper {
                 Map<String, Object> param = (Map<String, Object>) p;
                 QueryFields fields = (QueryFields) param.get("config");
                 String column = MybatisScripts.columnScript(fields.find(info.getSelectFields()));
-                String condition = MybatisScripts.foreach("ids", "id");
+                String condition = MybatisScripts.foreach("ids", "_id");
                 return String.format("<script>SELECT %s FROM %s WHERE \n %s IN \n %s </script>",
                         column, info.name(), idField.columnName(), condition);
             });

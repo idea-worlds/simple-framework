@@ -15,8 +15,12 @@ public class DynamicModelField extends AbstractModelField<Map<String, Object>> {
     }
 
     public DynamicModelField(String fieldName, String column, Class<?> fieldType) {
+        this(fieldName, column, fieldType, null);
+    }
+
+    public DynamicModelField(String fieldName, String column, Class<?> fieldType, Class<?> fieldComponentType) {
         super();
-        super.setColumn(column, fieldName, fieldType);
+        super.setColumn(column, fieldName, fieldType, fieldComponentType);
         super.setInsertable(true);
         super.setUpdatable(true);
         super.setSelectable(true);
