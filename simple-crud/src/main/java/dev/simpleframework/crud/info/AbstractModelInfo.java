@@ -2,13 +2,14 @@ package dev.simpleframework.crud.info;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
+import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.core.ModelConfiguration;
+import dev.simpleframework.crud.exception.FieldDefinitionException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -30,7 +31,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
     /**
      * 主键
      */
-    private ModelId<T> id;
+    private ModelField<T> id;
     /**
      * 字段列表
      */
@@ -73,15 +74,26 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
         return this.fields.get(fieldName);
     }
 
-    protected void setId(ModelId<T> id) {
-        this.id = id;
+    public void setId(String fieldName, Id.Type type) {
+        if (fieldName == null) {
+            this.id = null;
+            return;
+        }
+        if (this.id != null) {
+            throw new FieldDefinitionException(this.name(), "only support one id field");
+        }
+        ModelField<T> field = this.fields.get(fieldName);
+        if (field == null) {
+            throw new FieldDefinitionException(this.name(), "no field named '" + fieldName + "'");
+        }
+        ((AbstractModelField<T>) field).changeToId(type);
     }
 
     protected Map<String, ModelField<T>> fields() {
         return this.fields;
     }
 
-    protected void addField(List<ModelField<T>> fields) {
+    protected void addFields(List<ModelField<T>> fields) {
         for (ModelField<T> field : fields) {
             this.addField(field);
         }

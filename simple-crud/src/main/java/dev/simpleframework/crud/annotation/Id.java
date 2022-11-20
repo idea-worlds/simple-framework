@@ -1,7 +1,5 @@
 package dev.simpleframework.crud.annotation;
 
-import dev.simpleframework.crud.core.ModelIdStrategy;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -20,6 +18,25 @@ public @interface Id {
     /**
      * 主键策略
      */
-    ModelIdStrategy strategy() default ModelIdStrategy.SNOWFLAKE;
+    Type type() default Type.SNOWFLAKE;
+
+    enum Type {
+        /**
+         * 雪花算法
+         */
+        SNOWFLAKE,
+        /**
+         * UUID.replace("-", "")
+         */
+        UUID32,
+        /**
+         * UUID
+         */
+        UUID36,
+        /**
+         * 数据库自增主键（数据库表需要定义主键自增）
+         */
+        AUTO_INCREMENT
+    }
 
 }

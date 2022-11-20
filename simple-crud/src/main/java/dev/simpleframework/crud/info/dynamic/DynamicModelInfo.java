@@ -1,11 +1,10 @@
 package dev.simpleframework.crud.info.dynamic;
 
 import dev.simpleframework.crud.ModelField;
+import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.core.ModelConfiguration;
-import dev.simpleframework.crud.core.ModelIdStrategy;
 import dev.simpleframework.crud.info.AbstractModelInfo;
-import dev.simpleframework.crud.info.ModelId;
 import dev.simpleframework.util.Strings;
 
 import java.util.Map;
@@ -43,29 +42,7 @@ public class DynamicModelInfo extends AbstractModelInfo<Map<String, Object>> {
     }
 
     public DynamicModelInfo setId(String fieldName) {
-        return this.setId(fieldName, Long.class);
-    }
-
-    public DynamicModelInfo setId(String fieldName, String column) {
-        return this.setId(fieldName, column, Long.class, ModelIdStrategy.SNOWFLAKE);
-    }
-
-    public DynamicModelInfo setId(String fieldName, Class<?> fieldType) {
-        return this.setId(fieldName, fieldType, ModelIdStrategy.SNOWFLAKE);
-    }
-
-    public DynamicModelInfo setId(String fieldName, Class<?> fieldType, ModelIdStrategy idStrategy) {
-        String column = Strings.camelToUnderline(fieldName);
-        return this.setId(fieldName, column, fieldType, idStrategy);
-    }
-
-    public DynamicModelInfo setId(String fieldName, String column, Class<?> fieldType, ModelIdStrategy idStrategy) {
-        if (Strings.isBlank(column)) {
-            column = Strings.camelToUnderline(fieldName);
-        }
-        DynamicModelField field = new DynamicModelField(fieldName, column, fieldType);
-        super.setId(new ModelId<>(field, idStrategy));
-        super.addField(field);
+        super.setId(fieldName, Id.Type.SNOWFLAKE);
         return this;
     }
 
@@ -82,9 +59,6 @@ public class DynamicModelInfo extends AbstractModelInfo<Map<String, Object>> {
     }
 
     public DynamicModelInfo addField(String fieldName, String column, Class<?> fieldType) {
-        if (this.isIdField(fieldName)) {
-            return this;
-        }
         if (Strings.isBlank(column)) {
             column = Strings.camelToUnderline(fieldName);
         }
@@ -102,14 +76,14 @@ public class DynamicModelInfo extends AbstractModelInfo<Map<String, Object>> {
             return this;
         }
         if (this.isIdField(fieldName)) {
-            super.setId(null);
+            super.setId(null, null);
         }
         super.fields().remove(fieldName);
         return this;
     }
 
     public DynamicModelInfo removeAllFields() {
-        super.setId(null);
+        super.setId(null, null);
         super.fields().clear();
         return this;
     }

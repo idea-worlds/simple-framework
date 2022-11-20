@@ -2,6 +2,7 @@ package dev.simpleframework.crud.info.dynamic;
 
 import dev.simpleframework.crud.exception.FieldDefinitionException;
 import dev.simpleframework.crud.info.AbstractModelField;
+import dev.simpleframework.crud.strategy.DataFillStrategy;
 
 import java.util.Map;
 
@@ -51,6 +52,11 @@ public class DynamicModelField extends AbstractModelField<Map<String, Object>> {
     @Override
     public void setSelectable(boolean selectable) {
         super.setSelectable(selectable);
+    }
+
+    @Override
+    public void setFillStrategy(DataFillStrategy strategy, Object strategyParam) {
+        super.setFillStrategy(strategy, strategyParam);
     }
 
     private void validValue(Object value) {

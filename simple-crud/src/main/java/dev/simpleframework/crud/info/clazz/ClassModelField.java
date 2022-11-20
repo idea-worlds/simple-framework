@@ -1,13 +1,16 @@
 package dev.simpleframework.crud.info.clazz;
 
+import dev.simpleframework.crud.Models;
 import dev.simpleframework.crud.annotation.Column;
 import dev.simpleframework.crud.core.ModelNameStrategy;
 import dev.simpleframework.crud.info.AbstractModelField;
+import dev.simpleframework.crud.strategy.DataFillStrategy;
 import dev.simpleframework.crud.util.Constants;
 import dev.simpleframework.util.Classes;
 import dev.simpleframework.util.Strings;
 import lombok.SneakyThrows;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
@@ -54,6 +57,17 @@ public class ClassModelField<T> extends AbstractModelField<T> {
         super.setInsertable(insertable);
         super.setUpdatable(updatable);
         super.setSelectable(selectable);
+
+        DataFillStrategy fillStrategy = null;
+        Object fillStrategyParam = null;
+        for (Annotation annotation : this.field.getAnnotations()) {
+            DataFillStrategy temp = Models.fillStrategy(annotation.annotationType());
+            if (fillStrategy == null || fillStrategy.order() >= temp.order()) {
+                fillStrategy = temp;
+                fillStrategyParam = fillStrategy.toParam(annotation);
+            }
+        }
+        super.setFillStrategy(fillStrategy, fillStrategyParam);
     }
 
     @SuppressWarnings("unchecked")

@@ -8,6 +8,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+
 /**
  * Spring 工具类
  */
@@ -79,6 +81,17 @@ public class SimpleSpringUtils implements BeanFactoryPostProcessor, ApplicationC
      */
     public static <T> T getBean(String name, Class<T> clazz) {
         return getBeanFactory().getBean(name, clazz);
+    }
+
+    /**
+     * 通过class获取Bean列表
+     *
+     * @param <T>   Bean类型
+     * @param clazz Bean类
+     * @return Bean类型
+     */
+    public static <T> Collection<T> getBeans(Class<T> clazz) {
+       return getBeanFactory().getBeansOfType(clazz).values();
     }
 
     /**

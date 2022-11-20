@@ -1,8 +1,8 @@
 package dev.simpleframework.crud;
 
 import dev.simpleframework.crud.annotation.Column;
+import dev.simpleframework.crud.annotation.DataOperateUser;
 import dev.simpleframework.crud.annotation.Id;
-import dev.simpleframework.crud.core.ModelIdStrategy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -14,11 +14,18 @@ import java.util.Date;
 @ToString
 public abstract class SimpleModel<T> implements BaseModel<T> {
 
-    @Id(strategy = ModelIdStrategy.SNOWFLAKE)
+    @Id(type = Id.Type.SNOWFLAKE)
+    @Column(updatable = false)
     private Long id;
+
+    @DataOperateUser
+    @Column(updatable = false)
+    private Long creator;
+
     @Column(insertable = false, updatable = false)
-    private Date created;
+    private Date createdTime;
+
     @Column(insertable = false, updatable = false)
-    private Date updated;
+    private Date updatedTime;
 
 }

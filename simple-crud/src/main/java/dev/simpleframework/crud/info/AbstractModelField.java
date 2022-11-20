@@ -1,6 +1,10 @@
 package dev.simpleframework.crud.info;
 
 import dev.simpleframework.crud.ModelField;
+import dev.simpleframework.crud.Models;
+import dev.simpleframework.crud.annotation.Id;
+import dev.simpleframework.crud.strategy.DataFillStrategy;
+import dev.simpleframework.crud.strategy.DataFillStrategy.FillType;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -34,6 +38,26 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
      * 是否可 select
      */
     private boolean selectable;
+    /**
+     * 数据填充策略
+     */
+    private DataFillStrategy fillStrategy;
+    private Object fillStrategyParam;
+
+    @Override
+    public void autoFillValue(T model) {
+        if (this.fillStrategy == null) {
+            return;
+        }
+        if (this.fillStrategy.type() == FillType.ALWAYS ||
+                (this.fillStrategy.type() == FillType.NULL && this.getValue(model) == null)) {
+            Object value = this.fillStrategy.get(this.fillStrategyParam);
+            if (String.class.isAssignableFrom(this.fieldType) && !(value instanceof String)) {
+                value = String.valueOf(value);
+            }
+            this.setValue(model, value);
+        }
+    }
 
     @Override
     public String columnName() {
@@ -87,6 +111,34 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
         this.fieldName = fieldName;
         this.fieldType = fieldType;
         this.fieldComponentType = fieldComponentType == null ? fieldType.getComponentType() : fieldComponentType;
+    }
+
+    protected void setFillStrategy(DataFillStrategy strategy, Object strategyParam) {
+        this.fillStrategy = strategy;
+        this.fillStrategyParam = strategyParam;
+    }
+
+    protected DataFillStrategy fillStrategy() {
+        return fillStrategy;
+    }
+
+    protected Object fillStrategyParam() {
+        return fillStrategyParam;
+    }
+
+    /**
+     * 改为主键字段
+     *
+     * @param type 主键策略。默认 SNOWFLAKE
+     */
+    void changeToId(Id.Type type) {
+        if (type == null) {
+            type = Id.Type.SNOWFLAKE;
+        }
+        if (this.fillStrategy == null || this.fillStrategy.support() != Id.class) {
+            this.fillStrategy = Models.fillStrategy(Id.class);
+            this.fillStrategyParam = type;
+        }
     }
 
 }

@@ -18,9 +18,10 @@ public final class MethodInsertHelper {
             return false;
         }
         ModelInfo<T> info = Models.info(model);
-        DatasourceType datasourceType = info.config().datasourceType();
         setIdValueIfAbsent(info, model);
+        fillValue(info, model);
 
+        DatasourceType datasourceType = info.config().datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisInsertHelper.insert(info, model);
         }
@@ -32,9 +33,12 @@ public final class MethodInsertHelper {
             return false;
         }
         ModelInfo<T> info = Models.info(models.get(0));
-        DatasourceType datasourceType = info.config().datasourceType();
         setIdValueIfAbsent(info, models);
+        for (T model : models) {
+            fillValue(info, model);
+        }
 
+        DatasourceType datasourceType = info.config().datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisInsertHelper.insertBatch(info, models);
         }
@@ -56,6 +60,12 @@ public final class MethodInsertHelper {
         }
         for (T m : model) {
             id.setValue(m, null);
+        }
+    }
+
+    private static <T> void fillValue(ModelInfo<T> info, T model) {
+        for (ModelField<T> field : info.getInsertFields()) {
+            field.autoFillValue(model);
         }
     }
 

@@ -1,5 +1,7 @@
 package dev.simpleframework.crud;
 
+import dev.simpleframework.crud.core.DatasourceType;
+
 /**
  * 数据源提供者
  *
@@ -16,6 +18,11 @@ public interface DatasourceProvider<T> {
     T get(String name);
 
     /**
+     * 数据源类型
+     */
+    DatasourceType support();
+
+    /**
      * 执行 crud 后是否需要自动关闭
      *
      * @param name 数据源名称
@@ -26,8 +33,7 @@ public interface DatasourceProvider<T> {
     }
 
     /**
-     * 序号
-     * 注册时较小序号的数据源提供者将替换同类型的数据源提供者
+     * 序号（越小约优先）
      */
     default int order() {
         return Integer.MAX_VALUE;

@@ -24,6 +24,13 @@ public interface ModelField<T> {
     void setValue(T model, Object value);
 
     /**
+     * 自动填充模型字段的值
+     *
+     * @param model 模型
+     */
+    void autoFillValue(T model);
+
+    /**
      * 表字段名
      *
      * @return 表字段名

@@ -4,10 +4,8 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.annotation.Table;
 import dev.simpleframework.crud.core.ModelConfiguration;
-import dev.simpleframework.crud.core.ModelIdStrategy;
 import dev.simpleframework.crud.core.ModelNameStrategy;
 import dev.simpleframework.crud.info.AbstractModelInfo;
-import dev.simpleframework.crud.info.ModelId;
 import dev.simpleframework.crud.util.Constants;
 import dev.simpleframework.util.Classes;
 import dev.simpleframework.util.Strings;
@@ -31,8 +29,8 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
     public ClassModelInfo(Class<T> modelClass, ModelConfiguration modelConfig) {
         super(modelClass, modelConfig, obtainModelName(modelClass, modelConfig.tableNameStrategy()));
         List<ModelField<T>> modelFields = obtainFields(modelClass, modelConfig.columnNameStrategy());
-        super.setId(obtainModelId(modelFields));
-        super.addField(modelFields);
+        super.addFields(modelFields);
+        super.setId(obtainModelIdFieldName(modelFields), null);
     }
 
     /**
@@ -91,45 +89,35 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
         };
         return Classes.getFields(modelClass, fieldFilter)
                 .stream()
-                .map(f -> new ClassModelField<>(modelClass, f, nameType))
+                .map(field -> new ClassModelField<>(modelClass, field, nameType))
                 .collect(Collectors.toList());
     }
 
     /**
      * 获取主键字段
      * 默认主键类字段名为 id，可通过注解 @Id 声明类字段为主键
-     * 默认主键策略为雪花算法，可通过 @IdStrategy 修改策略
      *
      * @see dev.simpleframework.crud.annotation.Id
      * @see javax.persistence.Id
      */
-    private static <M> ModelId<M> obtainModelId(List<ModelField<M>> modelFields) {
-        ModelIdStrategy strategy = null;
-        ClassModelField<M> idField = null;
+    private static <M> String obtainModelIdFieldName(List<ModelField<M>> modelFields) {
         for (ModelField<M> modelField : modelFields) {
             ClassModelField<M> field = (ClassModelField<M>) modelField;
             if (field.getField().isAnnotationPresent(Id.class)) {
+                return field.fieldName();
+            }
+        }
+        ClassModelField<M> idField = null;
+        for (ModelField<M> modelField : modelFields) {
+            ClassModelField<M> field = (ClassModelField<M>) modelField;
+            if (Constants.jpaPresent && field.getField().isAnnotationPresent(javax.persistence.Id.class)) {
+                return field.fieldName();
+            }
+            if (DEFAULT_ID_FIELD.equals(modelField.fieldName())) {
                 idField = field;
-                strategy = field.getField().getAnnotation(Id.class).strategy();
-                break;
             }
         }
-        if (idField == null) {
-            for (ModelField<M> modelField : modelFields) {
-                ClassModelField<M> field = (ClassModelField<M>) modelField;
-                if (Constants.jpaPresent && field.getField().isAnnotationPresent(javax.persistence.Id.class)) {
-                    idField = field;
-                    break;
-                }
-                if (DEFAULT_ID_FIELD.equals(modelField.fieldName())) {
-                    idField = field;
-                }
-            }
-        }
-        if (idField == null) {
-            return null;
-        }
-        return strategy == null ? new ModelId<>(idField) : new ModelId<>(idField, strategy);
+        return idField == null ? null : idField.fieldName();
     }
 
 }
