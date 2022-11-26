@@ -17,14 +17,9 @@
 
         <guava.version>31.1-jre</guava.version>
         <mybatis.version>3.5.11</mybatis.version>
-        <mybatis-spring-boot-starter.version>2.2.2</mybatis-spring-boot-starter.version>
+        <mybatis-spring-boot-starter.version>3.0.0</mybatis-spring-boot-starter.version>
         <pagehelper.version>5.3.2</pagehelper.version>
-        <pagehelper-spring-boot-starter.version>1.4.5</pagehelper-spring-boot-starter.version>
-
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
-        <project.build.encoding>UTF-8</project.build.encoding>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <pagehelper-spring-boot-starter.version>1.4.6</pagehelper-spring-boot-starter.version>
     </properties>
 
     <dependencyManagement>

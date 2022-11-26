@@ -80,7 +80,7 @@ public final class Models {
 
     /**
      * 注册模型
-     * 不注册：抽象类、接口类、Map 和 Iterable 子类、java/javax 包下的类
+     * 不注册：抽象类、接口类、Map 和 Iterable 子类、java 包下的类
      * 注册逻辑：从要注册的模型类一直往上找父类，然后从最后一个父类开始注册直至某个类注册成功，注册成功后子类都不再注册
      * eg: child -> parent -> grandparent
      * 若 grandparent 成功，则 parent 和 child 不再注册
@@ -109,8 +109,7 @@ public final class Models {
                 || Modifier.isInterface(classModifiers)
                 || Map.class.isAssignableFrom(modelClass)
                 || Iterable.class.isAssignableFrom(modelClass)
-                || modelClass.getName().startsWith("java.")
-                || modelClass.getName().startsWith("javax.")) {
+                || modelClass.getName().startsWith("java")) {
             return null;
         }
         ModelInfo<?> modelInfo = new ClassModelInfo<>(modelClass, modelConfig);

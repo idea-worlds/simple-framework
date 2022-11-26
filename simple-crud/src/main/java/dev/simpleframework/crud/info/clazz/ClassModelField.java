@@ -5,7 +5,6 @@ import dev.simpleframework.crud.annotation.Column;
 import dev.simpleframework.crud.core.ModelNameStrategy;
 import dev.simpleframework.crud.info.AbstractModelField;
 import dev.simpleframework.crud.strategy.DataFillStrategy;
-import dev.simpleframework.crud.util.Constants;
 import dev.simpleframework.util.Classes;
 import dev.simpleframework.util.Strings;
 import lombok.SneakyThrows;
@@ -37,13 +36,6 @@ public class ClassModelField<T> extends AbstractModelField<T> {
             insertable = crudColumn.insertable();
             updatable = crudColumn.updatable();
             selectable = crudColumn.selectable();
-        } else if (Constants.jpaPresent) {
-            javax.persistence.Column jpaColumn = this.field.getAnnotation(javax.persistence.Column.class);
-            if (jpaColumn != null) {
-                columnName = jpaColumn.name();
-                insertable = jpaColumn.insertable();
-                updatable = jpaColumn.updatable();
-            }
         }
         if (Strings.isBlank(columnName)) {
             columnName = nameType.trans(fieldName);

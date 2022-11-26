@@ -6,7 +6,6 @@ import dev.simpleframework.crud.annotation.Table;
 import dev.simpleframework.crud.core.ModelConfiguration;
 import dev.simpleframework.crud.core.ModelNameStrategy;
 import dev.simpleframework.crud.info.AbstractModelInfo;
-import dev.simpleframework.crud.util.Constants;
 import dev.simpleframework.util.Classes;
 import dev.simpleframework.util.Strings;
 
@@ -40,7 +39,6 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
      * 若 schema() 有值，则表名为 schema().表名
      *
      * @see dev.simpleframework.crud.annotation.Table
-     * @see javax.persistence.Table
      */
     private static <M> String obtainModelName(Class<M> clazz, ModelNameStrategy nameType) {
         BiFunction<String, String, String> nameTrans = (modelName, definedName) -> {
@@ -61,12 +59,6 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
         if (crudTable != null) {
             modelName = nameTrans.apply(modelName, crudTable.name());
             modelName = schemaTrans.apply(modelName, crudTable.schema());
-        } else if (Constants.jpaPresent) {
-            javax.persistence.Table jpaTable = clazz.getAnnotation(javax.persistence.Table.class);
-            if (jpaTable != null) {
-                modelName = nameTrans.apply(modelName, jpaTable.name());
-                modelName = schemaTrans.apply(modelName, jpaTable.schema());
-            }
         }
         return modelName;
     }
@@ -81,10 +73,6 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
             boolean isStatic = Modifier.isStatic(modifiers);
             // 过滤掉 transient 关键字修饰的字段
             boolean isTransient = Modifier.isTransient(modifiers);
-            if (!isTransient) {
-                // 过滤掉 @Transient 注解的字段
-                isTransient = Constants.jpaPresent && field.isAnnotationPresent(javax.persistence.Transient.class);
-            }
             return !isStatic && !isTransient;
         };
         return Classes.getFields(modelClass, fieldFilter)
@@ -98,7 +86,6 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
      * 默认主键类字段名为 id，可通过注解 @Id 声明类字段为主键
      *
      * @see dev.simpleframework.crud.annotation.Id
-     * @see javax.persistence.Id
      */
     private static <M> String obtainModelIdFieldName(List<ModelField<M>> modelFields) {
         for (ModelField<M> modelField : modelFields) {
@@ -107,17 +94,13 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
                 return field.fieldName();
             }
         }
-        ClassModelField<M> idField = null;
         for (ModelField<M> modelField : modelFields) {
             ClassModelField<M> field = (ClassModelField<M>) modelField;
-            if (Constants.jpaPresent && field.getField().isAnnotationPresent(javax.persistence.Id.class)) {
+            if (DEFAULT_ID_FIELD.equals(modelField.fieldName())) {
                 return field.fieldName();
             }
-            if (DEFAULT_ID_FIELD.equals(modelField.fieldName())) {
-                idField = field;
-            }
         }
-        return idField == null ? null : idField.fieldName();
+        return null;
     }
 
 }

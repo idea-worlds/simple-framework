@@ -7,7 +7,6 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Alias for javax.persistence.Id
  *
  * @author loyayz (loyayz@foxmail.com)
  */
