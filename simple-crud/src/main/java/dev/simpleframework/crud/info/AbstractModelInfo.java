@@ -3,7 +3,7 @@ package dev.simpleframework.crud.info;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.annotation.Id;
-import dev.simpleframework.crud.core.ModelConfiguration;
+import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.exception.FieldDefinitionException;
 
 import java.util.ArrayList;
@@ -21,13 +21,17 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
      */
     private final Class<T> modelClass;
     /**
-     * 模型配置
-     */
-    private final ModelConfiguration config;
-    /**
      * 模型名（表名）
      */
     private final String modelName;
+    /**
+     * 数据源类型
+     */
+    private final DatasourceType datasourceType;
+    /**
+     * 数据源名称
+     */
+    private final String datasourceName;
     /**
      * 主键
      */
@@ -37,10 +41,11 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
      */
     private final Map<String, ModelField<T>> fields;
 
-    protected AbstractModelInfo(Class<T> modelClass, ModelConfiguration config, String modelName) {
+    protected AbstractModelInfo(Class<T> modelClass, String modelName, DatasourceType dsType, String dsName) {
         this.modelClass = modelClass;
-        this.config = config;
         this.modelName = modelName;
+        this.datasourceType = dsType;
+        this.datasourceName = dsName;
         this.fields = new LinkedHashMap<>();
     }
 
@@ -50,13 +55,18 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
     }
 
     @Override
-    public ModelConfiguration config() {
-        return this.config;
+    public String name() {
+        return this.modelName;
     }
 
     @Override
-    public String name() {
-        return this.modelName;
+    public DatasourceType datasourceType() {
+        return this.datasourceType;
+    }
+
+    @Override
+    public String datasourceName() {
+        return this.datasourceName;
     }
 
     @Override

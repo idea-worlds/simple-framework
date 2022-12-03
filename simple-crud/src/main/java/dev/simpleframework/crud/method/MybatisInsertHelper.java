@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 final class MybatisInsertHelper {
 
     static <T> boolean insert(ModelInfo<?> info, T model) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "insert",
                     SqlCommandType.INSERT, Integer.class, INSERT);
             return session.insert(msId, model) == 1;
@@ -28,7 +28,7 @@ final class MybatisInsertHelper {
     }
 
     static <T> boolean insertBatch(ModelInfo<?> info, List<? extends T> models) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "insertBatch",
                     SqlCommandType.INSERT, Integer.class, INSERT_BATCH);
             Map<String, Object> param = new HashMap<>(3);

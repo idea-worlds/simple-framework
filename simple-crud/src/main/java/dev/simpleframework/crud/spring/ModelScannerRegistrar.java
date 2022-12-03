@@ -1,7 +1,7 @@
 package dev.simpleframework.crud.spring;
 
 import dev.simpleframework.crud.Models;
-import dev.simpleframework.crud.core.ModelConfiguration;
+import dev.simpleframework.crud.core.DatasourceType;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -46,11 +46,12 @@ public class ModelScannerRegistrar implements ImportBeanDefinitionRegistrar {
         String[] packages = basePackages(attrs, defaultPackage);
 
         Set<String> classNames = scanModels(packages, superClass);
-        ModelConfiguration modelConfig = modelConfig(attrs);
+        DatasourceType dsType = attrs.getEnum("datasourceType");
+        String dsName = attrs.getString("datasourceName");
         ClassLoader classLoader = ModelScannerRegistrar.class.getClassLoader();
         for (String className : classNames) {
             Class modelClass = ClassUtils.forName(className, classLoader);
-            Models.registerModel(modelClass, superClass, modelConfig);
+            Models.registerModel(modelClass, superClass, dsType, dsName);
         }
     }
 
@@ -78,14 +79,6 @@ public class ModelScannerRegistrar implements ImportBeanDefinitionRegistrar {
         return StringUtils.tokenizeToStringArray(
                 StringUtils.collectionToCommaDelimitedString(result),
                 ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-    }
-
-    private static ModelConfiguration modelConfig(AnnotationAttributes attrs) {
-        return new ModelConfiguration(
-                attrs.getEnum("datasourceType"),
-                attrs.getString("datasourceName"),
-                attrs.getEnum("tableNameStrategy"),
-                attrs.getEnum("columnNameStrategy"));
     }
 
     static class ClassPathModelScanner extends ClassPathScanningCandidateComponentProvider {

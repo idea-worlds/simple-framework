@@ -2,7 +2,6 @@ package dev.simpleframework.crud.info.clazz;
 
 import dev.simpleframework.crud.Models;
 import dev.simpleframework.crud.annotation.Column;
-import dev.simpleframework.crud.core.ModelNameStrategy;
 import dev.simpleframework.crud.info.AbstractModelField;
 import dev.simpleframework.crud.strategy.DataFillStrategy;
 import dev.simpleframework.util.Classes;
@@ -20,7 +19,7 @@ public class ClassModelField<T> extends AbstractModelField<T> {
     private final Class<T> modelClass;
     private final Field field;
 
-    ClassModelField(Class<T> modelClass, Field field, ModelNameStrategy nameType) {
+    ClassModelField(Class<T> modelClass, Field field) {
         this.modelClass = modelClass;
         this.field = field;
         field.setAccessible(true);
@@ -38,7 +37,7 @@ public class ClassModelField<T> extends AbstractModelField<T> {
             selectable = crudColumn.selectable();
         }
         if (Strings.isBlank(columnName)) {
-            columnName = nameType.trans(fieldName);
+            columnName = Strings.camelToUnderline(fieldName).toUpperCase();
         }
         Class<?> fieldType = field.getType();
         Class<?> fieldComponentType = null;

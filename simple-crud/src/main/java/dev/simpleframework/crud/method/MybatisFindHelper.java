@@ -24,7 +24,7 @@ import static org.apache.ibatis.mapping.SqlCommandType.SELECT;
 final class MybatisFindHelper {
 
     static <T, R extends T> R findById(ModelInfo<?> info, Object id) {
-        return MybatisHelper.exec(info.config(), sesssion -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), sesssion -> {
             String msId = MybatisHelper.mappedStatement(info, sesssion, "findById",
                     SELECT, info.modelClass(), FIND_BY_ID);
             Map<String, Object> param = new HashMap<>(3);
@@ -34,7 +34,7 @@ final class MybatisFindHelper {
     }
 
     static <T, R extends T> R findByIdDynamic(ModelInfo<?> info, Object id, QueryFields queryFields) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "findByIdWithFields",
                     SELECT, info.modelClass(), FIND_BY_ID_WITH_FIELDS);
             Map<String, Object> param = new HashMap<>(3);
@@ -45,7 +45,7 @@ final class MybatisFindHelper {
     }
 
     static <T> long countByConditions(ModelInfo<?> info, T model) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "countByStaticConditions",
                     SELECT, Long.class, COUNT_BY_CONS);
             Map<String, Object> param = new HashMap<>(6);
@@ -56,7 +56,7 @@ final class MybatisFindHelper {
     }
 
     static <T> long countByConditionsDynamic(ModelInfo<?> info, T model, QueryConditions conditions) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "countByDynamicConditions",
                     SELECT, Long.class, COUNT_BY_CONS_DYNAMIC);
             Map<String, Object> param = new HashMap<>(6);
@@ -69,7 +69,7 @@ final class MybatisFindHelper {
     }
 
     static <T, R extends T> List<R> listByIds(ModelInfo<?> info, Collection<?> ids) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "listByIds",
                     SELECT, info.modelClass(), LIST_BY_IDS);
             Map<String, Object> param = new HashMap<>(3);
@@ -79,7 +79,7 @@ final class MybatisFindHelper {
     }
 
     static <T, R extends T> List<R> listByIdsDynamic(ModelInfo<?> info, Collection<?> ids, QueryFields queryFields) {
-        return MybatisHelper.exec(info.config(), sqlSession -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), sqlSession -> {
             String msId = MybatisHelper.mappedStatement(info, sqlSession, "listByIdsWithFields",
                     SELECT, info.modelClass(), LIST_BY_IDS_WITH_FIELDS);
             Map<String, Object> param = new HashMap<>(3);
@@ -90,7 +90,7 @@ final class MybatisFindHelper {
     }
 
     static <T, R extends T> List<R> listByConditions(ModelInfo<?> info, T model) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "listByStaticConditions",
                     SELECT, info.modelClass(), LIST_BY_CONS);
             Map<String, Object> param = new HashMap<>(6);
@@ -100,7 +100,7 @@ final class MybatisFindHelper {
     }
 
     static <T, R extends T> List<R> listByConditionsDynamic(ModelInfo<?> info, T model, QueryConfig queryConfig) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "listByDynamicConditions",
                     SELECT, info.modelClass(), LIST_BY_CONS_DYNAMIC);
             Map<String, Object> param = new HashMap<>(6);

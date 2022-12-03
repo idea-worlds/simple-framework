@@ -16,7 +16,7 @@ public final class MethodUpdateHelper {
         info.validIdExist();
         fillValue(info, model);
 
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisUpdateHelper.updateById(info, model);
         }
@@ -28,7 +28,7 @@ public final class MethodUpdateHelper {
         ModelInfo<T> info = Models.info(model);
         fillValue(info, model);
 
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisUpdateHelper.updateByConditions(info, model, combinedConditions);
         }

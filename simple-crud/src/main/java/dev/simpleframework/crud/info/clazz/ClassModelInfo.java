@@ -3,8 +3,7 @@ package dev.simpleframework.crud.info.clazz;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.annotation.Table;
-import dev.simpleframework.crud.core.ModelConfiguration;
-import dev.simpleframework.crud.core.ModelNameStrategy;
+import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.info.AbstractModelInfo;
 import dev.simpleframework.util.Classes;
 import dev.simpleframework.util.Strings;
@@ -25,9 +24,9 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
      */
     private static final String DEFAULT_ID_FIELD = "id";
 
-    public ClassModelInfo(Class<T> modelClass, ModelConfiguration modelConfig) {
-        super(modelClass, modelConfig, obtainModelName(modelClass, modelConfig.tableNameStrategy()));
-        List<ModelField<T>> modelFields = obtainFields(modelClass, modelConfig.columnNameStrategy());
+    public ClassModelInfo(Class<T> modelClass, DatasourceType dsType, String dsName) {
+        super(modelClass, obtainModelName(modelClass), dsType, dsName);
+        List<ModelField<T>> modelFields = obtainFields(modelClass);
         super.addFields(modelFields);
         super.setId(obtainModelIdFieldName(modelFields), null);
     }
@@ -40,7 +39,7 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
      *
      * @see dev.simpleframework.crud.annotation.Table
      */
-    private static <M> String obtainModelName(Class<M> clazz, ModelNameStrategy nameType) {
+    private static <M> String obtainModelName(Class<M> clazz) {
         BiFunction<String, String, String> nameTrans = (modelName, definedName) -> {
             if (Strings.hasText(definedName)) {
                 modelName = definedName;
@@ -54,7 +53,7 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
             return modelName;
         };
 
-        String modelName = nameType.trans(clazz.getSimpleName());
+        String modelName = Strings.camelToUnderline(clazz.getSimpleName()).toUpperCase();
         Table crudTable = clazz.getAnnotation(Table.class);
         if (crudTable != null) {
             modelName = nameTrans.apply(modelName, crudTable.name());
@@ -66,7 +65,7 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
     /**
      * 获取类的字段列表
      */
-    private static <M> List<ModelField<M>> obtainFields(Class<M> modelClass, ModelNameStrategy nameType) {
+    private static <M> List<ModelField<M>> obtainFields(Class<M> modelClass) {
         Predicate<Field> fieldFilter = field -> {
             int modifiers = field.getModifiers();
             // 过滤掉静态字段
@@ -77,7 +76,7 @@ public class ClassModelInfo<T> extends AbstractModelInfo<T> {
         };
         return Classes.getFields(modelClass, fieldFilter)
                 .stream()
-                .map(field -> new ClassModelField<>(modelClass, field, nameType))
+                .map(field -> new ClassModelField<>(modelClass, field))
                 .collect(Collectors.toList());
     }
 

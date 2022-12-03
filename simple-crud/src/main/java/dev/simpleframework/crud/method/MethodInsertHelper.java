@@ -21,7 +21,7 @@ public final class MethodInsertHelper {
         setIdValueIfAbsent(info, model);
         fillValue(info, model);
 
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisInsertHelper.insert(info, model);
         }
@@ -38,7 +38,7 @@ public final class MethodInsertHelper {
             fillValue(info, model);
         }
 
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisInsertHelper.insertBatch(info, models);
         }

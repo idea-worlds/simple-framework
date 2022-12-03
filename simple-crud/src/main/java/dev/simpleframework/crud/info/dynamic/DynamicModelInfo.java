@@ -3,7 +3,6 @@ package dev.simpleframework.crud.info.dynamic;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.core.ModelConfiguration;
 import dev.simpleframework.crud.info.AbstractModelInfo;
 import dev.simpleframework.util.Strings;
 
@@ -22,8 +21,7 @@ public class DynamicModelInfo extends AbstractModelInfo<Map<String, Object>> {
     public DynamicModelInfo(String modelName, DatasourceType datasourceType, String datasourceName) {
         super(
                 (Class<Map<String, Object>>) (Object) Map.class,
-                new ModelConfiguration(datasourceType, datasourceName),
-                modelName
+                modelName, datasourceType, datasourceName
         );
     }
 

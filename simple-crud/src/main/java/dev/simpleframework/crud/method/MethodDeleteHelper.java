@@ -17,7 +17,7 @@ public final class MethodDeleteHelper {
             return false;
         }
         ModelInfo<?> info = Models.info(model).validIdExist();
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
 
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisDeleteHelper.deleteById(info, id);
@@ -30,7 +30,7 @@ public final class MethodDeleteHelper {
             return false;
         }
         ModelInfo<?> info = Models.info(model).validIdExist();
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
 
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisDeleteHelper.deleteByIds(info, ids);
@@ -42,7 +42,7 @@ public final class MethodDeleteHelper {
         boolean dynamic = conditions != null && conditions.length > 0;
         QueryConditions combinedConditions = QueryConditions.combineConditions(conditions);
         ModelInfo<?> info = Models.info(model);
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
 
         if (datasourceType == DatasourceType.Mybatis) {
             return dynamic ?

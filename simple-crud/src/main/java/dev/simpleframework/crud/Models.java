@@ -1,7 +1,6 @@
 package dev.simpleframework.crud;
 
 import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.core.ModelConfiguration;
 import dev.simpleframework.crud.exception.DatasourceNotRegisteredException;
 import dev.simpleframework.crud.exception.FieldDefinitionException;
 import dev.simpleframework.crud.exception.ModelNotRegisteredException;
@@ -86,12 +85,13 @@ public final class Models {
      * 若 grandparent 成功，则 parent 和 child 不再注册
      * 若 parent 成功，则 child 不再注册
      *
-     * @param modelClass  要注册的模型类
-     * @param superClass  父类
-     * @param modelConfig 模型配置
+     * @param modelClass 要注册的模型类
+     * @param superClass 父类
+     * @param dsType     数据源类型
+     * @param dsName     数据源名称
      * @return 注册成功的模型类
      */
-    public static Class<?> registerModel(Class<?> modelClass, Class<?> superClass, ModelConfiguration modelConfig) {
+    public static Class<?> registerModel(Class<?> modelClass, Class<?> superClass, DatasourceType dsType, String dsName) {
         modelClass = Classes.getTargetClassIfProxy(modelClass);
         if (modelClass == null || modelClass == Object.class || modelClass == superClass) {
             return null;
@@ -99,7 +99,7 @@ public final class Models {
         if (INFOS.containsKey(modelClass)) {
             return modelClass;
         }
-        Class<?> registered = registerModel(modelClass.getSuperclass(), superClass, modelConfig);
+        Class<?> registered = registerModel(modelClass.getSuperclass(), superClass, dsType, dsName);
         if (registered != null) {
             return registered;
         }
@@ -112,7 +112,7 @@ public final class Models {
                 || modelClass.getName().startsWith("java")) {
             return null;
         }
-        ModelInfo<?> modelInfo = new ClassModelInfo<>(modelClass, modelConfig);
+        ModelInfo<?> modelInfo = new ClassModelInfo<>(modelClass, dsType, dsName);
         if (modelInfo.getAllFields().isEmpty()) {
             throw new FieldDefinitionException(modelClass.toString(), "fields can not be empty");
         }

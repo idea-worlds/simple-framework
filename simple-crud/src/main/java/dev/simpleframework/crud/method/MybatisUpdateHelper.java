@@ -22,7 +22,7 @@ import static org.apache.ibatis.mapping.SqlCommandType.UPDATE;
 final class MybatisUpdateHelper {
 
     static <T> boolean updateById(ModelInfo<?> info, T model) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "updateById",
                     UPDATE, Integer.class, UPDATE_BY_ID);
             return session.update(msId, model) == 1;
@@ -30,7 +30,7 @@ final class MybatisUpdateHelper {
     }
 
     static <T> int updateByConditions(ModelInfo<?> info, T model, QueryConditions conditions) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "updateByConditions",
                     UPDATE, Integer.class, UPDATE_BY_CONS);
             Map<String, Object> param = new HashMap<>(6);

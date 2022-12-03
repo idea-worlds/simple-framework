@@ -6,7 +6,6 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.Models;
 import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.core.ModelConfiguration;
 import dev.simpleframework.crud.core.Page;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
@@ -48,10 +47,7 @@ public final class MybatisHelper {
         }
     }
 
-    public static <R> R exec(ModelConfiguration config, Function<SqlSession, R> function) {
-        String datasourceName = config.datasourceName();
-        DatasourceType datasourceType = config.datasourceType();
-
+    public static <R> R exec(DatasourceType datasourceType, String datasourceName, Function<SqlSession, R> function) {
         DatasourceProvider<SqlSession> provider = Models.provider(datasourceType);
         SqlSession session = provider.get(datasourceName);
         try {

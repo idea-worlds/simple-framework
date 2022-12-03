@@ -3,7 +3,6 @@ package dev.simpleframework.crud.spring;
 import dev.simpleframework.crud.BaseModel;
 import dev.simpleframework.crud.DatasourceProvider;
 import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.core.ModelNameStrategy;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -47,7 +46,6 @@ public @interface ModelScan {
      */
     Class<?> superClass() default BaseModel.class;
 
-
     /**
      * 模型类型
      * 用于 ${@link DatasourceProvider} 获取数据源
@@ -59,15 +57,5 @@ public @interface ModelScan {
      * 用于 ${@link DatasourceProvider} 获取数据源
      */
     String datasourceName() default "";
-
-    /**
-     * 模型表名转换类型
-     */
-    ModelNameStrategy tableNameStrategy() default ModelNameStrategy.UNDERLINE_LOWER_CASE;
-
-    /**
-     * 模型字段名转换类型
-     */
-    ModelNameStrategy columnNameStrategy() default ModelNameStrategy.UNDERLINE_LOWER_CASE;
 
 }

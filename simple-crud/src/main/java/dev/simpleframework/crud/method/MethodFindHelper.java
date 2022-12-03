@@ -23,7 +23,7 @@ public final class MethodFindHelper {
         boolean dynamic = queryFields != null && queryFields.length > 0;
         QueryFields combinedFields = QueryFields.combineFields(queryFields);
         ModelInfo<?> info = Models.info(model).validIdExist();
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
 
         if (datasourceType == DatasourceType.Mybatis) {
             return dynamic ?
@@ -37,7 +37,7 @@ public final class MethodFindHelper {
         boolean dynamic = conditions != null && conditions.length > 0;
         QueryConditions combinedConditions = QueryConditions.combineConditions(conditions);
         ModelInfo<?> info = Models.info(model);
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
 
         if (datasourceType == DatasourceType.Mybatis) {
             return dynamic ?
@@ -54,7 +54,7 @@ public final class MethodFindHelper {
         boolean dynamic = queryFields != null && queryFields.length > 0;
         QueryFields combinedFields = QueryFields.combineFields(queryFields);
         ModelInfo<?> info = Models.info(model).validIdExist();
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
 
         if (datasourceType == DatasourceType.Mybatis) {
             return dynamic ?
@@ -68,7 +68,7 @@ public final class MethodFindHelper {
         QueryConfig queryConfig = QueryConfig.combineConfigs(configs);
         boolean dynamic = configs != null && configs.length > 0;
         ModelInfo<?> info = Models.info(model);
-        DatasourceType datasourceType = info.config().datasourceType();
+        DatasourceType datasourceType = info.datasourceType();
 
         if (datasourceType == DatasourceType.Mybatis) {
             return dynamic ?

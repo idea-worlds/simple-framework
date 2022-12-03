@@ -4,7 +4,6 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.util.MybatisHelper;
-import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
@@ -19,7 +18,7 @@ import static org.apache.ibatis.mapping.SqlCommandType.DELETE;
 final class MybatisDeleteHelper {
 
     static <T> boolean deleteById(ModelInfo<?> info, Object id) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "deleteById",
                     DELETE, Integer.class, DEL_BY_ID);
             Map<String, Object> param = new HashMap<>(3);
@@ -29,7 +28,7 @@ final class MybatisDeleteHelper {
     }
 
     static <T> boolean deleteByIds(ModelInfo<?> info, Collection<?> ids) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "deleteByIds",
                     DELETE, Integer.class, DEL_BY_IDS);
             Map<String, Object> param = new HashMap<>(3);
@@ -39,7 +38,7 @@ final class MybatisDeleteHelper {
     }
 
     static <T> int deleteByConditions(ModelInfo<?> info, T model) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "deleteByStaticConditions",
                     DELETE, Integer.class, DEL_BY_CONS);
             Map<String, Object> param = new HashMap<>(3);
@@ -49,7 +48,7 @@ final class MybatisDeleteHelper {
     }
 
     static <T> int deleteByConditionsDynamic(ModelInfo<?> info, T model, QueryConditions conditions) {
-        return MybatisHelper.exec(info.config(), session -> {
+        return MybatisHelper.exec(info.datasourceType(), info.datasourceName(), session -> {
             String msId = MybatisHelper.mappedStatement(info, session, "deleteByDynamicConditions",
                     DELETE, Integer.class, DEL_BY_CONS_DYNAMIC);
             Map<String, Object> param = new HashMap<>(3);

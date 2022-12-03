@@ -1,6 +1,6 @@
 package dev.simpleframework.crud;
 
-import dev.simpleframework.crud.core.ModelConfiguration;
+import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.exception.FieldDefinitionException;
 
 import java.util.List;
@@ -21,18 +21,25 @@ public interface ModelInfo<T> {
     Class<T> modelClass();
 
     /**
-     * 模型配置
-     *
-     * @return 当前模型信息注册时的配置
-     */
-    ModelConfiguration config();
-
-    /**
      * 模型名
      *
      * @return 模型名/表名
      */
     String name();
+
+    /**
+     * 数据源类型
+     *
+     * @return 数据源类型
+     */
+    DatasourceType datasourceType();
+
+    /**
+     * 数据源名称
+     *
+     * @return 数据源名称
+     */
+    String datasourceName();
 
     /**
      * 模型 id 字段
