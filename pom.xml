@@ -38,9 +38,7 @@
         <revision>0.1-SNAPSHOT</revision>
         <spring-boot.version>3.0.0</spring-boot.version>
 
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
-        <project.build.encoding>UTF-8</project.build.encoding>
+        <project.build.javaVersion>17</project.build.javaVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.testOutputDirectory>${basedir}/misc/test_out/</project.build.testOutputDirectory>
     </properties>
@@ -139,8 +137,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <source>${project.build.javaVersion}</source>
+                    <target>${project.build.javaVersion}</target>
                     <compilerArgs>
                         <arg>-Xpkginfo:always</arg>
                     </compilerArgs>
