@@ -1,7 +1,7 @@
 package dev.simpleframework.crud;
 
-import dev.simpleframework.crud.exception.FieldDefinitionException;
-import dev.simpleframework.crud.exception.ModelNotRegisteredException;
+import dev.simpleframework.crud.exception.ModelExecuteException;
+import dev.simpleframework.crud.exception.ModelRegisterException;
 import dev.simpleframework.crud.info.dynamic.DynamicModelInfo;
 
 import java.util.Map;
@@ -26,7 +26,7 @@ public class DynamicModel implements BaseModel<Map<String, Object>> {
             return;
         }
         if (info.getAllFields().isEmpty()) {
-            throw new FieldDefinitionException(info.name(), "fields can not be empty");
+            throw new ModelRegisterException(info.name(), "Fields can not be empty");
         }
         INFOS.put(info.name(), info);
     }
@@ -75,7 +75,7 @@ public class DynamicModel implements BaseModel<Map<String, Object>> {
         if (this.info == null) {
             this.info = INFOS.get(this.modelName);
             if (this.info == null) {
-                throw new ModelNotRegisteredException(this.modelName);
+                throw new ModelExecuteException("Model is not registered: " + this.modelName);
             }
         }
         return this.info;

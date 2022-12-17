@@ -4,18 +4,13 @@ import lombok.SneakyThrows;
 
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * 反射工具类
@@ -38,32 +33,27 @@ public final class Classes {
      */
     @SneakyThrows
     public static <T> T newInstance(Class<T> clazz) {
-        Constructor<T> constructor = getConstructor(clazz);
-        return constructor.newInstance();
-    }
-
-    /**
-     * 获取空构造函数
-     *
-     * @param clazz 要查询的类
-     * @param <T>   要查询的类
-     * @return 构造函数
-     */
-    public static <T> Constructor<T> getConstructor(Class<T> clazz) {
-        return Optional.ofNullable(CONSTRUCTORS.get(clazz))
-                .map(WeakReference::get)
-                .orElseGet(() -> {
-                    Constructor<T> c = null;
-                    try {
-                        c = clazz.getDeclaredConstructor();
-                    } catch (Exception ignore) {
-                    }
-                    if (c != null) {
-                        c.setAccessible(true);
-                        CONSTRUCTORS.put(clazz, new WeakReference<>(c));
-                    }
-                    return c;
-                });
+        if (clazz.isInterface()) {
+            throw new IllegalArgumentException("Failed to instantiate [" + clazz.getName() + "]:" +
+                    " Specified class is an interface");
+        }
+        Constructor<T> ctor = Optional.ofNullable(CONSTRUCTORS.get(clazz)).map(WeakReference::get).orElse(null);
+        if (ctor == null) {
+            try {
+                ctor = clazz.getDeclaredConstructor();
+            } catch (NoSuchMethodException e) {
+                throw new IllegalArgumentException("Failed to instantiate [" + clazz.getName() + "]:" +
+                        " No default constructor found", e);
+            } catch (LinkageError e) {
+                throw new IllegalArgumentException("Failed to instantiate [" + clazz.getName() + "]:" +
+                        " Unresolvable class definition", e);
+            }
+            if ((!Modifier.isPublic(ctor.getModifiers()) || !Modifier.isPublic(ctor.getDeclaringClass().getModifiers())) && !ctor.isAccessible()) {
+                ctor.setAccessible(true);
+            }
+            CONSTRUCTORS.put(clazz, new WeakReference<>(ctor));
+        }
+        return ctor.newInstance();
     }
 
     /**
@@ -83,7 +73,7 @@ public final class Classes {
             currentClass = currentClass.getSuperclass();
         }
         Map<String, Field> fields = Stream.of(clazz.getDeclaredFields())
-                .collect(toMap(Field::getName, f -> f, (o1, o2) -> o1, LinkedHashMap::new));
+                .collect(Collectors.toMap(Field::getName, f -> f, (o1, o2) -> o1, LinkedHashMap::new));
         for (Field field : superFields) {
             String fieldName = field.getName();
             if (fields.containsKey(fieldName)) {
@@ -93,7 +83,7 @@ public final class Classes {
         }
         return fields.values().stream()
                 .filter(fieldFilter)
-                .collect(toList());
+                .collect(Collectors.toList());
     }
 
     public static List<Field> getFieldsByAnnotations(Class<?> clazz, Class<? extends Annotation>... annotations) {
@@ -161,26 +151,46 @@ public final class Classes {
     }
 
     /**
-     * 递归获取父类的信息
+     * 递归获取自身或父类的信息
      *
-     * @param clazz 要查询的类
-     * @param func  获取信息的方法
-     * @param <T>   方法返回值类型
-     * @return func 结果
+     * @param clazz  要查询的类
+     * @param action 获取信息的方法
+     * @param <T>    方法返回值类型
+     * @return action 结果
      */
-    public static <T> T getInfoFromSuperclass(Class<?> clazz, Function<Class<?>, T> func) {
+    public static <T> T findInfo(Class<?> clazz, Function<Class<?>, T> action) {
         if (clazz == null || clazz == Object.class) {
             return null;
         }
-        T result = null;
-        Class<?> supperClass = clazz.getSuperclass();
-        while (result == null) {
-            if (supperClass == null || supperClass == Object.class) {
-                break;
-            }
-            result = func.apply(supperClass);
-            supperClass = supperClass.getSuperclass();
+        T result;
+        do {
+            result = action.apply(clazz);
+            clazz = clazz.getSuperclass();
+        } while (result == null && clazz != null && clazz != Object.class);
+        return result;
+    }
+
+    /**
+     * 递归获取自身或父类或接口的注解
+     *
+     * @param clazz          要查询的类
+     * @param annotationType 注解类
+     * @return 注解集合
+     */
+    public static <T extends Annotation> Map<Class<?>, List<T>> findAnnotations(Class<?> clazz, Class<T> annotationType) {
+        if (annotationType == null || clazz == null || clazz == Object.class) {
+            return Collections.emptyMap();
         }
+        Map<Class<?>, List<T>> result = new HashMap<>();
+        T[] annotations = clazz.getDeclaredAnnotationsByType(annotationType);
+        if (annotations.length > 0) {
+            result.put(clazz, Arrays.asList(annotations));
+        }
+        for (Class<?> interfaceType : clazz.getInterfaces()) {
+            result.putAll(findAnnotations(interfaceType, annotationType));
+        }
+        Class<?> superclass = clazz.getSuperclass();
+        result.putAll(findAnnotations(superclass, annotationType));
         return result;
     }
 

@@ -1,8 +1,12 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
+import dev.simpleframework.crud.method.definition.DeleteByIdDefinition;
+
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(DeleteByIdDefinition.class)
 public interface DeleteById<T> {
 
     /**
@@ -12,7 +16,7 @@ public interface DeleteById<T> {
      * @return 是否操作成功
      */
     default boolean deleteById(Object id) {
-        return MethodDeleteHelper.deleteById(this, id);
+        return DeleteByIdDefinition.exec(this, id);
     }
 
 }

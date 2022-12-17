@@ -1,10 +1,14 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
+import dev.simpleframework.crud.method.definition.InsertBatchDefinition;
+
 import java.util.List;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(InsertBatchDefinition.class)
 public interface InsertBatch<T> {
 
     /**
@@ -13,8 +17,8 @@ public interface InsertBatch<T> {
      * @param models 要新增的模型列表
      * @return 是否操作成功
      */
-   default boolean insertBatch(List<? extends T> models){
-       return MethodInsertHelper.insertBatch(models);
-   }
+    default boolean insertBatch(List<? extends T> models) {
+        return InsertBatchDefinition.exec(models);
+    }
 
 }

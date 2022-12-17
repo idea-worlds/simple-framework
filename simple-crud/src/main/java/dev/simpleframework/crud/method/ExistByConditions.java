@@ -1,6 +1,7 @@
 package dev.simpleframework.crud.method;
 
 import dev.simpleframework.crud.core.QueryConditions;
+import dev.simpleframework.crud.method.definition.CountByConditionsDefinition;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -14,7 +15,7 @@ public interface ExistByConditions<T> {
      * @return 是否存在记录
      */
     default boolean existByConditions(QueryConditions... conditions) {
-        long total = MethodFindHelper.countByConditions(this, conditions);
+        long total = CountByConditionsDefinition.exec(this, conditions);
         return total > 0;
     }
 

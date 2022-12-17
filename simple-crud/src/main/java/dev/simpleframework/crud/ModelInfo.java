@@ -1,7 +1,7 @@
 package dev.simpleframework.crud;
 
 import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.exception.FieldDefinitionException;
+import dev.simpleframework.crud.exception.ModelExecuteException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,7 +53,7 @@ public interface ModelInfo<T> {
      */
     default ModelInfo<T> validIdExist() {
         if (this.id() == null) {
-            throw new FieldDefinitionException(this.name(), "id field is not defined");
+            throw new ModelExecuteException(this.modelClass(), "Id field is not defined");
         }
         return this;
     }

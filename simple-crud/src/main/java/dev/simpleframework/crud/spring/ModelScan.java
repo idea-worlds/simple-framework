@@ -1,8 +1,8 @@
 package dev.simpleframework.crud.spring;
 
 import dev.simpleframework.crud.BaseModel;
-import dev.simpleframework.crud.DatasourceProvider;
 import dev.simpleframework.crud.core.DatasourceType;
+import dev.simpleframework.crud.helper.DatasourceProvider;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;

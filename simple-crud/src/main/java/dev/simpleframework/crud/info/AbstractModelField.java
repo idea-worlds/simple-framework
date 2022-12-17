@@ -1,10 +1,10 @@
 package dev.simpleframework.crud.info;
 
 import dev.simpleframework.crud.ModelField;
-import dev.simpleframework.crud.Models;
 import dev.simpleframework.crud.annotation.Id;
-import dev.simpleframework.crud.strategy.DataFillStrategy;
-import dev.simpleframework.crud.strategy.DataFillStrategy.FillType;
+import dev.simpleframework.crud.helper.DataFillStrategy;
+import dev.simpleframework.crud.helper.DataFillStrategy.FillType;
+import dev.simpleframework.crud.util.ModelCache;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -136,7 +136,7 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
             type = Id.Type.SNOWFLAKE;
         }
         if (this.fillStrategy == null || this.fillStrategy.support() != Id.class) {
-            this.fillStrategy = Models.fillStrategy(Id.class);
+            this.fillStrategy = ModelCache.fillStrategy(Id.class);
             this.fillStrategyParam = type;
         }
     }

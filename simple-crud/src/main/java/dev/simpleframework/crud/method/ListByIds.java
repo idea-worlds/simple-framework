@@ -1,6 +1,8 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.QueryFields;
+import dev.simpleframework.crud.method.definition.ListByIdsDefinition;
 
 import java.util.Collection;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.List;
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(ListByIdsDefinition.class)
 public interface ListByIds<T> {
 
     /**
@@ -17,7 +20,7 @@ public interface ListByIds<T> {
      * @return 列表结果
      */
     default <R extends T> List<R> listByIds(Collection<?> ids, QueryFields... queryFields) {
-        return MethodFindHelper.listByIds(this, ids, queryFields);
+        return ListByIdsDefinition.exec(this, ids, queryFields);
     }
 
 }

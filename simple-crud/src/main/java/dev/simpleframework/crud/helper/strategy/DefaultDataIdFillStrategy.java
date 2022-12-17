@@ -1,15 +1,16 @@
-package dev.simpleframework.crud.strategy;
+package dev.simpleframework.crud.helper.strategy;
 
 import dev.simpleframework.crud.annotation.Id;
+import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.util.Snowflake;
 
 import java.lang.annotation.Annotation;
 import java.util.UUID;
 
-public class DefaultIdFillStrategy implements DataFillStrategy {
+@SuppressWarnings("unchecked")
+public class DefaultDataIdFillStrategy implements DataFillStrategy {
 
     @Override
-    @SuppressWarnings("unchecked")
     public <R> R get(Object param) {
         if (param instanceof Id.Type) {
             Object result = null;

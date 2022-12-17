@@ -1,7 +1,8 @@
 package dev.simpleframework.crud.spring;
 
-import dev.simpleframework.crud.Models;
+import dev.simpleframework.crud.annotation.Table;
 import dev.simpleframework.crud.core.DatasourceType;
+import dev.simpleframework.crud.util.ModelRegistrar;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -10,14 +11,13 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -43,25 +43,19 @@ public class ModelScannerRegistrar implements ImportBeanDefinitionRegistrar {
     @SneakyThrows
     private void register(AnnotationAttributes attrs, String defaultPackage) {
         Class<?> superClass = attrs.getClass("superClass");
-        String[] packages = basePackages(attrs, defaultPackage);
-
-        Set<String> classNames = scanModels(packages, superClass);
         DatasourceType dsType = attrs.getEnum("datasourceType");
         String dsName = attrs.getString("datasourceName");
-        ClassLoader classLoader = ModelScannerRegistrar.class.getClassLoader();
-        for (String className : classNames) {
-            Class modelClass = ClassUtils.forName(className, classLoader);
-            Models.registerModel(modelClass, superClass, dsType, dsName);
-        }
-    }
 
-    private static Set<String> scanModels(String[] packages, Class<?> superClass) {
-        Set<BeanDefinition> beanNames = new HashSet<>();
-        ClassPathModelScanner scanner = new ClassPathModelScanner(superClass);
-        for (String p : packages) {
-            beanNames.addAll(scanner.findCandidateComponents(p));
+        ModelRegistrar modelRegistrar = ModelRegistrar.newRegistrar(dsType, dsName);
+        ClassPathModelScanner modelScanner = new ClassPathModelScanner(superClass);
+        ClassLoader classLoader = ModelScannerRegistrar.class.getClassLoader();
+        for (String p : basePackages(attrs, defaultPackage)) {
+            for (BeanDefinition bean : modelScanner.findCandidateComponents(p)) {
+                String className = bean.getBeanClassName();
+                Class<?> modelClass = ClassUtils.forName(className, classLoader);
+                modelRegistrar.add(modelClass);
+            }
         }
-        return beanNames.stream().map(BeanDefinition::getBeanClassName).collect(Collectors.toSet());
     }
 
     private static String[] basePackages(AnnotationAttributes attrs, String defaultPackage) {
@@ -85,6 +79,7 @@ public class ModelScannerRegistrar implements ImportBeanDefinitionRegistrar {
         ClassPathModelScanner(Class superClass) {
             super(false);
             super.addIncludeFilter(new AssignableTypeFilter(superClass));
+            super.addIncludeFilter(new AnnotationTypeFilter(Table.class));
         }
     }
 

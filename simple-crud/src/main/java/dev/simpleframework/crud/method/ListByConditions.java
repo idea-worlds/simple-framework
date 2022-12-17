@@ -1,12 +1,15 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.QueryConfig;
+import dev.simpleframework.crud.method.definition.ListByConditionsDefinition;
 
 import java.util.List;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(ListByConditionsDefinition.class)
 public interface ListByConditions<T> {
 
     /**
@@ -16,7 +19,7 @@ public interface ListByConditions<T> {
      * @return 列表结果
      */
     default <R extends T> List<R> listByConditions(QueryConfig... configs) {
-        return MethodFindHelper.listByConditions(this, configs);
+        return ListByConditionsDefinition.exec(this, configs);
     }
 
 }

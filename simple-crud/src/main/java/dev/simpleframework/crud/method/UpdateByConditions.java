@@ -1,10 +1,13 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.QueryConditions;
+import dev.simpleframework.crud.method.definition.UpdateByConditionsDefinition;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(UpdateByConditionsDefinition.class)
 public interface UpdateByConditions<T> {
 
     /**
@@ -15,7 +18,7 @@ public interface UpdateByConditions<T> {
      * @return 修改记录数
      */
     default int updateByConditions(QueryConditions... conditions) {
-        return MethodUpdateHelper.updateByConditions(this, conditions);
+        return UpdateByConditionsDefinition.exec(this, conditions);
     }
 
 }

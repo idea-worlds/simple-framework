@@ -1,9 +1,9 @@
 package dev.simpleframework.crud.core;
 
 import dev.simpleframework.crud.annotation.Condition;
-import dev.simpleframework.crud.exception.FieldDefinitionException;
-import dev.simpleframework.util.Functions;
+import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.util.Classes;
+import dev.simpleframework.util.Functions;
 import dev.simpleframework.util.SerializedFunction;
 import dev.simpleframework.util.Strings;
 import lombok.Data;
@@ -196,7 +196,7 @@ public class QueryConditions {
         List<Field> fields = CONDITION_CACHES.computeIfAbsent(annotationClass,
                 c -> Classes.getFieldsByAnnotations(annotationClass, Condition.class, dev.simpleframework.crud.annotation.Conditions.class));
         if (fields.isEmpty()) {
-            throw new FieldDefinitionException(annotationClass.toString(), "can not found any field declared by @Condition");
+            throw new ModelExecuteException("Can not found any field declared by @Condition from " + annotationClass.getName());
         }
         Map<String, List<ConditionInfo>> result = new LinkedHashMap<>();
         for (Field field : fields) {

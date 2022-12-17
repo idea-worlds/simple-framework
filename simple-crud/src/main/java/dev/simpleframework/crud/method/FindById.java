@@ -1,10 +1,13 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.QueryFields;
+import dev.simpleframework.crud.method.definition.FindByIdDefinition;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(FindByIdDefinition.class)
 public interface FindById<T> {
 
     /**
@@ -15,7 +18,7 @@ public interface FindById<T> {
      */
     @SuppressWarnings("unchecked")
     default <R extends T> R findById(Object id, QueryFields... queryFields) {
-        return MethodFindHelper.findById(this, id, queryFields);
+        return FindByIdDefinition.exec(this, id, queryFields);
     }
 
 }

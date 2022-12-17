@@ -1,11 +1,14 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.Page;
 import dev.simpleframework.crud.core.QueryConfig;
+import dev.simpleframework.crud.method.definition.PageByConditionsDefinition;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(PageByConditionsDefinition.class)
 public interface PageByConditions<T> {
 
     /**
@@ -17,7 +20,7 @@ public interface PageByConditions<T> {
      * @return 分页结果
      */
     default <R extends T> Page<R> pageByConditions(int pageNum, int pageSize, QueryConfig... configs) {
-        return MethodPageHelper.pageByConditions(this, pageNum, pageSize, configs);
+        return PageByConditionsDefinition.exec(this, pageNum, pageSize, configs);
     }
 
 }

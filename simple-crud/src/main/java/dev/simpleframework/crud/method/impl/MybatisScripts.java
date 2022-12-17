@@ -1,10 +1,10 @@
-package dev.simpleframework.crud.method;
+package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.core.ConditionType;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.core.QuerySorters;
-import dev.simpleframework.crud.exception.SimpleCrudException;
+import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
 
 import java.util.ArrayList;
@@ -204,7 +204,7 @@ public final class MybatisScripts {
                         script = String.format("%s <![CDATA[ && ]]> #{%s}", column, fieldParam);
                         break;
                     default:
-                        throw new SimpleCrudException("Not support conditionType [" + condition.getType() + "]");
+                        throw new ModelExecuteException("Not support conditionType [" + condition.getType() + "]");
                 }
                 script = " AND " + script + " ";
                 if (field.fieldType().isPrimitive()) {

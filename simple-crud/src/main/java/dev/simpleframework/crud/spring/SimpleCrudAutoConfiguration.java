@@ -1,12 +1,13 @@
 package dev.simpleframework.crud.spring;
 
-import dev.simpleframework.crud.DatasourceProvider;
-import dev.simpleframework.crud.Models;
-import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.strategy.DataFillStrategy;
-import dev.simpleframework.crud.strategy.DefaultIdFillStrategy;
+import dev.simpleframework.crud.helper.DataFillStrategy;
+import dev.simpleframework.crud.helper.DatasourceProvider;
+import dev.simpleframework.crud.helper.provider.DefaultSpringMybatisProvider;
+import dev.simpleframework.crud.helper.strategy.DefaultDataIdFillStrategy;
+import dev.simpleframework.crud.helper.strategy.DefaultDataOperateDateFillStrategy;
+import dev.simpleframework.crud.util.ModelCache;
+import dev.simpleframework.crud.util.ModelRegistrar;
 import dev.simpleframework.util.SimpleSpringUtils;
-import dev.simpleframework.util.Strings;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
@@ -21,35 +22,19 @@ public class SimpleCrudAutoConfiguration implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         this.setDatasourceProvider();
         this.setDataFillStrategy();
+        ModelRegistrar.register();
     }
 
     private void setDatasourceProvider() {
-        DatasourceProvider<SqlSession> defaultMybatisProvider = new DatasourceProvider<SqlSession>() {
-            @Override
-            public SqlSession get(String name) {
-                return Strings.hasText(name) ?
-                        SimpleSpringUtils.getBean(name, SqlSession.class)
-                        :
-                        SimpleSpringUtils.getBean(SqlSession.class);
-            }
-
-            @Override
-            public DatasourceType support() {
-                return DatasourceType.Mybatis;
-            }
-
-            @Override
-            public boolean closeable(String name) {
-                return false;
-            }
-        };
-        Models.registerProvider(defaultMybatisProvider);
-        SimpleSpringUtils.getBeans(DatasourceProvider.class).forEach(Models::registerProvider);
+        DatasourceProvider<SqlSession> defaultMybatisProvider = new DefaultSpringMybatisProvider();
+        ModelCache.registerProvider(defaultMybatisProvider);
+        SimpleSpringUtils.getBeans(DatasourceProvider.class).forEach(ModelCache::registerProvider);
     }
 
     private void setDataFillStrategy() {
-        Models.registerFillStrategy(new DefaultIdFillStrategy());
-        SimpleSpringUtils.getBeans(DataFillStrategy.class).forEach(Models::registerFillStrategy);
+        ModelCache.registerFillStrategy(new DefaultDataIdFillStrategy());
+        ModelCache.registerFillStrategy(new DefaultDataOperateDateFillStrategy());
+        SimpleSpringUtils.getBeans(DataFillStrategy.class).forEach(ModelCache::registerFillStrategy);
     }
 
 }

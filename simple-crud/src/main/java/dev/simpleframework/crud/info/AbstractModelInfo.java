@@ -4,7 +4,7 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.exception.FieldDefinitionException;
+import dev.simpleframework.crud.exception.ModelRegisterException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -90,13 +90,14 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
             return;
         }
         if (this.id != null) {
-            throw new FieldDefinitionException(this.name(), "only support one id field");
+            throw new ModelRegisterException(this.name(), "Only support one id field");
         }
         ModelField<T> field = this.fields.get(fieldName);
         if (field == null) {
-            throw new FieldDefinitionException(this.name(), "no field named '" + fieldName + "'");
+            throw new ModelRegisterException(this.name(), "No field named [" + fieldName + "]");
         }
         ((AbstractModelField<T>) field).changeToId(type);
+        this.id = field;
     }
 
     protected Map<String, ModelField<T>> fields() {

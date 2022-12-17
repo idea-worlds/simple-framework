@@ -1,10 +1,13 @@
 package dev.simpleframework.crud.method;
 
+import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.QueryConditions;
+import dev.simpleframework.crud.method.definition.DeleteByConditionsDefinition;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@ModelMethod(DeleteByConditionsDefinition.class)
 public interface DeleteByConditions<T> {
 
     /**
@@ -15,7 +18,7 @@ public interface DeleteByConditions<T> {
      * @return 删除记录数
      */
     default int deleteByConditions(QueryConditions... conditions) {
-        return MethodDeleteHelper.deleteByConditions(this, conditions);
+        return DeleteByConditionsDefinition.exec(this, conditions);
     }
 
 }

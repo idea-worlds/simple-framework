@@ -1,13 +1,13 @@
-package dev.simpleframework.crud.strategy;
+package dev.simpleframework.crud.helper;
 
-import dev.simpleframework.crud.Models;
+import dev.simpleframework.crud.util.ModelCache;
 
 import java.lang.annotation.Annotation;
 
 /**
  * 数据填充策略，新增或修改数据前将自动替换模型字段的值
  * *
- * 需注册到 {@link Models#registerFillStrategy(DataFillStrategy)}
+ * 需注册到 {@link ModelCache#registerFillStrategy(DataFillStrategy)}
  * 在 Spring 项目中带 @Component 的实现类将自动注册，非 Spring 请手动注册
  *
  * @author loyayz (loyayz@foxmail.com)

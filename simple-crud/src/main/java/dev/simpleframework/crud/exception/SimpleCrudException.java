@@ -3,7 +3,7 @@ package dev.simpleframework.crud.exception;
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SimpleCrudException extends RuntimeException {
+public abstract class SimpleCrudException extends RuntimeException {
 
     public SimpleCrudException() {
     }

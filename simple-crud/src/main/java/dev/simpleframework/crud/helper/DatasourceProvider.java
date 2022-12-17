@@ -1,4 +1,4 @@
-package dev.simpleframework.crud;
+package dev.simpleframework.crud.helper;
 
 import dev.simpleframework.crud.core.DatasourceType;
 

@@ -1,9 +1,9 @@
 package dev.simpleframework.crud.info.clazz;
 
-import dev.simpleframework.crud.Models;
 import dev.simpleframework.crud.annotation.Column;
+import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.info.AbstractModelField;
-import dev.simpleframework.crud.strategy.DataFillStrategy;
+import dev.simpleframework.crud.util.ModelCache;
 import dev.simpleframework.util.Classes;
 import dev.simpleframework.util.Strings;
 import lombok.SneakyThrows;
@@ -49,16 +49,19 @@ public class ClassModelField<T> extends AbstractModelField<T> {
         super.setUpdatable(updatable);
         super.setSelectable(selectable);
 
-        DataFillStrategy fillStrategy = null;
-        Object fillStrategyParam = null;
+        DataFillStrategy strategy = null;
+        Object strategyParam = null;
         for (Annotation annotation : this.field.getAnnotations()) {
-            DataFillStrategy temp = Models.fillStrategy(annotation.annotationType());
-            if (fillStrategy == null || fillStrategy.order() >= temp.order()) {
-                fillStrategy = temp;
-                fillStrategyParam = fillStrategy.toParam(annotation);
+            DataFillStrategy _strategy = ModelCache.fillStrategy(annotation.annotationType());
+            if (strategy == null ||
+                    (_strategy != null && strategy.order() >= _strategy.order())) {
+                strategy = _strategy;
+            }
+            if (strategy != null) {
+                strategyParam = strategy.toParam(annotation);
             }
         }
-        super.setFillStrategy(fillStrategy, fillStrategyParam);
+        super.setFillStrategy(strategy, strategyParam);
     }
 
     @SuppressWarnings("unchecked")

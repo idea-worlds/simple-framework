@@ -1,8 +1,8 @@
 package dev.simpleframework.crud.info.dynamic;
 
-import dev.simpleframework.crud.exception.FieldDefinitionException;
+import dev.simpleframework.crud.exception.ModelExecuteException;
+import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.info.AbstractModelField;
-import dev.simpleframework.crud.strategy.DataFillStrategy;
 
 import java.util.Map;
 
@@ -63,8 +63,8 @@ public class DynamicModelField extends AbstractModelField<Map<String, Object>> {
         if (value == null || super.fieldType().isAssignableFrom(value.getClass())) {
             return;
         }
-        String msg = String.format("field [%s] must be [%s]", super.fieldName(), super.fieldType());
-        throw new FieldDefinitionException("dynamic model", msg);
+        String msg = String.format("Type of field [%s] must be [%s]", super.fieldName(), super.fieldType());
+        throw new ModelExecuteException("dynamic model", msg);
     }
 
 }

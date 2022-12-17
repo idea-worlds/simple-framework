@@ -1,12 +1,11 @@
 package dev.simpleframework.crud.util;
 
 import com.github.pagehelper.PageHelper;
-import dev.simpleframework.crud.DatasourceProvider;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
-import dev.simpleframework.crud.Models;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.core.Page;
+import dev.simpleframework.crud.helper.DatasourceProvider;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.keygen.NoKeyGenerator;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -48,7 +46,7 @@ public final class MybatisHelper {
     }
 
     public static <R> R exec(DatasourceType datasourceType, String datasourceName, Function<SqlSession, R> function) {
-        DatasourceProvider<SqlSession> provider = Models.provider(datasourceType);
+        DatasourceProvider<SqlSession> provider = ModelCache.provider(datasourceType);
         SqlSession session = provider.get(datasourceName);
         try {
             return function.apply(session);
@@ -59,64 +57,56 @@ public final class MybatisHelper {
         }
     }
 
-    public static String mappedStatement(ModelInfo<?> info,
-                                         SqlSession sqlSession,
-                                         String methodName,
-                                         SqlCommandType commandType,
-                                         Class<?> resultType,
-                                         BiFunction<ModelInfo<?>, Configuration, SqlSource> sqlSourceProvider) {
-        String msId = String.format("%s.%s.%s", info.methodNamespace(), commandType, methodName);
-        Configuration configuration = sqlSession.getConfiguration();
-        if (configuration.hasStatement(msId, false)) {
-            return msId;
-        }
-        String keyColumn = null, keyFieldName = null;
-        KeyGenerator keyGenerator = NoKeyGenerator.INSTANCE;
-        ModelField<?> modelId = info.id();
-        if (commandType == INSERT && modelId != null && !modelId.insertable()) {
-            keyColumn = modelId.columnName();
-            keyFieldName = modelId.fieldName();
-            keyGenerator = Jdbc3KeyGenerator.INSTANCE;
-        }
-        List<ResultMapping> resultMappings = new ArrayList<>();
-        if (commandType == SELECT && info.modelClass() == resultType) {
-            resultMappings = info.getSelectFields()
-                    .stream()
-                    .map(f -> {
-                        TypeHandler<?> handler = MybatisTypeHandler.typeHandler(f);
-                        return handler == null ? null :
-                                new ResultMapping.Builder(configuration, f.fieldName(), f.columnName(), handler).build();
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        }
-        SqlSource sqlSource = sqlSourceProvider.apply(info, configuration);
-        MappedStatement ms = new MappedStatement.Builder(configuration, msId, sqlSource, commandType)
-                .resultMaps(Collections.singletonList(
-                        new ResultMap.Builder(configuration, msId, resultType, resultMappings).build()
-                ))
-                .keyGenerator(keyGenerator)
-                .keyColumn(keyColumn)
-                .keyProperty(keyFieldName)
-                .build();
-        configuration.addMappedStatement(ms);
-        return msId;
-    }
-
-    public static SqlSource buildSqlSource(ModelInfo<?> info, Configuration config, Supplier<String> script) {
-        if (info.dynamic()) {
-            return buildDynamicSqlSource(config, p -> script.get());
-        } else {
-            return config
-                    .getDefaultScriptingLanguageInstance()
-                    .createSqlSource(config, script.get(), null);
+    public static void addMappedStatement(ModelInfo<?> info,
+                                          String methodId,
+                                          SqlCommandType commandType,
+                                          Class<?> resultType,
+                                          Function<Object, String> sqlProvider) {
+        DatasourceProvider<SqlSession> provider = ModelCache.provider(DatasourceType.Mybatis);
+        SqlSession sqlSession = provider.get(info.datasourceName());
+        try {
+            Configuration configuration = sqlSession.getConfiguration();
+            String keyColumn = null, keyFieldName = null;
+            KeyGenerator keyGenerator = NoKeyGenerator.INSTANCE;
+            ModelField<?> modelId = info.id();
+            if (commandType == INSERT && modelId != null && !modelId.insertable()) {
+                keyColumn = modelId.columnName();
+                keyFieldName = modelId.fieldName();
+                keyGenerator = Jdbc3KeyGenerator.INSTANCE;
+            }
+            List<ResultMapping> resultMappings = new ArrayList<>();
+            if (commandType == SELECT && info.modelClass() == resultType) {
+                resultMappings = info.getSelectFields()
+                        .stream()
+                        .map(f -> {
+                            TypeHandler<?> handler = MybatisTypeHandler.typeHandler(f);
+                            return handler == null ? null :
+                                    new ResultMapping.Builder(configuration, f.fieldName(), f.columnName(), handler).build();
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
+            SqlSource sqlSource = buildSqlSource(configuration, sqlProvider);
+            MappedStatement ms = new MappedStatement.Builder(configuration, methodId, sqlSource, commandType)
+                    .resultMaps(Collections.singletonList(
+                            new ResultMap.Builder(configuration, methodId, resultType, resultMappings).build()
+                    ))
+                    .keyGenerator(keyGenerator)
+                    .keyColumn(keyColumn)
+                    .keyProperty(keyFieldName)
+                    .build();
+            configuration.addMappedStatement(ms);
+        } finally {
+            if (provider.closeable(info.datasourceName())) {
+                sqlSession.close();
+            }
         }
     }
 
-    public static SqlSource buildDynamicSqlSource(Configuration config, Function<Object, String> script) {
+    private static SqlSource buildSqlSource(Configuration config, Function<Object, String> sqlProvider) {
         return param -> config
                 .getDefaultScriptingLanguageInstance()
-                .createSqlSource(config, script.apply(param), null)
+                .createSqlSource(config, sqlProvider.apply(param), null)
                 .getBoundSql(param);
     }
 
