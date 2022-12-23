@@ -1,0 +1,31 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          server-id: ossrh
+          server-username: CI_DEPLOY_USERNAME
+          server-password: CI_DEPLOY_PASSWORD
+          gpg-passphrase: CI_GPG_PASSPHRASE
+          gpg-private-key: ${{ env.CI_GPG_PRIVATE_KEY }}
+        env:
+          CI_GPG_PRIVATE_KEY: ${{ secrets.MVN_GPG_PRIVATE_KEY }}
+      - name: Deploy to Sonatype
+        run: ./mvnw deploy -B -P release -DskipTests -Dlicense.skip=true
+        env:
+          CI_DEPLOY_USERNAME: ${{ secrets.MVN_DEPLOY_USERNAME }}
+          CI_DEPLOY_PASSWORD: ${{ secrets.MVN_DEPLOY_PASSWORD }}
+          CI_GPG_PASSPHRASE: ${{ secrets.MVN_GPG_PASSPHRASE }}

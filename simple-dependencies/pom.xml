@@ -11,6 +11,28 @@
 
     <name>Simple Dependencies</name>
     <description>Simple Dependencies</description>
+    <url>https://github.com/idea-worlds/simple-framework</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>loyayz</name>
+            <email>loyayz@foxmail.com</email>
+            <url>https://github.com/loyayz</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/idea-worlds/simple-framework</url>
+        <connection>scm:git:git://github.com/idea-worlds/simple-framework.git</connection>
+        <developerConnection>scm:git:ssh://github.com:idea-worlds/simple-framework.git</developerConnection>
+    </scm>
 
     <properties>
         <simple-framework.version>0.1-SNAPSHOT</simple-framework.version>
@@ -70,4 +92,14 @@
         </dependencies>
     </dependencyManagement>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 </project>
