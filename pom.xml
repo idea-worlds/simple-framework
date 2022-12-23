@@ -36,7 +36,7 @@
 
     <properties>
         <revision>0.1-SNAPSHOT</revision>
-        <spring-boot.version>3.0.0</spring-boot.version>
+        <spring-boot.version>3.0.1</spring-boot.version>
 
         <project.build.javaVersion>17</project.build.javaVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
