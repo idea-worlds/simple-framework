@@ -2,6 +2,7 @@ package dev.simpleframework.util;
 
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -37,6 +38,8 @@ public final class Jsons {
                             JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
                     // 使用 BigDecimal 序列化浮点数
                     .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+                    // 忽略枚举大小写
+                    .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
                     // 允许未知属性
                     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                     // 允许空对象

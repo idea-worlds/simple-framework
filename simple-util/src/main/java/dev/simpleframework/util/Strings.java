@@ -3,6 +3,7 @@ package dev.simpleframework.util;
 import lombok.SneakyThrows;
 
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * 字符串工具类
@@ -11,6 +12,20 @@ import java.util.Date;
  */
 @SuppressWarnings("all")
 public final class Strings {
+
+    /**
+     * UUID
+     */
+    public static String uuid() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * UUID
+     */
+    public static String uuid32() {
+        return uuid().replace("-", "");
+    }
 
     /**
      * 字符串是否有值

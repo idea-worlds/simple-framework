@@ -12,10 +12,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         java: [17, 19]
-        distribution: ['temurin', 'zulu']
+        distribution: ['temurin']
       fail-fast: false
       max-parallel: 5
-    name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
+    name: Test JDK ${{ matrix.java }}-${{ matrix.distribution }}, ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
