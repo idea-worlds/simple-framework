@@ -14,6 +14,8 @@ import java.util.stream.Stream;
 
 /**
  * 反射工具类
+ *
+ * @author loyayz (loyayz@foxmail.com)
  */
 @SuppressWarnings("all")
 public final class Classes {

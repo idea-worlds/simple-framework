@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 函数工具类
+ *
+ * @author loyayz (loyayz@foxmail.com)
  */
 public final class Functions {
     private static final Map<Class<?>, WeakReference<SerializedLambda>> LAMBDA_CACHE = new ConcurrentHashMap<>();

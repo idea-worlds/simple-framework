@@ -12,6 +12,8 @@ import java.util.Collection;
 
 /**
  * Spring 工具类
+ *
+ * @author loyayz (loyayz@foxmail.com)
  */
 @SuppressWarnings("unchecked")
 @Component
@@ -91,7 +93,7 @@ public class SimpleSpringUtils implements BeanFactoryPostProcessor, ApplicationC
      * @return Bean类型
      */
     public static <T> Collection<T> getBeans(Class<T> clazz) {
-       return getBeanFactory().getBeansOfType(clazz).values();
+        return getBeanFactory().getBeansOfType(clazz).values();
     }
 
     /**

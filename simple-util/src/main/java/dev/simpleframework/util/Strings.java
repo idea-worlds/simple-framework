@@ -6,6 +6,8 @@ import java.util.Date;
 
 /**
  * 字符串工具类
+ *
+ * @author loyayz (loyayz@foxmail.com)
  */
 @SuppressWarnings("all")
 public final class Strings {
@@ -46,14 +48,18 @@ public final class Strings {
      * @return 转换好的字符串
      */
     public static String camelToUnderline(String str) {
+        boolean preIsUnderline = false;
+        boolean currentIsUnderline = false;
         int len = str.length();
         StringBuilder sb = new StringBuilder(len);
         for (int i = 0; i < len; i++) {
             char c = str.charAt(i);
-            if (Character.isUpperCase(c) && i > 0) {
+            currentIsUnderline = '_' == c;
+            if (i > 0 && Character.isUpperCase(c) && !preIsUnderline) {
                 sb.append("_");
             }
             sb.append(Character.toLowerCase(c));
+            preIsUnderline = currentIsUnderline;
         }
         return sb.toString();
     }
@@ -88,6 +94,13 @@ public final class Strings {
         }
         if (Class.class == clazz) {
             return (T) Class.forName(str);
+        }
+        if (Jsons.present()) {
+            try {
+                return Jsons.read(str, clazz);
+            } catch (Exception e) {
+                throw new ClassCastException("Can not cast [" + str + "] to " + clazz);
+            }
         }
         throw new ClassCastException("Can not cast [" + str + "] to " + clazz);
     }
