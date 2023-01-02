@@ -55,7 +55,17 @@ public final class Jsons {
         return !absent;
     }
 
-    public ObjectMapper objectMapper() {
+    public static ObjectMapper objectMapper() {
+        return OBJECT_MAPPER;
+    }
+
+    public static ObjectMapper objectMapper(boolean newInstance) {
+        if (newInstance) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setConfig(OBJECT_MAPPER.getSerializationConfig());
+            objectMapper.setConfig(OBJECT_MAPPER.getDeserializationConfig());
+            return objectMapper;
+        }
         return OBJECT_MAPPER;
     }
 

@@ -5,28 +5,11 @@ import lombok.EqualsAndHashCode;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class PageResponse<T> extends ListResponse<T> {
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 总记录数
-     */
-    private long total;
-    /**
-     * 总页数
-     */
-    private int pages;
-    /**
-     * 页码
-     */
-    private int pageNum;
-    /**
-     * 每页数量
-     */
-    private int pageSize;
+public class PageResponse<T> extends AbstractResponse<PageData<T>> {
 
     public static <R> PageResponse<R> of(int pageNum, int pageSize) {
         return of(pageNum, pageSize, 0, Collections.emptyList());
@@ -38,24 +21,22 @@ public class PageResponse<T> extends ListResponse<T> {
 
     public static <R> PageResponse<R> of(int pageNum, int pageSize, long total, Collection<R> items) {
         PageResponse<R> result = new PageResponse<>();
-        result.setItems(items);
-        result.setPageNum(pageNum);
-        result.setPageSize(pageSize);
-        result.setTotal(total);
-        result.setPages(calcPages(total, pageSize));
+        PageData<R> data = PageData.of(pageNum, pageSize, total, items);
+        result.setData(data);
         return result;
     }
 
-    public static int calcPages(long total, int pageSize) {
-        if (total <= 0 || pageSize <= 0) {
-            return 0;
-        } else {
-            int pages = (int) (total / (long) pageSize);
-            if (total % pageSize != 0) {
-                ++pages;
-            }
-            return pages;
-        }
+    public List<T> getItems() {
+        return super.getData().getItems();
+    }
+
+    public boolean isEmpty() {
+        List<T> items = this.getItems();
+        return items == null || items.isEmpty();
+    }
+
+    public boolean isNotEmpty() {
+        return !isEmpty();
     }
 
 }

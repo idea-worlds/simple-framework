@@ -6,7 +6,10 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * 函数工具类
@@ -54,32 +57,52 @@ public final class Functions {
     }
 
     /**
-     * 异步执行对象集的指定方法
+     * 并行执行对象集的指定方法
      *
      * @return 执行过程产生的异常集合
      */
-    public static <T> List<Throwable> runAsync(Collection<T> objects, Consumer<T> action) {
+    public static <T> List<Throwable> parallelRun(Collection<T> objects, Consumer<T> action) {
+        return parallelRun(objects, action, null);
+    }
+
+    public static <T> List<Throwable> parallelRun(Collection<T> objects, Consumer<T> action, Executor executor) {
+        Function<T, Throwable> function = object -> {
+            try {
+                action.accept(object);
+                return null;
+            } catch (Throwable e) {
+                return e;
+            }
+        };
         try {
-            List<CompletableFuture<Throwable>> threads = objects.stream()
-                    .map(object ->
-                            CompletableFuture.supplyAsync(() -> {
-                                try {
-                                    action.accept(object);
-                                    return null;
-                                } catch (Throwable e) {
-                                    return e;
-                                }
-                            })
-                    )
-                    .toList();
-            return CompletableFuture.allOf(threads.toArray(new CompletableFuture[]{}))
-                    .thenApply(v ->
-                            threads.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList()
-                    )
-                    .get();
+            return parallelRun(objects, function, executor).stream().filter(Objects::nonNull).toList();
         } catch (Throwable e) {
             return Collections.singletonList(e);
         }
+    }
+
+    /**
+     * 并行执行对象集的指定方法
+     *
+     * @return 执行方法的结果集合
+     */
+    public static <T, R> List<R> parallelRun(Collection<T> objects, Function<T, R> action) {
+        return parallelRun(objects, action, null);
+    }
+
+    public static <T, R> List<R> parallelRun(Collection<T> objects, Function<T, R> action, Executor executor) {
+        if (executor == null) {
+            return objects.parallelStream().map(action).toList();
+        }
+        List<CompletableFuture<R>> futures = objects.stream()
+                .map(object -> {
+                    Supplier<R> supplier = () -> action.apply(object);
+                    return CompletableFuture.supplyAsync(supplier, executor);
+                })
+                .toList();
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{}))
+                .thenApply(v -> futures.stream().map(CompletableFuture::join).toList())
+                .join();
     }
 
 }
