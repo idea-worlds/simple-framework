@@ -5,6 +5,10 @@ package dev.simpleframework.core;
  */
 public class CommonResponse<T> extends AbstractResponse<T> {
 
+    public static CommonResponse<String> success() {
+        return new CommonResponse<>();
+    }
+
     public static <R> CommonResponse<R> success(R data) {
         CommonResponse<R> result = new CommonResponse<>();
         result.setData(data);
