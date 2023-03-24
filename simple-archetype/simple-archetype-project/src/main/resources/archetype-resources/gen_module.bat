@@ -7,7 +7,7 @@ set _LCASE=abcdefghijklmnopqrstuvwxyz
 
 set archetype_group=-DarchetypeGroupId=dev.simpleframework
 set archetype_artifact=-DarchetypeArtifactId=simple-archetype-module
-set archetype_version=-DarchetypeVersion=0.1-SNAPSHOT
+set archetype_version=-DarchetypeVersion=0.1
 
 set moduleName=%1
 call :setModuleName

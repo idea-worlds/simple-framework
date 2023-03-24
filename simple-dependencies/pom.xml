@@ -6,7 +6,7 @@
 
     <artifactId>simple-dependencies</artifactId>
     <groupId>dev.simpleframework</groupId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
     <packaging>pom</packaging>
 
     <name>Simple Dependencies</name>
@@ -35,7 +35,7 @@
     </scm>
 
     <properties>
-        <simple-framework.version>0.1-SNAPSHOT</simple-framework.version>
+        <simple-framework.version>0.1</simple-framework.version>
 
         <guava.version>31.1-jre</guava.version>
         <mybatis.version>3.5.13</mybatis.version>
