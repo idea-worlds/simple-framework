@@ -6,7 +6,7 @@
 cd `dirname $0`
 archetype_group="-DarchetypeGroupId=dev.simpleframework"
 archetype_artifact="-DarchetypeArtifactId=simple-archetype-module"
-archetype_version="-DarchetypeVersion=0.1"
+archetype_version="-DarchetypeVersion=0.2-SNAPSHOT"
 
 moduleName=$1
 if [ -z $moduleName ]; then
