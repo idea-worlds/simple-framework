@@ -16,6 +16,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>${groupId}</groupId>
+            <artifactId>${project}-commons</artifactId>
+        </dependency>
+        <dependency>
             <groupId>dev.simpleframework</groupId>
             <artifactId>simple-crud</artifactId>
         </dependency>
