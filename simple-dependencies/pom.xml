@@ -39,7 +39,7 @@
 
         <guava.version>31.1-jre</guava.version>
         <mybatis.version>3.5.13</mybatis.version>
-        <mybatis-spring-boot-starter.version>3.0.1</mybatis-spring-boot-starter.version>
+        <mybatis-spring-boot-starter.version>3.0.2</mybatis-spring-boot-starter.version>
         <pagehelper.version>5.3.2</pagehelper.version>
         <pagehelper-spring-boot-starter.version>1.4.6</pagehelper-spring-boot-starter.version>
     </properties>
