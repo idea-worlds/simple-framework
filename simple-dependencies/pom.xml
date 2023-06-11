@@ -42,6 +42,7 @@
         <mybatis-spring-boot-starter.version>3.0.2</mybatis-spring-boot-starter.version>
         <pagehelper.version>5.3.2</pagehelper.version>
         <pagehelper-spring-boot-starter.version>1.4.6</pagehelper-spring-boot-starter.version>
+        <jcommander.version>1.82</jcommander.version>
     </properties>
 
     <dependencyManagement>
@@ -87,6 +88,12 @@
                 <groupId>com.github.pagehelper</groupId>
                 <artifactId>pagehelper-spring-boot-starter</artifactId>
                 <version>${pagehelper-spring-boot-starter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.beust</groupId>
+                <artifactId>jcommander</artifactId>
+                <version>${jcommander.version}</version>
             </dependency>
 
         </dependencies>
