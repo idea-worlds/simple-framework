@@ -14,10 +14,16 @@ public final class ContextManager {
     public static SimpleTokenContextForRpc RPC_CONTEXT = null;
 
     public static void registerFrameworkContext(SimpleTokenContextForFramework context) {
+        if (context == null) {
+            return;
+        }
         FRAMEWORK_CONTEXT = context;
     }
 
     public static void registerRpcContext(SimpleTokenContextForRpc context) {
+        if (context == null) {
+            return;
+        }
         RPC_CONTEXT = context;
     }
 

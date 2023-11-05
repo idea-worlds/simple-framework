@@ -19,9 +19,14 @@
     <dependencies>
         <dependency>
             <groupId>dev.simpleframework</groupId>
+            <artifactId>simple-dto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.simpleframework</groupId>
             <artifactId>simple-util</artifactId>
         </dependency>
 
+        <!-- 以下全为非必要依赖 -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -32,14 +37,27 @@
             <artifactId>hutool-all</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webflux</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
     </dependencies>

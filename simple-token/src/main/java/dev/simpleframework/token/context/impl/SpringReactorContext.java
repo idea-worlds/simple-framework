@@ -103,6 +103,11 @@ public class SpringReactorContext
     }
 
     @Override
+    public String getRequestPath() {
+        return getRequest().getPath().toString();
+    }
+
+    @Override
     public boolean matchPath(String pattern, String path) {
         PathPattern pathPattern = PathPatternParser.defaultInstance.parse(pattern);
         PathContainer pathContainer = PathContainer.parsePath(path);
