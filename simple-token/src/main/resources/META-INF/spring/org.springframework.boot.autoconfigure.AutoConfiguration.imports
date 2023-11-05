@@ -1,0 +1,4 @@
+dev.simpleframework.token.autoconfigure.SimpleTokenSpringAutoConfiguration
+dev.simpleframework.token.autoconfigure.SimpleTokenSpringWebmvcAutoConfiguration
+dev.simpleframework.token.autoconfigure.SimpleTokenSpringWebfluxAutoConfiguration
+dev.simpleframework.token.autoconfigure.SimpleTokenSpringRegisterAutoConfiguration

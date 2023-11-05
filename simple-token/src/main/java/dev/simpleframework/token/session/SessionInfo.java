@@ -12,7 +12,7 @@ import java.util.Map;
  * @author loyayz (loyayz@foxmail.com)
  */
 @Data
-public class SimpleTokenSession implements Serializable {
+public class SessionInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -40,12 +40,12 @@ public class SimpleTokenSession implements Serializable {
      */
     private Map<String, Object> attrs;
 
-    public SimpleTokenSession() {
+    public SessionInfo() {
         this.createTime = System.currentTimeMillis();
         this.attrs = new HashMap<>();
     }
 
-    public SimpleTokenSession(String accountType, String loginId, long expiredTime) {
+    public SessionInfo(String accountType, String loginId, long expiredTime) {
         this.accountType = accountType;
         this.loginId = loginId;
         this.createTime = System.currentTimeMillis();
@@ -53,7 +53,7 @@ public class SimpleTokenSession implements Serializable {
         this.attrs = new HashMap<>();
     }
 
-    public SimpleTokenSession addAttr(String key, Object value) {
+    public SessionInfo addAttr(String key, Object value) {
         this.attrs.put(key, value);
         return this;
     }

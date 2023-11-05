@@ -4,9 +4,9 @@ import dev.simpleframework.token.SimpleTokenLoginConfig;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.SimpleTokenException;
+import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SimpleTokenApps;
-import dev.simpleframework.token.session.SimpleTokenSession;
 import dev.simpleframework.util.Strings;
 import lombok.Getter;
 
@@ -23,7 +23,7 @@ public class SimpleTokenLogin {
     private final LoginSetting setting;
     private final SimpleTokenLoginConfig config;
     private final long now = System.currentTimeMillis();
-    private SimpleTokenSession session;
+    private SessionInfo session;
     /**
      * 当前账号的应用会话值
      */

@@ -12,7 +12,7 @@ public interface SessionStore {
      *
      * @param session 会话值
      */
-    void setSession(SimpleTokenSession session);
+    void setSession(SessionInfo session);
 
     /**
      * 存储应用会话值
@@ -29,7 +29,7 @@ public interface SessionStore {
      * @param token 会话 token
      * @return 会话值
      */
-    SimpleTokenSession getSession(String token);
+    SessionInfo getSession(String token);
 
     /**
      * 获取应用会话值

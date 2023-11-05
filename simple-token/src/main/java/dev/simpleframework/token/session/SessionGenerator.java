@@ -13,6 +13,6 @@ public interface SessionGenerator {
      * @param args 参数
      * @return 会话值
      */
-    SimpleTokenSession generate(SimpleTokenSession args);
+    SessionInfo generate(SessionInfo args);
 
 }

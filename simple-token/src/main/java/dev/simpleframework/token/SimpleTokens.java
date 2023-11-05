@@ -1,7 +1,12 @@
 package dev.simpleframework.token;
 
+import dev.simpleframework.token.context.ContextManager;
+import dev.simpleframework.token.exception.InvalidTokenException;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.login.*;
+import dev.simpleframework.token.session.SessionInfo;
+import dev.simpleframework.token.session.SessionManager;
+import dev.simpleframework.token.session.SimpleTokenApps;
 import dev.simpleframework.token.session.SimpleTokenKickout;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,13 +22,66 @@ import java.util.List;
 @Slf4j
 public final class SimpleTokens {
 
-    private static final SimpleTokenConfig CONFIG = null;
+    private static SimpleTokenConfig CONFIG = null;
 
     private SimpleTokens() {
     }
 
+    public static void setGlobalConfig(SimpleTokenConfig config) {
+        CONFIG = config;
+    }
+
     public static SimpleTokenConfig getGlobalConfig() {
         return CONFIG;
+    }
+
+    /**
+     * 获取当前会话的 token
+     */
+    public static String getToken() {
+        return ContextManager.findToken();
+    }
+
+    /**
+     * 获取当前会话值，未登录时抛异常
+     */
+    public static SessionInfo getSession() {
+        String token = getToken();
+        SessionInfo session = SessionManager.findSession(token);
+        if (session == null) {
+            throw new InvalidTokenException("not login");
+        }
+        return session;
+    }
+
+    /**
+     * 当前会话是否已登录
+     *
+     * @return true: 已登录； false: 未登录
+     */
+    public static boolean isLogin() {
+        String token = getToken();
+        SessionInfo session = SessionManager.findSession(token);
+        return session != null;
+    }
+
+    /**
+     * 指定账号是否已登录
+     *
+     * @param accountType 账号类型
+     * @param loginId     用户 id
+     * @return true: 已登录； false: 未登录
+     */
+    public static boolean isLogin(String accountType, String loginId) {
+        SimpleTokenApps apps = SessionManager.findApps(accountType, loginId);
+        return apps != null && System.currentTimeMillis() < apps.findLastExpiredTime();
+    }
+
+    /**
+     * 当前会话是否已登录，未登录时抛异常
+     */
+    public static void checkLogin() {
+        getSession();
     }
 
     /**

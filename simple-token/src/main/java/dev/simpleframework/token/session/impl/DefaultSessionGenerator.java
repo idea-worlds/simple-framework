@@ -5,7 +5,7 @@ import dev.simpleframework.token.SimpleTokenLoginConfig;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.SessionGenerator;
-import dev.simpleframework.token.session.SimpleTokenSession;
+import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.util.Strings;
 
 import java.nio.charset.StandardCharsets;
@@ -19,17 +19,17 @@ import java.util.Date;
 public class DefaultSessionGenerator implements SessionGenerator {
 
     @Override
-    public SimpleTokenSession generate(SimpleTokenSession args) {
+    public SessionInfo generate(SessionInfo args) {
         this.setAttrs(args);
         this.setToken(args);
         return args;
     }
 
-    protected void setAttrs(SimpleTokenSession info) {
+    protected void setAttrs(SessionInfo info) {
         // nothing
     }
 
-    protected void setToken(SimpleTokenSession info) {
+    protected void setToken(SessionInfo info) {
         String accountType = info.getAccountType();
         SimpleTokenLoginConfig config = SimpleTokens.getGlobalConfig().findLoginConfig(accountType);
         String token;
@@ -44,7 +44,7 @@ public class DefaultSessionGenerator implements SessionGenerator {
     /**
      * 基于 hutool-jwt 生成 jwt. 本项目未引入依赖，请自行添加
      */
-    protected String generateJwt(SimpleTokenLoginConfig config, SimpleTokenSession info) {
+    protected String generateJwt(SimpleTokenLoginConfig config, SessionInfo info) {
         String secretKey = config.getTokenJwtSecretKey();
         if (secretKey == null || secretKey.isBlank()) {
             throw new SimpleTokenException("Secret key for token jwt can not be empty. " +

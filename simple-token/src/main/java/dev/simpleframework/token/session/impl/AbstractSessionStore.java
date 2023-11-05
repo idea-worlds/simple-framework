@@ -1,9 +1,9 @@
 package dev.simpleframework.token.session.impl;
 
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionStore;
 import dev.simpleframework.token.session.SimpleTokenApps;
-import dev.simpleframework.token.session.SimpleTokenSession;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -17,7 +17,7 @@ public abstract class AbstractSessionStore implements SessionStore {
     protected abstract void remove(String key);
 
     @Override
-    public void setSession(SimpleTokenSession session) {
+    public void setSession(SessionInfo session) {
         String key = this.toSessionKey(session.getToken());
         long timeout = session.getExpiredTime() - System.currentTimeMillis();
         this.set(key, session, timeout);
@@ -36,7 +36,7 @@ public abstract class AbstractSessionStore implements SessionStore {
     }
 
     @Override
-    public SimpleTokenSession getSession(String token) {
+    public SessionInfo getSession(String token) {
         String key = this.toSessionKey(token);
         return this.get(key);
     }

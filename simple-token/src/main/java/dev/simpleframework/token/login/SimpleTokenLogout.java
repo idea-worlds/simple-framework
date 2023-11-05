@@ -1,9 +1,9 @@
 package dev.simpleframework.token.login;
 
 import dev.simpleframework.token.context.ContextManager;
+import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SimpleTokenApps;
-import dev.simpleframework.token.session.SimpleTokenSession;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +48,7 @@ public class SimpleTokenLogout {
             return;
         }
         // 获取 session
-        SimpleTokenSession session = SessionManager.findSession(token);
+        SessionInfo session = SessionManager.findSession(token);
         if (session == null) {
             return;
         }

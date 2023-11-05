@@ -37,7 +37,10 @@ public final class SessionManager {
      * @param token token
      * @return 会话值
      */
-    public static SimpleTokenSession findSession(String token) {
+    public static SessionInfo findSession(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
         validStore();
         return STORE.getSession(token);
     }
@@ -50,9 +53,9 @@ public final class SessionManager {
      * @param expiredTime 过期时间
      * @return 会话值
      */
-    public static SimpleTokenSession createSession(String accountType, String loginId, long expiredTime) {
+    public static SessionInfo createSession(String accountType, String loginId, long expiredTime) {
         validGenerator();
-        SimpleTokenSession session = new SimpleTokenSession(accountType, loginId, expiredTime);
+        SessionInfo session = new SessionInfo(accountType, loginId, expiredTime);
         return GENERATOR.generate(session);
     }
 
@@ -61,7 +64,7 @@ public final class SessionManager {
      *
      * @param session 会话值
      */
-    public static void storeSession(SimpleTokenSession session) {
+    public static void storeSession(SessionInfo session) {
         validStore();
         STORE.setSession(session);
     }
