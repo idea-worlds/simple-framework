@@ -1,4 +1,4 @@
-package dev.simpleframework.token;
+package dev.simpleframework.token.config;
 
 import lombok.Data;
 

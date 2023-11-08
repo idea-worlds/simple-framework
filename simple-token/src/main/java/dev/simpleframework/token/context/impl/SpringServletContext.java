@@ -129,6 +129,11 @@ public class SpringServletContext
     }
 
     @Override
+    public String getRequestMethod() {
+        return getRequest().getMethod();
+    }
+
+    @Override
     public boolean matchPath(String pattern, String path) {
         PathPattern pathPattern = PathPatternParser.defaultInstance.parse(pattern);
         PathContainer pathContainer = PathContainer.parsePath(path);

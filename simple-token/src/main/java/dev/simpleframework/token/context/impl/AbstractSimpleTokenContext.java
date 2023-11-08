@@ -1,8 +1,8 @@
 package dev.simpleframework.token.context.impl;
 
-import dev.simpleframework.token.SimpleTokenConfig;
-import dev.simpleframework.token.SimpleTokenCookieConfig;
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.config.SimpleTokenConfig;
+import dev.simpleframework.token.config.SimpleTokenCookieConfig;
 import dev.simpleframework.token.context.ContextCookie;
 import dev.simpleframework.token.context.SimpleTokenContext;
 

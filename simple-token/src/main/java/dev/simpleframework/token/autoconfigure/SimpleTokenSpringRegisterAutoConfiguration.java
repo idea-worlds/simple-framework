@@ -1,7 +1,7 @@
 package dev.simpleframework.token.autoconfigure;
 
-import dev.simpleframework.token.SimpleTokenConfig;
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.context.SimpleTokenContextForFramework;
 import dev.simpleframework.token.path.PathManager;

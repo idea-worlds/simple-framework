@@ -1,5 +1,6 @@
 package dev.simpleframework.token;
 
+import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.InvalidTokenException;
 import dev.simpleframework.token.exception.SimpleTokenException;

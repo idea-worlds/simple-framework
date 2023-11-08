@@ -1,6 +1,6 @@
 package dev.simpleframework.token.session;
 
-import dev.simpleframework.token.SimpleTokenLoginConfig;
+import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.constant.LoginMaxStrategy;
 import dev.simpleframework.token.exception.LoginRejectException;
 import lombok.Data;

@@ -1,8 +1,8 @@
 package dev.simpleframework.token.session.impl;
 
 import cn.hutool.jwt.JWT;
-import dev.simpleframework.token.SimpleTokenLoginConfig;
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionInfo;

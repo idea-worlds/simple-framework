@@ -1,6 +1,6 @@
 package dev.simpleframework.token.autoconfigure;
 
-import dev.simpleframework.token.SimpleTokenConfig;
+import dev.simpleframework.token.config.SimpleTokenConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;

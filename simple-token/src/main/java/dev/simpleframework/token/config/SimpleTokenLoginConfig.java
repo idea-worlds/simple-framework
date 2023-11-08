@@ -1,4 +1,4 @@
-package dev.simpleframework.token;
+package dev.simpleframework.token.config;
 
 import dev.simpleframework.token.constant.LoginMaxStrategy;
 import dev.simpleframework.token.constant.TokenStyle;
@@ -9,11 +9,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 登录配置
+ *
  * @author loyayz (loyayz@foxmail.com)
  */
 @Data
 public class SimpleTokenLoginConfig {
 
+
+    /**
+     * 同账号是否共享 token
+     */
     private Boolean shareToken = Boolean.FALSE;
     /**
      * token 风格
@@ -26,7 +32,7 @@ public class SimpleTokenLoginConfig {
     /**
      * token 超时时间，默认 1 天
      */
-    private Duration timeout = Duration.ofDays(1);
+    private Duration tokenTimeout = Duration.ofDays(1);
     /**
      * 最大登录数量，默认 -1
      * <0 : 不限数量

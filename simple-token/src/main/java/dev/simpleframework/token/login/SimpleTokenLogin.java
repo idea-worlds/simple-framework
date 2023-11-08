@@ -1,7 +1,7 @@
 package dev.simpleframework.token.login;
 
-import dev.simpleframework.token.SimpleTokenLoginConfig;
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.SessionInfo;
@@ -41,7 +41,7 @@ public class SimpleTokenLogin {
         this.setting = setting;
         this.config = SimpleTokens.getGlobalConfig().findLoginConfig(setting.getAccountType());
         if (this.setting.getTimeout() == null) {
-            this.setting.setTimeout(this.config.getTimeout());
+            this.setting.setTimeout(this.config.getTokenTimeout());
         }
     }
 

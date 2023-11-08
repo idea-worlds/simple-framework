@@ -1,4 +1,4 @@
-package dev.simpleframework.token;
+package dev.simpleframework.token.config;
 
 import dev.simpleframework.token.exception.InvalidTokenException;
 import lombok.Data;
@@ -31,12 +31,30 @@ public class SimpleTokenConfig {
      */
     private SimpleTokenCookieConfig cookie = new SimpleTokenCookieConfig();
     /**
+     * 登录配置
+     */
+    private SimpleTokenLoginConfig login = new SimpleTokenLoginConfig();
+    /**
      * 登录配置，key 为 账号类型
      */
-    private Map<String, SimpleTokenLoginConfig> login = new HashMap<>();
+    private Map<String, SimpleTokenLoginConfig> accountLogin = new HashMap<>();
+    /**
+     * 路径配置
+     */
+    private SimpleTokenPathConfig path = new SimpleTokenPathConfig();
 
-    public SimpleTokenLoginConfig findLoginConfig(String type) {
-        return this.login.get(type);
+    /**
+     * 获取账号类型对应的登录配置，未配置时取默认值 {@link #login}
+     *
+     * @param accountType 账号类型
+     * @return 登录配置
+     */
+    public SimpleTokenLoginConfig findLoginConfig(String accountType) {
+        SimpleTokenLoginConfig config = this.accountLogin.get(accountType);
+        if (config == null) {
+            config = this.login;
+        }
+        return config;
     }
 
     public String splicingToken(String token) {
