@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -72,6 +70,309 @@ public class StringsTest {
         Assertions.assertThrows(ClassNotFoundException.class, () -> {
             Strings.cast(StringsTest.class.getName() + 1, Class.class);
         });
+    }
+
+    @Test
+    public void like() {
+        Assertions.assertTrue(Strings.like('*', null, null));
+        Assertions.assertFalse(Strings.like('*', "", null));
+        Assertions.assertFalse(Strings.like('*', "1", null));
+        Assertions.assertFalse(Strings.like('*', "111", null));
+        Assertions.assertFalse(Strings.like('*', null, ""));
+        Assertions.assertFalse(Strings.like('*', null, "1"));
+        Assertions.assertFalse(Strings.like('*', null, "111"));
+        Assertions.assertFalse(Strings.like('*', "*", null));
+
+
+        // 全是模糊字符
+        Assertions.assertFalse(Strings.like('*', "*", null));
+        Assertions.assertFalse(Strings.like('*', "*", ""));
+        Assertions.assertTrue(Strings.like('*', "*", "1"));
+        Assertions.assertTrue(Strings.like('*', "*", "11"));
+        Assertions.assertTrue(Strings.like('*', "*", "111"));
+        Assertions.assertTrue(Strings.like('*', "*", "1.1.1"));
+
+        Assertions.assertTrue(Strings.like('*', "**", "1"));
+        Assertions.assertTrue(Strings.like('*', "**", "11"));
+        Assertions.assertTrue(Strings.like('*', "**", "111"));
+        Assertions.assertTrue(Strings.like('*', "**", "1.1.1"));
+
+        Assertions.assertTrue(Strings.like('*', "***", "1"));
+        Assertions.assertTrue(Strings.like('*', "***", "11"));
+        Assertions.assertTrue(Strings.like('*', "***", "111"));
+        Assertions.assertTrue(Strings.like('*', "***", "1.1.1"));
+
+        Assertions.assertFalse(Strings.like('%', "%", null));
+        Assertions.assertFalse(Strings.like('%', "%", ""));
+        Assertions.assertTrue(Strings.like('%', "%", "1"));
+        Assertions.assertTrue(Strings.like('%', "%", "11"));
+        Assertions.assertTrue(Strings.like('%', "%", "111"));
+        Assertions.assertTrue(Strings.like('%', "%", "1.1.1"));
+
+        Assertions.assertTrue(Strings.like('%', "%%", "1"));
+        Assertions.assertTrue(Strings.like('%', "%%", "11"));
+        Assertions.assertTrue(Strings.like('%', "%%", "111"));
+        Assertions.assertTrue(Strings.like('%', "%%", "1.1.1"));
+
+        Assertions.assertTrue(Strings.like('%', "%%%", "1"));
+        Assertions.assertTrue(Strings.like('%', "%%%", "11"));
+        Assertions.assertTrue(Strings.like('%', "%%%", "111"));
+        Assertions.assertTrue(Strings.like('%', "%%%", "1.1.1"));
+
+
+        // 前模糊
+        Assertions.assertFalse(Strings.like('*', "*foo", null));
+        Assertions.assertFalse(Strings.like('*', "*foo", ""));
+        Assertions.assertFalse(Strings.like('*', "*foo", "bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo", "foo"));
+        Assertions.assertTrue(Strings.like('*', "*foo", ".foo"));
+        Assertions.assertTrue(Strings.like('*', "*foo", "1.foo"));
+        Assertions.assertTrue(Strings.like('*', "*foo", "*foo"));
+        Assertions.assertTrue(Strings.like('*', "*foo", "1*foo"));
+
+        Assertions.assertFalse(Strings.like('*', "**foo", "bar"));
+        Assertions.assertTrue(Strings.like('*', "**foo", "foo"));
+        Assertions.assertTrue(Strings.like('*', "**foo", ".foo"));
+        Assertions.assertTrue(Strings.like('*', "**foo", "1.foo"));
+        Assertions.assertTrue(Strings.like('*', "**foo", "*foo"));
+        Assertions.assertTrue(Strings.like('*', "**foo", "1*foo"));
+
+        Assertions.assertFalse(Strings.like('*', "***foo", "bar"));
+        Assertions.assertTrue(Strings.like('*', "***foo", "foo"));
+        Assertions.assertTrue(Strings.like('*', "***foo", ".foo"));
+        Assertions.assertTrue(Strings.like('*', "***foo", "1.foo"));
+        Assertions.assertTrue(Strings.like('*', "***foo", "*foo"));
+        Assertions.assertTrue(Strings.like('*', "***foo", "1*foo"));
+
+        Assertions.assertFalse(Strings.like('*', "*foo", "foobar"));
+        Assertions.assertFalse(Strings.like('*', "*foo", ".foobar"));
+        Assertions.assertFalse(Strings.like('*', "*foo", "1.foobar"));
+        Assertions.assertFalse(Strings.like('*', "*foo", "*foobar"));
+        Assertions.assertFalse(Strings.like('*', "*foo", "1*foobar"));
+
+        Assertions.assertFalse(Strings.like('*', "**foo", "foobar"));
+        Assertions.assertFalse(Strings.like('*', "**foo", ".foobar"));
+        Assertions.assertFalse(Strings.like('*', "**foo", "1.foobar"));
+        Assertions.assertFalse(Strings.like('*', "**foo", "*foobar"));
+        Assertions.assertFalse(Strings.like('*', "**foo", "1*foobar"));
+
+        Assertions.assertFalse(Strings.like('*', "***foo", "foobar"));
+        Assertions.assertFalse(Strings.like('*', "***foo", ".foobar"));
+        Assertions.assertFalse(Strings.like('*', "***foo", "1.foobar"));
+        Assertions.assertFalse(Strings.like('*', "***foo", "*foobar"));
+        Assertions.assertFalse(Strings.like('*', "***foo", "1*foobar"));
+
+
+        // 后模糊
+        Assertions.assertFalse(Strings.like('*', "foo*", ""));
+        Assertions.assertFalse(Strings.like('*', "foo*", "bar"));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foo"));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foo."));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foo.1"));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foo*"));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foo*1"));
+
+        Assertions.assertFalse(Strings.like('*', "foo**", "bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**", "foo"));
+        Assertions.assertTrue(Strings.like('*', "foo**", "foo."));
+        Assertions.assertTrue(Strings.like('*', "foo**", "foo.1"));
+        Assertions.assertTrue(Strings.like('*', "foo**", "foo*"));
+        Assertions.assertTrue(Strings.like('*', "foo**", "foo*1"));
+
+        Assertions.assertFalse(Strings.like('*', "foo***", "bar"));
+        Assertions.assertTrue(Strings.like('*', "foo***", "foo"));
+        Assertions.assertTrue(Strings.like('*', "foo***", "foo."));
+        Assertions.assertTrue(Strings.like('*', "foo***", "foo.1"));
+        Assertions.assertTrue(Strings.like('*', "foo***", "foo*"));
+        Assertions.assertTrue(Strings.like('*', "foo***", "foo*1"));
+
+        Assertions.assertFalse(Strings.like('*', "bar*", "foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar*", ".foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar*", "1.foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar*", "*foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar*", "1*foobar"));
+
+        Assertions.assertFalse(Strings.like('*', "bar**", "foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar**", ".foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar**", "1.foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar**", "*foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar**", "1*foobar"));
+
+        Assertions.assertFalse(Strings.like('*', "bar***", "foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar***", ".foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar***", "1.foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar***", "*foobar"));
+        Assertions.assertFalse(Strings.like('*', "bar***", "1*foobar"));
+
+
+        // 中间模糊
+        Assertions.assertFalse(Strings.like('*', "foo*bar", null));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", ""));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "bar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1foobar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1foo.bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1foo..bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1foo...bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1foo1bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1foo11bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foobar1"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo.bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo..bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo...bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo1bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo11bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo111bar1"));
+
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foo"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar", "foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar", "foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar", "foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar", "foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar", "foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar", "foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "1foobar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "1foo.bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "1foo..bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "1foo...bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "1foo1bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "1foo11bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "1foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foobar1"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foo.bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foo..bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foo...bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foo1bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foo11bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar", "foo111bar1"));
+
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foo"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "bar"));
+        Assertions.assertTrue(Strings.like('*', "foo***bar", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "foo***bar", "foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "foo***bar", "foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "foo***bar", "foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "foo***bar", "foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "foo***bar", "foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "foo***bar", "foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "bar111foo"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "1foobar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "1foo.bar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "1foo..bar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "1foo...bar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "1foo1bar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "1foo11bar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "1foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foobar1"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foo.bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foo..bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foo...bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foo1bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foo11bar1"));
+        Assertions.assertFalse(Strings.like('*', "foo***bar", "foo111bar1"));
+
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foo"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "foo111bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "1foobar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "1foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "1foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "1foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "1foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "1foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo*bar", "1foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foobar1"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foo.bar1"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foo..bar1"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foo...bar1"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foo1bar1"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foo11bar1"));
+        Assertions.assertFalse(Strings.like('*', "*foo*bar", "foo111bar1"));
+
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "foo"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "1foobar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "1foo.bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "1foo..bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "1foo...bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "1foo1bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "1foo11bar"));
+        Assertions.assertFalse(Strings.like('*', "foo**bar*", "1foo111bar"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foobar1"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo.bar1"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo..bar1"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo...bar1"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo1bar1"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo11bar1"));
+        Assertions.assertTrue(Strings.like('*', "foo**bar*", "foo111bar1"));
+
+        Assertions.assertFalse(Strings.like('*', "*foo***ba*r", "foo"));
+        Assertions.assertFalse(Strings.like('*', "*foo***bar*", "bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo111bar"));
+        Assertions.assertFalse(Strings.like('*', "*foo***bar*", "bar111foo"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "1foobar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "1foo.bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "1foo..bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "1foo...bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "1foo1bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "1foo11bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "1foo111bar"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foobar1"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo.bar1"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo..bar1"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo...bar1"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo1bar1"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo11bar1"));
+        Assertions.assertTrue(Strings.like('*', "*foo***bar*", "foo111bar1"));
+
+
+        Assertions.assertTrue(Strings.like('*', "*foo", "foo"));
+        Assertions.assertFalse(Strings.like('*', "*foo", "bar"));
+        Assertions.assertFalse(Strings.like('*', "*foo", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "*foo", "barfoo"));
+        Assertions.assertTrue(Strings.like('*', "*foo", "bar.foo"));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foo"));
+        Assertions.assertFalse(Strings.like('*', "foo*", "bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*", "barfoo"));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "foo*", "foo.bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "foo"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "barfoo"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "bar.foo"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foobar"));
+        Assertions.assertTrue(Strings.like('*', "foo*bar", "foo.bar"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "1bar.foo"));
+        Assertions.assertFalse(Strings.like('*', "foo*bar", "bar.foo1"));
     }
 
 }
