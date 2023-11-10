@@ -33,17 +33,7 @@ public class SimpleTokenSpringReactorFilter implements SimpleTokenFilter, WebFil
             // 执行路径匹配器
             PathManager.execMatchers();
         } catch (Throwable e) {
-            // 获取异常处理返回值
-            ExceptionResponse responseData = ExceptionManager.getResponseData(e);
-            CommonResponse<String> responseBody = CommonResponse.failure(responseData.errCode(), responseData.errMsg());
-
-            // 写入输出流
-            ServerHttpResponse response = exchange.getResponse();
-            response.setRawStatusCode(responseData.status());
-            response.getHeaders().set("Content-Type", "application/json;charset=UTF-8");
-            DataBuffer buffer = response.bufferFactory().wrap(Jsons.write(responseBody).getBytes(StandardCharsets.UTF_8));
-            return response.writeWith(Mono.just(buffer))
-                    .doOnError(error -> DataBufferUtils.release(buffer));
+            return this.writeExceptionResponse(exchange.getResponse(), e);
         } finally {
             // 清除上下文
             SpringReactorContext.clearContext();
@@ -56,6 +46,19 @@ public class SimpleTokenSpringReactorFilter implements SimpleTokenFilter, WebFil
                     // 清除上下文
                     SpringReactorContext.clearContext();
                 });
+    }
+
+    protected Mono<Void> writeExceptionResponse(ServerHttpResponse response, Throwable exception) {
+        // 获取异常处理返回值
+        ExceptionResponse responseData = ExceptionManager.getResponseData(exception);
+        CommonResponse<String> responseBody = CommonResponse.failure(responseData.errCode(), responseData.errMsg());
+
+        // 写入输出流
+        response.setRawStatusCode(responseData.status());
+        response.getHeaders().set("Content-Type", "application/json;charset=UTF-8");
+        DataBuffer buffer = response.bufferFactory().wrap(Jsons.write(responseBody).getBytes(StandardCharsets.UTF_8));
+        return response.writeWith(Mono.just(buffer))
+                .doOnError(error -> DataBufferUtils.release(buffer));
     }
 
 }

@@ -92,7 +92,7 @@ public final class SimpleTokens {
      * @param id 用户 id
      * @return token
      */
-    public static String login(Long id) {
+    public static LoginResponse login(Long id) {
         LoginSetting config = new LoginSetting();
         return login(id, config);
     }
@@ -104,7 +104,7 @@ public final class SimpleTokens {
      * @param id 用户 id
      * @return token
      */
-    public static String login(String id) {
+    public static LoginResponse login(String id) {
         LoginSetting config = new LoginSetting();
         return login(id, config);
     }
@@ -117,7 +117,7 @@ public final class SimpleTokens {
      * @param timeout 本次登录的有效期
      * @return token
      */
-    public static String login(Long id, Duration timeout) {
+    public static LoginResponse login(Long id, Duration timeout) {
         LoginSetting config = new LoginSetting();
         config.setTimeout(timeout);
         return login(id, config);
@@ -131,7 +131,7 @@ public final class SimpleTokens {
      * @param timeout 本次登录的有效期
      * @return token
      */
-    public static String login(String id, Duration timeout) {
+    public static LoginResponse login(String id, Duration timeout) {
         LoginSetting config = new LoginSetting();
         config.setTimeout(timeout);
         return login(id, config);
@@ -145,7 +145,7 @@ public final class SimpleTokens {
      * @param config 登录的参数
      * @return token
      */
-    public static String login(Long id, LoginSetting config) {
+    public static LoginResponse login(Long id, LoginSetting config) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
@@ -160,7 +160,7 @@ public final class SimpleTokens {
      * @param config 登录的参数
      * @return token
      */
-    public static String login(String id, LoginSetting config) {
+    public static LoginResponse login(String id, LoginSetting config) {
         // 构建一个登录领域对象执行登录逻辑
         SimpleTokenLogin login = new SimpleTokenLogin(id, config);
         login.exec();
@@ -172,7 +172,8 @@ public final class SimpleTokens {
         } catch (Exception e) {
             log.warn("kick out tokens error after login", e);
         }
-        return login.getToken();
+        SessionInfo session = login.getSession();
+        return new LoginResponse(session.getToken(), session.getExpiredTime());
     }
 
     /**
@@ -183,7 +184,7 @@ public final class SimpleTokens {
      * @param password 账号密码
      * @return token
      */
-    public static String loginByAccount(String account, String password) {
+    public static LoginResponse loginByAccount(String account, String password) {
         return loginByAccount(account, password, new LoginSetting());
     }
 
@@ -196,7 +197,7 @@ public final class SimpleTokens {
      * @param config   登录的参数
      * @return token
      */
-    public static String loginByAccount(String account, String password, LoginSetting config) {
+    public static LoginResponse loginByAccount(String account, String password, LoginSetting config) {
         String accountType = config.getAccountType();
         AccountInfo info = AccountManager.findInfo(accountType, account);
         AccountManager.validatePassword(accountType, password, info.getPassword());
