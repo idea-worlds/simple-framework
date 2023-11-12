@@ -4,9 +4,6 @@ import dev.simpleframework.token.exception.ImplementationNotFoundException;
 import dev.simpleframework.token.exception.LoginAccountNotFoundException;
 import dev.simpleframework.token.exception.LoginInvalidPasswordException;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * 账号密码管理器
  *
@@ -14,33 +11,28 @@ import java.util.Map;
  */
 public final class AccountManager {
 
-    private static final Map<String, AccountStore> STORE = new HashMap<>();
-    private static final Map<String, AccountPasswordValidator> VALIDATORS = new HashMap<>();
-
-    private static final AccountPasswordValidator DEFAULT_VALIDATOR = (param, store) -> param != null && param.equals(store);
+    private static AccountStore STORE = AccountStore.DEFAULT;
+    private static AccountPasswordValidator VALIDATOR = AccountPasswordValidator.DEFAULT;
 
     private AccountManager() {
-
     }
 
     /**
      * 注册账号信息存储器，用于获取账号信息
      *
-     * @param accountType 账号类型
-     * @param store       账号信息存储器
+     * @param store 账号信息存储器
      */
-    public synchronized static void registerStore(String accountType, AccountStore store) {
-        STORE.put(accountType, store);
+    public synchronized static void registerStore(AccountStore store) {
+        STORE = store;
     }
 
     /**
      * 注册账号密码校验器，用于获取账号密码
      *
-     * @param accountType 账号类型
-     * @param validator   账号密码校验器
+     * @param validator 账号密码校验器
      */
-    public synchronized static void registerValidator(String accountType, AccountPasswordValidator validator) {
-        VALIDATORS.put(accountType, validator);
+    public synchronized static void registerValidator(AccountPasswordValidator validator) {
+        VALIDATOR = validator;
     }
 
     /**
@@ -50,12 +42,9 @@ public final class AccountManager {
      * @param accountName 账号名
      * @return 账号信息
      */
-    public static AccountInfo findInfo(String accountType, String accountName) {
-        AccountStore store = STORE.get(accountType);
-        if (store == null) {
-            throw new ImplementationNotFoundException(AccountStore.class, AccountManager.class);
-        }
-        AccountInfo info = store.get(accountName);
+    public static AccountInfo findInfoByName(String accountType, String accountName) {
+        validStore();
+        AccountInfo info = STORE.getInfoByName(accountType, accountName);
         if (info == null) {
             throw new LoginAccountNotFoundException("Login account can not be found");
         }
@@ -73,10 +62,15 @@ public final class AccountManager {
         if (paramPassword == null && storedPassword == null) {
             return;
         }
-        AccountPasswordValidator validator = VALIDATORS.getOrDefault(accountType, DEFAULT_VALIDATOR);
-        boolean match = validator.validate(paramPassword, storedPassword);
+        boolean match = VALIDATOR.validate(accountType, paramPassword, storedPassword);
         if (!match) {
             throw new LoginInvalidPasswordException("Invalid account password");
+        }
+    }
+
+    private static void validStore() {
+        if (STORE == null) {
+            throw new ImplementationNotFoundException(AccountStore.class, AccountManager.class);
         }
     }
 

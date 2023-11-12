@@ -35,7 +35,7 @@ public class SimpleTokenConfig {
      */
     private SimpleTokenLoginConfig login = new SimpleTokenLoginConfig();
     /**
-     * 登录配置，key 为 账号类型
+     * 不同账号类型的个性化登录配置，key 为 账号类型，未配置时取默认值 {@link #login}
      */
     private Map<String, SimpleTokenLoginConfig> accountLogin = new HashMap<>();
     /**

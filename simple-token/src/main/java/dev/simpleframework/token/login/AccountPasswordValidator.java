@@ -11,10 +11,13 @@ public interface AccountPasswordValidator {
     /**
      * 校验账号密码是否匹配
      *
+     * @param accountType    账号类型
      * @param paramPassword  要匹配的密码
      * @param storedPassword 存储的实际密码
      * @return 是否相等
      */
-    boolean validate(String paramPassword, String storedPassword);
+    boolean validate(String accountType, String paramPassword, String storedPassword);
+
+    AccountPasswordValidator DEFAULT = (type, param, store) -> param != null && param.equals(store);
 
 }

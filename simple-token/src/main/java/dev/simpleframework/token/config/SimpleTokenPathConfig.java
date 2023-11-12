@@ -1,11 +1,10 @@
 package dev.simpleframework.token.config;
 
 import dev.simpleframework.token.path.PathInfo;
+import dev.simpleframework.token.path.PathPermission;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * 路径配置
@@ -14,7 +13,6 @@ import java.util.List;
  */
 @Data
 public class SimpleTokenPathConfig {
-    private static volatile boolean CHANGED = false;
 
     /**
      * 公共路径
@@ -40,7 +38,20 @@ public class SimpleTokenPathConfig {
      * 不需要鉴权的路径
      */
     private List<PathInfo> permit;
+    /**
+     * 路径权限
+     */
+    private List<PathPermission> permissions = new ArrayList<>();
+    /**
+     * 不同账号类型的个性化路径权限，key 为 账号类型，未配置时取默认值 {@link #permissions}
+     */
+    private Map<String, List<PathPermission>> accountPermissions = new HashMap<>();
 
+    /**
+     * 获取所有不需要鉴权的路径
+     *
+     * @return 路径集
+     */
     public List<PathInfo> getAllPermitPaths() {
         List<PathInfo> result = new ArrayList<>();
         if (this.permitPublic) {
@@ -55,42 +66,18 @@ public class SimpleTokenPathConfig {
         return result;
     }
 
-    public void setPublicPaths(List<String> publicPaths) {
-        this.publicPaths = publicPaths;
-        markChange(true);
-    }
-
-    public void setStaticPaths(List<String> staticPaths) {
-        this.staticPaths = staticPaths;
-        markChange(true);
-    }
-
-    public void setPermitPublic(Boolean permitPublic) {
-        this.permitPublic = permitPublic;
-        markChange(true);
-    }
-
-    public void setPermitStatic(Boolean permitStatic) {
-        this.permitStatic = permitStatic;
-        markChange(true);
-    }
-
-    public void setPermitOptionsRequest(Boolean permitOptionsRequest) {
-        this.permitOptionsRequest = permitOptionsRequest;
-        markChange(true);
-    }
-
-    public void setPermit(List<PathInfo> permit) {
-        this.permit = permit;
-        markChange(true);
-    }
-
-    public static void markChange(boolean flag) {
-        CHANGED = flag;
-    }
-
-    public static boolean hasChanged() {
-        return CHANGED;
+    /**
+     * 获取账号类型对应的权限配置，未配置时取默认值 {@link #permissions}
+     *
+     * @param accountType 账号类型
+     * @return 路径权限集
+     */
+    public List<PathPermission> findPermission(String accountType) {
+        List<PathPermission> permissions = this.accountPermissions.get(accountType);
+        if (permissions == null) {
+            permissions = this.permissions;
+        }
+        return permissions;
     }
 
 }

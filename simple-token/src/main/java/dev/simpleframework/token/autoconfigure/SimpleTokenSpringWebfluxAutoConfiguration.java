@@ -1,5 +1,6 @@
 package dev.simpleframework.token.autoconfigure;
 
+import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.context.SimpleTokenContextForFramework;
 import dev.simpleframework.token.context.impl.SpringReactorContext;
 import dev.simpleframework.token.filter.SimpleTokenFilter;
@@ -10,6 +11,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -27,8 +32,26 @@ public class SimpleTokenSpringWebfluxAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(SimpleTokenFilter.class)
-    public SimpleTokenFilter simpleTokenFilter() {
+    public SimpleTokenFilter simpleTokenDefaultFilter() {
         return new SimpleTokenSpringReactorFilter();
+    }
+
+    @Bean
+    public WebFilter simpleTokenGlobalFilter() {
+        return new SimpleTokenGlobalFilter();
+    }
+
+    @Order(Ordered.HIGHEST_PRECEDENCE + 10)
+    public static class SimpleTokenGlobalFilter implements WebFilter {
+
+        @Override
+        public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+            return chain.filter(exchange)
+                    .doFinally(r -> {
+                        SimpleTokens.clearThreadCache();
+                    });
+        }
+
     }
 
 }

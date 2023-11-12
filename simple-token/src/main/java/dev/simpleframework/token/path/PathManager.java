@@ -9,6 +9,7 @@ import dev.simpleframework.token.context.SimpleTokenContext;
 import dev.simpleframework.token.exception.InvalidContextException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -24,10 +25,6 @@ public final class PathManager {
      * 所有自定义路径匹配器
      */
     private static final List<PathMatcher> CUSTOM_MATCHERS = new CopyOnWriteArrayList<>();
-    /**
-     * 所有配置的路径匹配器
-     */
-    private static final List<PathMatcher> CONFIG_MATCHERS = new ArrayList<>();
 
     /**
      * 设置路径前缀
@@ -45,8 +42,13 @@ public final class PathManager {
      * 3，依次执行匹配的回调
      */
     public static void execMatchers() {
-        if (SimpleTokenPathConfig.hasChanged()) {
-            setConfigMatchers();
+        execMatchers(buildConfigMatchers());
+        execMatchers(CUSTOM_MATCHERS);
+    }
+
+    private static void execMatchers(List<PathMatcher> matchers) {
+        if (matchers.isEmpty()) {
+            return;
         }
         SimpleTokenContext context = ContextManager.findContext();
         String requestPath = context.getRequestPath();
@@ -55,9 +57,13 @@ public final class PathManager {
             throw new InvalidContextException("Can not found the request path");
         }
         requestPath = parsePath(requestPath);
-        List<PathMatcher> matchers = new ArrayList<>();
-        matchers.addAll(CONFIG_MATCHERS);
-        matchers.addAll(CUSTOM_MATCHERS);
+
+        // options 请求不执行路径匹配器
+        boolean permitOptions = SimpleTokens.getGlobalConfig().getPath().getPermitOptionsRequest();
+        if (permitOptions && HttpMethod.OPTIONS.name().equals(requestMethod)) {
+            return;
+        }
+
         for (PathMatcher matcher : matchers) {
             EmptyFunction handler = matcher.getHandler();
             if (handler == null) {
@@ -73,18 +79,31 @@ public final class PathManager {
         }
     }
 
-    public synchronized static void setConfigMatchers() {
-        CONFIG_MATCHERS.clear();
+    private static List<PathMatcher> buildConfigMatchers() {
         SimpleTokenPathConfig config = SimpleTokens.getGlobalConfig().getPath();
+        PathMatcher configMatcher = new PathMatcher()
+                // 不匹配不需要鉴权的路径才执行回调
+                .notMatchInfo(config.getAllPermitPaths())
+                .handler(() -> {
+                    // 校验登录
+                    SimpleTokens.checkLogin();
 
-        PathMatcher matcher = new PathMatcher();
-        CONFIG_MATCHERS.add(
-                matcher
-                        // 不需要鉴权的路径：不匹配才校验是否登录
-                        .notMatchInfo(config.getAllPermitPaths())
-                        .handler(SimpleTokens::checkLogin)
-        );
-        SimpleTokenPathConfig.markChange(false);
+                    // 校验权限
+                    List<PathMatcher> permissionMatchers = new ArrayList<>();
+                    PathMatcher permissionMatcher;
+                    String accountType = SimpleTokens.getAccountTypeAndLoginId().getLeft();
+                    for (PathPermission permission : config.findPermission(accountType)) {
+                        permissionMatcher = new PathMatcher()
+                                .anyMatchMethod(permission.getPath(), permission.getHttpMethods())
+                                .handler(() -> {
+                                    SimpleTokens.checkAnyPermission(permission.getPermissions());
+                                    SimpleTokens.checkAnyRole(permission.getRoles());
+                                });
+                        permissionMatchers.add(permissionMatcher);
+                    }
+                    execMatchers(permissionMatchers);
+                });
+        return Collections.singletonList(configMatcher);
     }
 
     /**

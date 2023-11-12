@@ -1,10 +1,14 @@
 package dev.simpleframework.token;
 
+import dev.simpleframework.core.Pair;
 import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.InvalidTokenException;
+import dev.simpleframework.token.exception.NotPermissionException;
+import dev.simpleframework.token.exception.NotRoleException;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.login.*;
+import dev.simpleframework.token.permission.SimpleTokenPermission;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SimpleTokenApps;
@@ -22,6 +26,8 @@ import java.util.List;
  */
 @Slf4j
 public final class SimpleTokens {
+    private static final ThreadLocal<SessionInfo> THREAD_LOCAL_SESSION = new InheritableThreadLocal<>();
+    private static final ThreadLocal<SimpleTokenPermission> THREAD_LOCAL_PERMISSION = new InheritableThreadLocal<>();
 
     private static SimpleTokenConfig CONFIG = null;
 
@@ -47,12 +53,26 @@ public final class SimpleTokens {
      * 获取当前会话值，未登录时抛异常
      */
     public static SessionInfo getSession() {
-        String token = getToken();
-        SessionInfo session = SessionManager.findSession(token);
+        SessionInfo session = THREAD_LOCAL_SESSION.get();
         if (session == null) {
-            throw new InvalidTokenException("not login");
+            String token = getToken();
+            session = SessionManager.findSession(token);
+            if (session == null) {
+                throw new InvalidTokenException("not login");
+            }
+            THREAD_LOCAL_SESSION.set(session);
         }
         return session;
+    }
+
+    /**
+     * 获取当前登录的账号类型和用户 id
+     *
+     * @return 账号类型, 用户 id
+     */
+    public static Pair<String, String> getAccountTypeAndLoginId() {
+        SessionInfo session = getSession();
+        return new Pair<>(session.getAccountType(), session.getLoginId());
     }
 
     /**
@@ -199,7 +219,7 @@ public final class SimpleTokens {
      */
     public static LoginResponse loginByAccount(String account, String password, LoginSetting config) {
         String accountType = config.getAccountType();
-        AccountInfo info = AccountManager.findInfo(accountType, account);
+        AccountInfo info = AccountManager.findInfoByName(accountType, account);
         AccountManager.validatePassword(accountType, password, info.getPassword());
         return login(info.getId(), config);
     }
@@ -317,6 +337,165 @@ public final class SimpleTokens {
      */
     public static void kickoutByToken(String token) {
         new SimpleTokenKickout().execByToken(Collections.singletonList(token));
+    }
+
+    /**
+     * 获取当前账号所拥有的权限集合
+     *
+     * @return 权限集合
+     */
+    public static List<String> getPermissions() {
+        return findPermission().getPermissions();
+    }
+
+    /**
+     * 判断当前账号是否有指定权限
+     *
+     * @param permission 权限
+     */
+    public static boolean hasPermission(String permission) {
+        return findPermission().hasPermission(permission);
+    }
+
+    /**
+     * 校验当前账号是否有指定的所有权限，无权限抛异常 NotPermissionException
+     *
+     * @param permission 权限
+     */
+    public static void checkHasPermission(String... permission) {
+        if (permission == null) {
+            return;
+        }
+        SimpleTokenPermission perm = findPermission();
+        if (!perm.hasPermission(permission)) {
+            throw new NotPermissionException(perm.getNotMatch());
+        }
+    }
+
+    /**
+     * 校验当前账号是否有指定的所有权限，无权限抛异常 NotPermissionException
+     *
+     * @param permissions 权限
+     */
+    public static void checkHasPermission(List<String> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return;
+        }
+        checkHasPermission(permissions.toArray(new String[0]));
+    }
+
+    /**
+     * 校验当前账号是否有指定的任一权限，无权限抛异常 NotPermissionException
+     *
+     * @param permission 权限
+     */
+    public static void checkAnyPermission(String... permission) {
+        if (permission == null) {
+            return;
+        }
+        SimpleTokenPermission perm = findPermission();
+        if (!perm.anyPermission(permission)) {
+            throw new NotPermissionException(perm.getNotMatch());
+        }
+    }
+
+    /**
+     * 校验当前账号是否有指定的任一权限，无权限抛异常 NotPermissionException
+     *
+     * @param permissions 权限
+     */
+    public static void checkAnyPermission(List<String> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return;
+        }
+        checkAnyPermission(permissions.toArray(new String[0]));
+    }
+
+    /**
+     * 获取当前账号所拥有的角色集合
+     *
+     * @return 角色集合
+     */
+    public static List<String> getRoles() {
+        return findPermission().getRoles();
+    }
+
+    /**
+     * 判断当前账号是否有指定角色
+     *
+     * @param role 角色
+     */
+    public static boolean hasRole(String role) {
+        return findPermission().hasRole(role);
+    }
+
+    /**
+     * 校验当前账号是否有指定的所有角色，无权限抛异常 NotRoleException
+     *
+     * @param role 角色
+     */
+    public static void checkHasRole(String... role) {
+        if (role == null) {
+            return;
+        }
+        SimpleTokenPermission perm = findPermission();
+        if (!perm.hasRole(role)) {
+            throw new NotRoleException(perm.getNotMatch());
+        }
+    }
+
+    /**
+     * 校验当前账号是否有指定的所有角色，无权限抛异常 NotRoleException
+     *
+     * @param roles 角色
+     */
+    public static void checkHasRole(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return;
+        }
+        checkHasRole(roles.toArray(new String[0]));
+    }
+
+    /**
+     * 校验当前账号是否有指定的任一角色，无权限抛异常 NotRoleException
+     *
+     * @param role 角色
+     */
+    public static void checkAnyRole(String... role) {
+        if (role == null) {
+            return;
+        }
+        SimpleTokenPermission perm = findPermission();
+        if (!perm.anyRole(role)) {
+            throw new NotRoleException(perm.getNotMatch());
+        }
+    }
+
+    /**
+     * 校验当前账号是否有指定的任一角色，无权限抛异常 NotRoleException
+     *
+     * @param roles 角色
+     */
+    public static void checkAnyRole(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return;
+        }
+        checkAnyRole(roles.toArray(new String[0]));
+    }
+
+    public static void clearThreadCache() {
+        THREAD_LOCAL_SESSION.remove();
+        THREAD_LOCAL_PERMISSION.remove();
+    }
+
+    private static SimpleTokenPermission findPermission() {
+        SimpleTokenPermission permission = THREAD_LOCAL_PERMISSION.get();
+        if (permission == null) {
+            SessionInfo session = getSession();
+            permission = SimpleTokenPermission.of(session.getAccountType(), session.getLoginId());
+            THREAD_LOCAL_PERMISSION.set(permission);
+        }
+        return permission;
     }
 
 }
