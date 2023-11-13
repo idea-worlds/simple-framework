@@ -43,7 +43,7 @@
         <mybatis.version>3.5.13</mybatis.version>
         <mybatis-spring-boot-starter.version>3.0.2</mybatis-spring-boot-starter.version>
         <pagehelper.version>5.3.3</pagehelper.version>
-        <pagehelper-spring-boot-starter.version>1.4.7</pagehelper-spring-boot-starter.version>
+        <pagehelper-spring-boot-starter.version>2.0.0</pagehelper-spring-boot-starter.version>
         <fastjson2.version>2.0.42</fastjson2.version>
         <jcommander.version>1.82</jcommander.version>
     </properties>
