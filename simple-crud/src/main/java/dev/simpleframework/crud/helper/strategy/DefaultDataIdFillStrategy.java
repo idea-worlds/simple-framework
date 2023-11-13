@@ -1,8 +1,8 @@
 package dev.simpleframework.crud.helper.strategy;
 
+import dev.simpleframework.core.util.Snowflake;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.helper.DataFillStrategy;
-import dev.simpleframework.util.Snowflake;
 
 import java.lang.annotation.Annotation;
 import java.util.UUID;

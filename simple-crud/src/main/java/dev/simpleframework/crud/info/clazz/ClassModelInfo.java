@@ -1,12 +1,12 @@
 package dev.simpleframework.crud.info.clazz;
 
+import dev.simpleframework.core.util.Classes;
+import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.annotation.Table;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.info.AbstractModelInfo;
-import dev.simpleframework.util.Classes;
-import dev.simpleframework.util.Strings;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

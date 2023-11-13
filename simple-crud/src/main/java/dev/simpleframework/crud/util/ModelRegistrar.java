@@ -1,9 +1,9 @@
 package dev.simpleframework.crud.util;
 
+import dev.simpleframework.core.util.Classes;
 import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.info.clazz.ClassModelInfo;
-import dev.simpleframework.util.Classes;
 
 import java.lang.reflect.Modifier;
 import java.util.*;

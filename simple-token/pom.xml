@@ -19,11 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>dev.simpleframework</groupId>
-            <artifactId>simple-dto</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.simpleframework</groupId>
-            <artifactId>simple-util</artifactId>
+            <artifactId>simple-core</artifactId>
         </dependency>
 
         <!-- 以下全为非必要依赖 -->

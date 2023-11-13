@@ -1,12 +1,12 @@
 package dev.simpleframework.token.session.impl;
 
 import cn.hutool.jwt.JWT;
+import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionInfo;
-import dev.simpleframework.util.Strings;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;

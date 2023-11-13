@@ -1,8 +1,8 @@
 package dev.simpleframework.crud.core;
 
+import dev.simpleframework.core.util.Functions;
+import dev.simpleframework.core.util.SerializedFunction;
 import dev.simpleframework.crud.ModelField;
-import dev.simpleframework.util.Functions;
-import dev.simpleframework.util.SerializedFunction;
 
 import java.util.*;
 

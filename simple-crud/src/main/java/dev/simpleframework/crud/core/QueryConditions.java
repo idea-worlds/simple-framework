@@ -1,11 +1,11 @@
 package dev.simpleframework.crud.core;
 
+import dev.simpleframework.core.util.Classes;
+import dev.simpleframework.core.util.Functions;
+import dev.simpleframework.core.util.SerializedFunction;
+import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.crud.annotation.Condition;
 import dev.simpleframework.crud.exception.ModelExecuteException;
-import dev.simpleframework.util.Classes;
-import dev.simpleframework.util.Functions;
-import dev.simpleframework.util.SerializedFunction;
-import dev.simpleframework.util.Strings;
 import lombok.Data;
 import lombok.SneakyThrows;
 

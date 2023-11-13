@@ -1,5 +1,6 @@
 package dev.simpleframework.crud.spring;
 
+import dev.simpleframework.core.util.SimpleSpringUtils;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.helper.DatasourceProvider;
 import dev.simpleframework.crud.helper.provider.DefaultSpringMybatisProvider;
@@ -7,7 +8,6 @@ import dev.simpleframework.crud.helper.strategy.DefaultDataIdFillStrategy;
 import dev.simpleframework.crud.helper.strategy.DefaultDataOperateDateFillStrategy;
 import dev.simpleframework.crud.util.ModelCache;
 import dev.simpleframework.crud.util.ModelRegistrar;
-import dev.simpleframework.util.SimpleSpringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;

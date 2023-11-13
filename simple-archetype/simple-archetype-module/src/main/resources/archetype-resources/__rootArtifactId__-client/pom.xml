@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>dev.simpleframework</groupId>
-            <artifactId>simple-dto</artifactId>
+            <artifactId>simple-core</artifactId>
         </dependency>
     </dependencies>
 

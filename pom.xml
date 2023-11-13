@@ -46,10 +46,9 @@
 
     <modules>
         <module>simple-dependencies</module>
-        <module>simple-dto</module>
+        <module>simple-core</module>
         <module>simple-crud</module>
         <module>simple-token</module>
-        <module>simple-util</module>
         <module>simple-archetype/simple-archetype-module</module>
         <module>simple-archetype/simple-archetype-project</module>
     </modules>

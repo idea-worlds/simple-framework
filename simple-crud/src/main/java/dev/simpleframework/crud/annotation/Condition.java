@@ -1,5 +1,6 @@
 package dev.simpleframework.crud.annotation;
 
+import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.crud.core.ConditionType;
 
 import java.lang.annotation.Documented;
@@ -33,7 +34,7 @@ public @interface Condition {
 
     /**
      * 当条件值为 null 时的默认值
-     * 解析方式：{@link dev.simpleframework.util.Strings#cast(String, Class)}
+     * 解析方式：{@link Strings#cast(String, Class)}
      */
     String defaultValueIfNull() default "";
 

@@ -1,5 +1,6 @@
 package dev.simpleframework.token.login;
 
+import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.context.ContextManager;
@@ -7,7 +8,6 @@ import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SimpleTokenApps;
-import dev.simpleframework.util.Strings;
 import lombok.Getter;
 
 import java.util.Collections;

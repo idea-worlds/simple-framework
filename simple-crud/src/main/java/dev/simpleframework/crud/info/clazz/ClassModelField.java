@@ -1,11 +1,11 @@
 package dev.simpleframework.crud.info.clazz;
 
+import dev.simpleframework.core.util.Classes;
+import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.crud.annotation.Column;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.info.AbstractModelField;
 import dev.simpleframework.crud.util.ModelCache;
-import dev.simpleframework.util.Classes;
-import dev.simpleframework.util.Strings;
 import lombok.SneakyThrows;
 
 import java.lang.annotation.Annotation;
