@@ -1,6 +1,6 @@
 package dev.simpleframework.util.test;
 
-import dev.simpleframework.core.util.Snowflake;
+import dev.simpleframework.util.Snowflake;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;

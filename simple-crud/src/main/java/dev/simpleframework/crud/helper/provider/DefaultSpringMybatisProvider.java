@@ -1,9 +1,9 @@
 package dev.simpleframework.crud.helper.provider;
 
-import dev.simpleframework.core.util.SimpleSpringUtils;
-import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.helper.DatasourceProvider;
+import dev.simpleframework.util.SimpleSpringUtils;
+import dev.simpleframework.util.Strings;
 import org.apache.ibatis.session.SqlSession;
 
 public class DefaultSpringMybatisProvider implements DatasourceProvider<SqlSession> {

@@ -1,4 +1,4 @@
-package dev.simpleframework.core.util;
+package dev.simpleframework.util;
 
 import java.lang.invoke.SerializedLambda;
 import java.lang.ref.WeakReference;

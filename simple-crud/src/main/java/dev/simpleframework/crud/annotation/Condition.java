@@ -1,7 +1,7 @@
 package dev.simpleframework.crud.annotation;
 
-import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.crud.core.ConditionType;
+import dev.simpleframework.util.Strings;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Repeatable;

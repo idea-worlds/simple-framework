@@ -1,10 +1,10 @@
 package dev.simpleframework.crud.info.dynamic;
 
-import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.info.AbstractModelInfo;
+import dev.simpleframework.util.Strings;
 
 import java.util.Map;
 

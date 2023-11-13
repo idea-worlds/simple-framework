@@ -1,4 +1,4 @@
-package dev.simpleframework.core.util;
+package dev.simpleframework.util;
 
 import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
@@ -32,6 +32,14 @@ public final class Jsons {
 
     public static boolean present() {
         return !jacksonExist && !fastjsonExist;
+    }
+
+    public static boolean jacksonExist() {
+        return jacksonExist;
+    }
+
+    public static boolean fastjsonExist() {
+        return fastjsonExist;
     }
 
     public static ObjectMapper objectMapper() {

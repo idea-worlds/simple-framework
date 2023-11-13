@@ -1,6 +1,6 @@
 package dev.simpleframework.util.test;
 
-import dev.simpleframework.core.util.Strings;
+import dev.simpleframework.util.Strings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

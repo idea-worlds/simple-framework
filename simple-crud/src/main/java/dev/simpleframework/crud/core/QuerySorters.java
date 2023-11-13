@@ -1,7 +1,7 @@
 package dev.simpleframework.crud.core;
 
-import dev.simpleframework.core.util.Functions;
-import dev.simpleframework.core.util.SerializedFunction;
+import dev.simpleframework.util.Functions;
+import dev.simpleframework.util.SerializedFunction;
 import lombok.Getter;
 
 import java.util.LinkedHashMap;

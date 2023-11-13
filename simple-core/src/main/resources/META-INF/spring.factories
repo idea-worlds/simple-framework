@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-dev.simpleframework.core.util.SimpleSpringUtils
+dev.simpleframework.util.SimpleSpringUtils

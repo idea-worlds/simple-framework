@@ -1,6 +1,6 @@
 package dev.simpleframework.crud.core;
 
-import dev.simpleframework.core.util.SerializedFunction;
+import dev.simpleframework.util.SerializedFunction;
 import lombok.Data;
 
 import java.util.Collection;

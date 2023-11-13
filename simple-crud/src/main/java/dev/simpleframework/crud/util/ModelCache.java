@@ -1,6 +1,5 @@
 package dev.simpleframework.crud.util;
 
-import dev.simpleframework.core.util.Classes;
 import dev.simpleframework.crud.DynamicModel;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.DatasourceType;
@@ -8,6 +7,7 @@ import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.crud.exception.ModelRegisterException;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.helper.DatasourceProvider;
+import dev.simpleframework.util.Classes;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
