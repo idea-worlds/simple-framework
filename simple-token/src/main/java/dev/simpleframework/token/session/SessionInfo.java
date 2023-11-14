@@ -24,6 +24,10 @@ public class SessionInfo implements Serializable {
      */
     private String loginId;
     /**
+     * 用户名
+     */
+    private String userName;
+    /**
      * 创建时间
      */
     private long createTime;
@@ -41,13 +45,15 @@ public class SessionInfo implements Serializable {
     private Map<String, Object> attrs;
 
     public SessionInfo() {
+        this.userName = "";
         this.createTime = System.currentTimeMillis();
         this.attrs = new HashMap<>();
     }
 
-    public SessionInfo(String accountType, String loginId, long expiredTime) {
+    public SessionInfo(String accountType, String loginId, String userName, long expiredTime) {
         this.accountType = accountType;
         this.loginId = loginId;
+        this.userName = userName;
         this.createTime = System.currentTimeMillis();
         this.expiredTime = expiredTime;
         this.attrs = new HashMap<>();

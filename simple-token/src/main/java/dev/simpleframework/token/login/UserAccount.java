@@ -8,7 +8,7 @@ import lombok.Data;
  * @author loyayz (loyayz@foxmail.com)
  */
 @Data
-public class AccountInfo {
+public class UserAccount {
 
     private String id;
     private String account;

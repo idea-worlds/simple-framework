@@ -5,9 +5,9 @@ import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.context.SimpleTokenRpcContext;
-import dev.simpleframework.token.login.AccountManager;
-import dev.simpleframework.token.login.AccountPasswordValidator;
-import dev.simpleframework.token.login.AccountStore;
+import dev.simpleframework.token.login.UserManager;
+import dev.simpleframework.token.login.UserAccountPasswordValidator;
+import dev.simpleframework.token.login.UserQuery;
 import dev.simpleframework.token.path.PathManager;
 import dev.simpleframework.token.permission.PermissionManager;
 import dev.simpleframework.token.permission.PermissionStore;
@@ -56,13 +56,13 @@ public class SimpleTokenSpringRegisterAutoConfiguration implements InitializingB
     }
 
     @Autowired(required = false)
-    public void setAccountStore(AccountStore store) {
-        AccountManager.registerStore(store);
+    public void setUserQuery(UserQuery query) {
+        UserManager.registerQuery(query);
     }
 
     @Autowired(required = false)
-    public void setAccountPasswordValidator(AccountPasswordValidator validator) {
-        AccountManager.registerValidator(validator);
+    public void setUserAccountPasswordValidator(UserAccountPasswordValidator validator) {
+        UserManager.registerPasswordValidator(validator);
     }
 
     @Autowired(required = false)

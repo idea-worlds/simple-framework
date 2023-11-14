@@ -54,6 +54,7 @@ public class DefaultSessionGenerator implements SessionGenerator {
                 .setKey(secretKey.getBytes(StandardCharsets.UTF_8))
                 .setSubject("token")
                 .setJWTId(info.getAccountType() + ":" + info.getLoginId())
+                .setIssuer(info.getUserName())
                 .setIssuedAt(new Date(info.getCreateTime()))
                 .setExpiresAt(new Date(info.getExpiredTime()))
                 .setCharset(StandardCharsets.UTF_8);

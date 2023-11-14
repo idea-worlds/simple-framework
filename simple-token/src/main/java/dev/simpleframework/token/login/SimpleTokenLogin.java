@@ -47,6 +47,7 @@ public class SimpleTokenLogin {
     }
 
     public void exec() {
+        UserInfo user = UserManager.findInfoById(this.getType(), this.id);
         // 过期时间
         long expiredTime = this.setting.getTimeout().toMillis() + this.now;
         // 是否需要存储 session
@@ -68,7 +69,7 @@ public class SimpleTokenLogin {
                 this.apps.removeTokens(Collections.singleton(shareToken));
                 shareToken = null;
             }
-            this.session = SessionManager.createSession(this.getType(), this.id, expiredTime);
+            this.session = SessionManager.createSession(this.getType(), this.id, user.getName(), expiredTime);
         }
 
         if (needStore) {

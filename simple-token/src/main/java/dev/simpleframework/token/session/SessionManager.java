@@ -53,9 +53,9 @@ public final class SessionManager {
      * @param expiredTime 过期时间
      * @return 会话值
      */
-    public static SessionInfo createSession(String accountType, String loginId, long expiredTime) {
+    public static SessionInfo createSession(String accountType, String loginId, String userName, long expiredTime) {
         validGenerator();
-        SessionInfo session = new SessionInfo(accountType, loginId, expiredTime);
+        SessionInfo session = new SessionInfo(accountType, loginId, userName, expiredTime);
         return GENERATOR.generate(session);
     }
 

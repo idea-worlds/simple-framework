@@ -1,6 +1,5 @@
 package dev.simpleframework.token;
 
-import dev.simpleframework.core.Pair;
 import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.InvalidTokenException;
@@ -66,13 +65,39 @@ public final class SimpleTokens {
     }
 
     /**
-     * 获取当前登录的账号类型和用户 id
+     * 获取当前登录的账号类型
      *
-     * @return 账号类型, 用户 id
+     * @return 账号类型
      */
-    public static Pair<String, String> getAccountTypeAndLoginId() {
-        SessionInfo session = getSession();
-        return new Pair<>(session.getAccountType(), session.getLoginId());
+    public static String getLoginAccountType() {
+        return getSession().getAccountType();
+    }
+
+    /**
+     * 获取当前登录的用户 id
+     *
+     * @return 用户 id
+     */
+    public static String getLoginId() {
+        return getSession().getLoginId();
+    }
+
+    /**
+     * 获取当前登录的用户 id 并转为 long 类型
+     *
+     * @return 用户 id
+     */
+    public static long getLoginIdAsLong() {
+        return Long.parseLong(getLoginId());
+    }
+
+    /**
+     * 获取当前登录的用户名
+     *
+     * @return 用户名
+     */
+    public static String getLoginUserName() {
+        return getSession().getUserName();
     }
 
     /**
@@ -219,9 +244,9 @@ public final class SimpleTokens {
      */
     public static LoginResponse loginByAccount(String account, String password, LoginSetting config) {
         String accountType = config.getAccountType();
-        AccountInfo info = AccountManager.findInfoByName(accountType, account);
-        AccountManager.validatePassword(accountType, password, info.getPassword());
-        return login(info.getId(), config);
+        UserAccount userAccount = UserManager.findAccountByName(accountType, account);
+        UserManager.validatePassword(accountType, password, userAccount.getPassword());
+        return login(userAccount.getId(), config);
     }
 
     /**
