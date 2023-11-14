@@ -3,27 +3,35 @@ package dev.simpleframework.token.autoconfigure;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
-import dev.simpleframework.token.context.SimpleTokenContextForFramework;
-import dev.simpleframework.token.context.SimpleTokenContextForRpc;
+import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
+import dev.simpleframework.token.context.SimpleTokenRpcContext;
 import dev.simpleframework.token.login.AccountManager;
 import dev.simpleframework.token.login.AccountPasswordValidator;
 import dev.simpleframework.token.login.AccountStore;
 import dev.simpleframework.token.path.PathManager;
 import dev.simpleframework.token.permission.PermissionManager;
 import dev.simpleframework.token.permission.PermissionStore;
+import dev.simpleframework.token.session.SessionGenerator;
+import dev.simpleframework.token.session.SessionManager;
+import dev.simpleframework.token.session.SessionStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+
+import java.util.List;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
 @Configuration
 @RequiredArgsConstructor
-@Order
+@AutoConfigureAfter(SimpleTokenSpringAutoConfiguration.class)
+@Order(Ordered.LOWEST_PRECEDENCE - 90)
 public class SimpleTokenSpringRegisterAutoConfiguration implements InitializingBean {
 
     @Value("${server.servlet.context-path:}")
@@ -38,13 +46,13 @@ public class SimpleTokenSpringRegisterAutoConfiguration implements InitializingB
     }
 
     @Autowired(required = false)
-    public void setContextForFramework(SimpleTokenContextForFramework context) {
+    public void setFrameworkContext(SimpleTokenFrameworkContext context) {
         ContextManager.registerFrameworkContext(context);
     }
 
     @Autowired(required = false)
-    public void setContextForRpc(SimpleTokenContextForRpc context) {
-        ContextManager.registerRpcContext(context);
+    public void setRpcContext(List<SimpleTokenRpcContext> contexts) {
+        ContextManager.registerRpcContext(contexts);
     }
 
     @Autowired(required = false)
@@ -60,6 +68,16 @@ public class SimpleTokenSpringRegisterAutoConfiguration implements InitializingB
     @Autowired(required = false)
     public void setPermissionStore(PermissionStore store) {
         PermissionManager.registerStore(store);
+    }
+
+    @Autowired(required = false)
+    public void setSessionStore(SessionStore store) {
+        SessionManager.registerStore(store);
+    }
+
+    @Autowired(required = false)
+    public void setSessionGenerator(SessionGenerator generator) {
+        SessionManager.registerGenerator(generator);
     }
 
     @Override

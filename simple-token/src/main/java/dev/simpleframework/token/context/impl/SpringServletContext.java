@@ -1,7 +1,7 @@
 package dev.simpleframework.token.context.impl;
 
 import dev.simpleframework.core.Pair;
-import dev.simpleframework.token.context.SimpleTokenContextForFramework;
+import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.exception.InvalidContextException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +19,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  */
 public class SpringServletContext
         extends AbstractSimpleTokenContext<HttpServletRequest, HttpServletResponse, HttpServletRequest>
-        implements SimpleTokenContextForFramework {
+        implements SimpleTokenFrameworkContext {
 
     private static final ThreadLocal<Pair<HttpServletRequest, HttpServletResponse>> threadLocal = new InheritableThreadLocal<>();
 

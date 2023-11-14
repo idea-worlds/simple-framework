@@ -5,7 +5,7 @@ import dev.simpleframework.token.exception.InvalidContextException;
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public interface SimpleTokenContextForRpc extends SimpleTokenContext {
+public interface SimpleTokenRpcContext extends SimpleTokenContext {
 
     @Override
     default boolean matchPath(String pattern, String path) {

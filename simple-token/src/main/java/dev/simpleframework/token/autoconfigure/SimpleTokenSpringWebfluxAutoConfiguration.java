@@ -1,10 +1,11 @@
 package dev.simpleframework.token.autoconfigure;
 
 import dev.simpleframework.token.SimpleTokens;
-import dev.simpleframework.token.context.SimpleTokenContextForFramework;
+import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.context.impl.SpringReactorContext;
 import dev.simpleframework.token.filter.SimpleTokenFilter;
 import dev.simpleframework.token.filter.impl.SimpleTokenSpringReactorFilter;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
@@ -21,12 +22,13 @@ import reactor.core.publisher.Mono;
  */
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
+@AutoConfigureAfter(SimpleTokenSpringRegisterAutoConfiguration.class)
 @Order(Ordered.LOWEST_PRECEDENCE - 100)
 public class SimpleTokenSpringWebfluxAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(SimpleTokenContextForFramework.class)
-    public SimpleTokenContextForFramework simpleTokenContextForFramework() {
+    @ConditionalOnMissingBean(SimpleTokenFrameworkContext.class)
+    public SimpleTokenFrameworkContext simpleTokenFrameworkContext() {
         return new SpringReactorContext();
     }
 

@@ -5,22 +5,36 @@ import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionStore;
 import dev.simpleframework.token.session.SimpleTokenApps;
 
+import java.time.Duration;
+
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
 public abstract class AbstractSessionStore implements SessionStore {
 
-    protected abstract void set(String key, Object value, long timeout);
+    protected abstract void set(String key, Object value, Duration timeoutSecond);
 
-    protected abstract <T> T get(String key);
+    protected abstract <T> T get(String key, Class<T> clazz);
 
     protected abstract void remove(String key);
 
     @Override
     public void setSession(SessionInfo session) {
         String key = this.toSessionKey(session.getToken());
-        long timeout = session.getExpiredTime() - System.currentTimeMillis();
+        Duration timeout = Duration.ofMillis(session.getExpiredTime() - System.currentTimeMillis());
         this.set(key, session, timeout);
+    }
+
+    @Override
+    public SessionInfo getSession(String token) {
+        String key = this.toSessionKey(token);
+        return this.get(key, SessionInfo.class);
+    }
+
+    @Override
+    public void removeSession(String token) {
+        String key = this.toSessionKey(token);
+        this.remove(key);
     }
 
     @Override
@@ -30,26 +44,20 @@ public abstract class AbstractSessionStore implements SessionStore {
         if (expiredTime == 0) {
             this.remove(key);
         } else {
-            long timeout = apps.findLastExpiredTime() - System.currentTimeMillis();
+            Duration timeout = Duration.ofMillis(apps.findLastExpiredTime() - System.currentTimeMillis());
             this.set(key, apps, timeout);
         }
     }
 
     @Override
-    public SessionInfo getSession(String token) {
-        String key = this.toSessionKey(token);
-        return this.get(key);
-    }
-
-    @Override
     public SimpleTokenApps getApps(String accountType, String loginId) {
         String key = this.toAppsKey(accountType, loginId);
-        return this.get(key);
+        return this.get(key, SimpleTokenApps.class);
     }
 
     @Override
-    public void removeSession(String token) {
-        String key = this.toSessionKey(token);
+    public void removeApps(String accountType, String loginId) {
+        String key = this.toAppsKey(accountType, loginId);
         this.remove(key);
     }
 

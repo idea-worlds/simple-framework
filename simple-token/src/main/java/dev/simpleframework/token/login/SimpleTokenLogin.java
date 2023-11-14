@@ -1,13 +1,14 @@
 package dev.simpleframework.token.login;
 
-import dev.simpleframework.core.util.Strings;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
+import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SimpleTokenApps;
+import dev.simpleframework.util.Strings;
 import lombok.Getter;
 
 import java.util.Collections;
@@ -48,14 +49,16 @@ public class SimpleTokenLogin {
     public void exec() {
         // 过期时间
         long expiredTime = this.setting.getTimeout().toMillis() + this.now;
+        // 是否需要存储 session
+        boolean needStore = this.needStore();
         // 查找当前账号是否已登录，未登录时构建一个新的应用会话值
-        this.apps = SessionManager.findApps(this.getType(), this.id);
+        this.apps = needStore ? SessionManager.findApps(this.getType(), this.id) : null;
         if (this.apps == null) {
             this.apps = new SimpleTokenApps(this.getType(), this.id);
         }
         // 共享 token 时查出最后过期的会话
         String shareToken = null;
-        if (this.config.getShareToken()) {
+        if (needStore && this.config.getShareToken()) {
             shareToken = this.apps.findLastExpiredToken();
             this.session = SessionManager.findSession(shareToken);
         }
@@ -67,20 +70,23 @@ public class SimpleTokenLogin {
             }
             this.session = SessionManager.createSession(this.getType(), this.id, expiredTime);
         }
-        // 修改会话过期时间
-        this.session.setExpiredTime(expiredTime);
-        // 非共享 token 时添加应用会话信息，并根据配置的策略获取过期的 token 用于登录后踢出
-        if (shareToken == null) {
-            String app = this.setting.getApp();
-            String token = this.session.getToken();
-            this.apps.addApp(app, token, this.now, expiredTime);
-            this.expiredTokens = this.apps.removeExpiredByConfig(this.config, app, token);
+
+        if (needStore) {
+            // 修改会话过期时间
+            this.session.setExpiredTime(expiredTime);
+            // 非共享 token 时添加应用会话信息，并根据配置的策略获取过期的 token 用于登录后踢出
+            if (shareToken == null) {
+                String app = this.setting.getApp();
+                String token = this.session.getToken();
+                this.apps.addApp(app, token, this.now, expiredTime);
+                this.expiredTokens = this.apps.removeExpiredByConfig(this.config, app, token);
+            }
+            // 存储会话
+            SessionManager.storeSession(this.session);
+            // 存储应用会话
+            SessionManager.storeApps(this.getType(), this.id, this.apps);
         }
 
-        // 存储会话
-        SessionManager.storeSession(this.session);
-        // 存储应用会话
-        SessionManager.storeApps(this.getType(), this.id, this.apps);
         // 存储 token 至上下文
         ContextManager.storeToken(this.getToken(), expiredTime);
     }
@@ -94,6 +100,11 @@ public class SimpleTokenLogin {
 
     public String getType() {
         return this.setting.getAccountType();
+    }
+
+    private boolean needStore() {
+        // jwt 风格的 token 不需要存储 session
+        return this.config.getTokenStyle() != TokenStyle.JWT;
     }
 
 }

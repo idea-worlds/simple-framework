@@ -131,7 +131,7 @@ public final class SessionManager {
      */
     public static void removeApps(String accountType, String loginId) {
         validStore();
-        STORE.setApps(accountType, loginId, new SimpleTokenApps(accountType, loginId));
+        STORE.removeApps(accountType, loginId);
     }
 
     private static void validGenerator() {

@@ -1,6 +1,6 @@
 package dev.simpleframework.token.context.impl;
 
-import dev.simpleframework.token.context.SimpleTokenContextForFramework;
+import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.exception.InvalidContextException;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.server.PathContainer;
@@ -19,7 +19,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  */
 public class SpringReactorContext
         extends AbstractSimpleTokenContext<ServerHttpRequest, ServerHttpResponse, ServerWebExchange>
-        implements SimpleTokenContextForFramework {
+        implements SimpleTokenFrameworkContext {
 
     private static final ThreadLocal<ServerWebExchange> threadLocal = new InheritableThreadLocal<>();
 

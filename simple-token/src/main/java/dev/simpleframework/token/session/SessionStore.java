@@ -15,6 +15,21 @@ public interface SessionStore {
     void setSession(SessionInfo session);
 
     /**
+     * 获取会话值
+     *
+     * @param token 会话 token
+     * @return 会话值
+     */
+    SessionInfo getSession(String token);
+
+    /**
+     * 清除 session
+     *
+     * @param token token
+     */
+    void removeSession(String token);
+
+    /**
      * 存储应用会话值
      *
      * @param accountType 账号类型
@@ -22,14 +37,6 @@ public interface SessionStore {
      * @param apps        应用会话值
      */
     void setApps(String accountType, String loginId, SimpleTokenApps apps);
-
-    /**
-     * 获取会话值
-     *
-     * @param token 会话 token
-     * @return 会话值
-     */
-    SessionInfo getSession(String token);
 
     /**
      * 获取应用会话值
@@ -41,10 +48,11 @@ public interface SessionStore {
     SimpleTokenApps getApps(String accountType, String loginId);
 
     /**
-     * 清除 session
+     * 清楚应用会话值
      *
-     * @param token token
+     * @param accountType 账号类型
+     * @param loginId     登录 id
      */
-    void removeSession(String token);
+    void removeApps(String accountType, String loginId);
 
 }
