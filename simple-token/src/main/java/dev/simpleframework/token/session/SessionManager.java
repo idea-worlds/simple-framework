@@ -97,7 +97,7 @@ public final class SessionManager {
      * 查找用户的所有会话值
      *
      * @param loginId 登录 id
-     * @return 应用会话值
+     * @return 会话值
      */
     public static SessionPerson findPerson(String loginId) {
         validStore();

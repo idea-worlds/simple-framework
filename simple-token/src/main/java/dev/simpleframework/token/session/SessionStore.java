@@ -41,7 +41,7 @@ public interface SessionStore {
      * 获取用户所有会话值
      *
      * @param loginId 登录 id
-     * @return 应用会话值
+     * @return 会话值
      */
     SessionPerson getPerson(String loginId);
 

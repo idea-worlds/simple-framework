@@ -46,20 +46,20 @@ public class SimpleTokenLoginConfig {
      */
     private LoginMaxStrategy maxStrategy = LoginMaxStrategy.KICK_OUT_FIRST_CREATE;
     /**
-     * 各应用的配置
+     * 各客户端的配置
      */
-    private Map<String, AppConfig> apps = new HashMap<>();
+    private Map<String, ClientConfig> clients = new HashMap<>();
 
-    public AppConfig findAppConfig(String app) {
-        AppConfig config = this.apps.get(app);
+    public ClientConfig findClientConfig(String client) {
+        ClientConfig config = this.clients.get(client);
         if (config == null) {
-            config = new AppConfig();
+            config = new ClientConfig();
         }
         return config;
     }
 
     @Data
-    public static class AppConfig {
+    public static class ClientConfig {
         /**
          * 最大登录数量，默认 1
          * <0 : 不限数量

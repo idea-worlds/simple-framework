@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class SimpleTokenKickout {
     private String loginId;
-    private String app;
+    private String client;
     private SessionPerson person;
 
     public SimpleTokenKickout() {
@@ -17,9 +17,9 @@ public class SimpleTokenKickout {
         this.loginId = loginId;
     }
 
-    public SimpleTokenKickout(String loginId, String app) {
+    public SimpleTokenKickout(String loginId, String client) {
         this.loginId = loginId;
-        this.app = app;
+        this.client = client;
     }
 
     public void exec() {
@@ -27,17 +27,17 @@ public class SimpleTokenKickout {
         if (this.person == null) {
             return;
         }
-        if (this.app == null) {
+        if (this.client == null) {
             List<String> tokens = this.person.findAllTokens();
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
             // 删除用户所有会话
             SessionManager.removePerson(this.loginId);
         } else {
-            List<String> tokens = this.person.findAllTokens(this.app);
+            List<String> tokens = this.person.findAllTokens(this.client);
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
-            // 删除应用会话中对应的 token
+            // 删除用户所有会话中对应的 token
             this.person.removeTokens(tokens);
             SessionManager.storePerson(this.loginId, this.person);
         }

@@ -14,24 +14,24 @@ public class SimpleTokenPersonTest {
 
     private static SessionPerson mock() {
         SessionPerson person = new SessionPerson();
-        person.addApp("1", UUID.randomUUID().toString(), now, now);
-        person.addApp("1", UUID.randomUUID().toString(), now, now - 1000);
-        person.addApp("1", UUID.randomUUID().toString(), now, now + 3000);
-        person.addApp("2", UUID.randomUUID().toString(), now, now - 2000);
-        person.addApp("2", UUID.randomUUID().toString(), now, now + 1000);
-        person.addApp("2", UUID.randomUUID().toString(), now, now + 2000);
-        person.addApp("1", UUID.randomUUID().toString(), now, now - 3000);
+        person.addClient("1", UUID.randomUUID().toString(), now, now);
+        person.addClient("1", UUID.randomUUID().toString(), now, now - 1000);
+        person.addClient("1", UUID.randomUUID().toString(), now, now + 3000);
+        person.addClient("2", UUID.randomUUID().toString(), now, now - 2000);
+        person.addClient("2", UUID.randomUUID().toString(), now, now + 1000);
+        person.addClient("2", UUID.randomUUID().toString(), now, now + 2000);
+        person.addClient("1", UUID.randomUUID().toString(), now, now - 3000);
         return person;
     }
 
     @Test
     public void removeExpired() {
         SessionPerson person = mock();
-        Assertions.assertEquals(person.getApps().get("1").size(), 4);
-        Assertions.assertEquals(person.getApps().get("2").size(), 3);
+        Assertions.assertEquals(person.getClients().get("1").size(), 4);
+        Assertions.assertEquals(person.getClients().get("2").size(), 3);
         person.removeExpired();
-        Assertions.assertEquals(person.getApps().get("1").size(), 1);
-        Assertions.assertEquals(person.getApps().get("2").size(), 2);
+        Assertions.assertEquals(person.getClients().get("1").size(), 1);
+        Assertions.assertEquals(person.getClients().get("2").size(), 2);
     }
 
     @Test
@@ -40,23 +40,23 @@ public class SimpleTokenPersonTest {
         SessionPerson person = new SessionPerson();
         String token1 = UUID.randomUUID().toString();
         String token2 = UUID.randomUUID().toString();
-        person.addApp("1", token1, now, now);
-        person.addApp("1", token1, now, now - 1000);
-        person.addApp("1", UUID.randomUUID().toString(), now, now - 3000);
-        person.addApp("2", UUID.randomUUID().toString(), now, now - 2000);
-        person.addApp("2", token2, now, now + 1000);
-        person.addApp("2", UUID.randomUUID().toString(), now, now + 2000);
-        person.addApp("1", token2, now, now + 3000);
-        person.addApp("3", token1, now, now + 2000);
-        person.addApp("3", token2, now, now + 3000);
+        person.addClient("1", token1, now, now);
+        person.addClient("1", token1, now, now - 1000);
+        person.addClient("1", UUID.randomUUID().toString(), now, now - 3000);
+        person.addClient("2", UUID.randomUUID().toString(), now, now - 2000);
+        person.addClient("2", token2, now, now + 1000);
+        person.addClient("2", UUID.randomUUID().toString(), now, now + 2000);
+        person.addClient("1", token2, now, now + 3000);
+        person.addClient("3", token1, now, now + 2000);
+        person.addClient("3", token2, now, now + 3000);
 
-        Assertions.assertEquals(person.getApps().get("1").size(), 4);
-        Assertions.assertEquals(person.getApps().get("2").size(), 3);
-        Assertions.assertEquals(person.getApps().get("3").size(), 2);
+        Assertions.assertEquals(person.getClients().get("1").size(), 4);
+        Assertions.assertEquals(person.getClients().get("2").size(), 3);
+        Assertions.assertEquals(person.getClients().get("3").size(), 2);
         person.removeTokens(List.of(token1, token2));
-        Assertions.assertEquals(person.getApps().get("1").size(), 1);
-        Assertions.assertEquals(person.getApps().get("2").size(), 2);
-        Assertions.assertNull(person.getApps().get("3"));
+        Assertions.assertEquals(person.getClients().get("1").size(), 1);
+        Assertions.assertEquals(person.getClients().get("2").size(), 2);
+        Assertions.assertNull(person.getClients().get("3"));
     }
 
     @Test
@@ -68,7 +68,7 @@ public class SimpleTokenPersonTest {
     @Test
     public void findLastExpiredToken() {
         SessionPerson person = mock();
-        Assertions.assertEquals(person.findLastExpiredToken(), person.getApps().get("1").get(2).getToken());
+        Assertions.assertEquals(person.findLastExpiredToken(), person.getClients().get("1").get(2).getToken());
     }
 
 }

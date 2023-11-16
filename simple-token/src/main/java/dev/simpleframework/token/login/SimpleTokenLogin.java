@@ -22,7 +22,7 @@ import java.util.List;
 public class SimpleTokenLogin {
 
     private final String id;
-    private final String app;
+    private final String client;
     private Duration timeout;
     private final SimpleTokenLoginConfig config;
     private final long now = System.currentTimeMillis();
@@ -41,7 +41,7 @@ public class SimpleTokenLogin {
             throw new SimpleTokenException("Login id can not be null");
         }
         this.id = id;
-        this.app = setting.getApp();
+        this.client = setting.getClient();
         this.timeout = setting.getTimeout();
         this.config = SimpleTokens.getGlobalConfig().getLogin();
         if (this.timeout == null) {
@@ -78,15 +78,15 @@ public class SimpleTokenLogin {
         if (needStore) {
             // 修改会话过期时间
             this.session.setExpiredTime(expiredTime);
-            // 非共享 token 时添加应用会话信息，并根据配置的策略获取过期的 token 用于登录后踢出
+            // 非共享 token 时添加客户端会话信息，并根据配置的策略获取过期的 token 用于登录后踢出
             if (shareToken == null) {
                 String token = this.session.getToken();
-                this.person.addApp(this.app, token, this.now, expiredTime);
-                this.expiredTokens = this.person.removeExpiredByConfig(this.config, this.app, token);
+                this.person.addClient(this.client, token, this.now, expiredTime);
+                this.expiredTokens = this.person.removeExpiredByConfig(this.config, this.client, token);
             }
             // 存储会话
             SessionManager.storeSession(this.session);
-            // 存储应用会话
+            // 存储用户的所有会话
             SessionManager.storePerson(this.id, this.person);
         }
 

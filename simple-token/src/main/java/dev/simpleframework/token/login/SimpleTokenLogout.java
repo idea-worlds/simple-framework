@@ -14,7 +14,7 @@ import java.util.List;
 public class SimpleTokenLogout {
 
     private String loginId;
-    private String app;
+    private String client;
 
     public SimpleTokenLogout() {
     }
@@ -23,16 +23,16 @@ public class SimpleTokenLogout {
         this.loginId = loginId;
     }
 
-    public SimpleTokenLogout(String loginId, String app) {
+    public SimpleTokenLogout(String loginId, String client) {
         this.loginId = loginId;
-        this.app = app;
+        this.client = client;
     }
 
     public void exec() {
         if (this.loginId == null) {
             this.logoutByToken();
         } else {
-            this.logoutByUserApp();
+            this.logoutByPersonClient();
         }
     }
 
@@ -59,20 +59,20 @@ public class SimpleTokenLogout {
         }
     }
 
-    private void logoutByUserApp() {
+    private void logoutByPersonClient() {
         SessionPerson person = SessionManager.findPerson(this.loginId);
         if (person == null) {
             // 查无会话，说明该账号未登录过
             return;
         }
-        if (this.app == null) {
+        if (this.client == null) {
             List<String> tokens = person.findAllTokens();
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
             // 删除用户所有会话
             SessionManager.removePerson(this.loginId);
         } else {
-            List<String> tokens = person.findAllTokens(this.app);
+            List<String> tokens = person.findAllTokens(this.client);
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
             // 删除用户所有会话中对应的 token

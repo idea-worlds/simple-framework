@@ -283,27 +283,27 @@ public final class SimpleTokens {
     }
 
     /**
-     * 登出（注销用户在某个应用的所有登录信息）
+     * 登出（注销用户在某个客户端的所有登录信息）
      *
-     * @param id  用户 id
-     * @param app 应用
+     * @param id     用户 id
+     * @param client 客户端
      */
-    public static void logout(Long id, String app) {
+    public static void logout(Long id, String client) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        logout(id.toString(), app);
+        logout(id.toString(), client);
     }
 
     /**
-     * 登出（注销用户在某个应用的所有登录信息）
+     * 登出（注销用户在某个客户端的所有登录信息）
      *
-     * @param id  用户 id
-     * @param app 应用
+     * @param id     用户 id
+     * @param client 客户端
      */
-    public static void logout(String id, String app) {
+    public static void logout(String id, String client) {
         // 构建一个登出领域对象执行登出逻辑
-        new SimpleTokenLogout(id, app).exec();
+        new SimpleTokenLogout(id, client).exec();
     }
 
     /**
@@ -330,24 +330,24 @@ public final class SimpleTokens {
     /**
      * 踢用户下线
      *
-     * @param id  用户 id
-     * @param app 应用
+     * @param id     用户 id
+     * @param client 客户端
      */
-    public static void kickout(Long id, String app) {
+    public static void kickout(Long id, String client) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        kickout(id.toString(), app);
+        kickout(id.toString(), client);
     }
 
     /**
      * 踢用户下线
      *
-     * @param id  用户 id
-     * @param app 应用
+     * @param id     用户 id
+     * @param client 客户端
      */
-    public static void kickout(String id, String app) {
-        new SimpleTokenKickout(id, app).exec();
+    public static void kickout(String id, String client) {
+        new SimpleTokenKickout(id, client).exec();
     }
 
     /**
