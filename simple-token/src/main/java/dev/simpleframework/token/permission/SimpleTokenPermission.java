@@ -10,7 +10,6 @@ import java.util.List;
  */
 public class SimpleTokenPermission {
 
-    private final String accountType;
     private final String loginId;
     private List<String> permissions;
     private List<String> roles;
@@ -19,8 +18,8 @@ public class SimpleTokenPermission {
     @Getter
     private String notMatch = "";
 
-    public static SimpleTokenPermission of(String accountType, String loginId) {
-        return new SimpleTokenPermission(accountType, loginId);
+    public static SimpleTokenPermission of(String loginId) {
+        return new SimpleTokenPermission(loginId);
     }
 
     public List<String> getPermissions() {
@@ -91,7 +90,7 @@ public class SimpleTokenPermission {
         if (this.foundPermissions) {
             return;
         }
-        this.permissions = PermissionManager.listPermissions(this.accountType, this.loginId);
+        this.permissions = PermissionManager.listPermissions(this.loginId);
         this.foundPermissions = true;
     }
 
@@ -99,7 +98,7 @@ public class SimpleTokenPermission {
         if (this.foundRoles) {
             return;
         }
-        this.roles = PermissionManager.listRoles(this.accountType, this.loginId);
+        this.roles = PermissionManager.listRoles(this.loginId);
         this.foundRoles = true;
     }
 
@@ -119,8 +118,7 @@ public class SimpleTokenPermission {
         return false;
     }
 
-    private SimpleTokenPermission(String accountType, String loginId) {
-        this.accountType = accountType;
+    private SimpleTokenPermission(String loginId) {
         this.loginId = loginId;
     }
 

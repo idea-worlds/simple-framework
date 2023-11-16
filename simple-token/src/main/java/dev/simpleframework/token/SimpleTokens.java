@@ -10,7 +10,7 @@ import dev.simpleframework.token.login.*;
 import dev.simpleframework.token.permission.SimpleTokenPermission;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
-import dev.simpleframework.token.session.SimpleTokenApps;
+import dev.simpleframework.token.session.SessionPerson;
 import dev.simpleframework.token.session.SimpleTokenKickout;
 import lombok.extern.slf4j.Slf4j;
 
@@ -65,15 +65,6 @@ public final class SimpleTokens {
     }
 
     /**
-     * 获取当前登录的账号类型
-     *
-     * @return 账号类型
-     */
-    public static String getLoginAccountType() {
-        return getSession().getAccountType();
-    }
-
-    /**
      * 获取当前登录的用户 id
      *
      * @return 用户 id
@@ -112,15 +103,14 @@ public final class SimpleTokens {
     }
 
     /**
-     * 指定账号是否已登录
+     * 指定用户是否已登录
      *
-     * @param accountType 账号类型
-     * @param loginId     用户 id
+     * @param loginId 用户 id
      * @return true: 已登录； false: 未登录
      */
-    public static boolean isLogin(String accountType, String loginId) {
-        SimpleTokenApps apps = SessionManager.findApps(accountType, loginId);
-        return apps != null && System.currentTimeMillis() < apps.findLastExpiredTime();
+    public static boolean isLogin(String loginId) {
+        SessionPerson person = SessionManager.findPerson(loginId);
+        return person != null && System.currentTimeMillis() < person.findLastExpiredTime();
     }
 
     /**
@@ -210,7 +200,7 @@ public final class SimpleTokens {
         SimpleTokenLogin login = new SimpleTokenLogin(id, config);
         login.exec();
 
-        // 踢出本次登录后改账号过期的 token
+        // 踢出本次登录后该用户过期的 token
         try {
             List<String> expiredTokens = login.getExpiredTokens();
             new SimpleTokenKickout().execByToken(expiredTokens);
@@ -225,26 +215,39 @@ public final class SimpleTokens {
      * 根据账号密码进行会话登录
      * 账号名、账号密码错误会抛异常
      *
-     * @param account  账号名
-     * @param password 账号密码
+     * @param accountName 账号名
+     * @param password    账号密码
      * @return token
      */
-    public static LoginResponse loginByAccount(String account, String password) {
-        return loginByAccount(account, password, new LoginSetting());
+    public static LoginResponse loginByAccount(String accountName, String password) {
+        return loginByAccount("default", accountName, password, new LoginSetting());
+    }
+
+    /**
+     * 根据账号密码进行会话登录
+     * 账号名、账号密码错误会抛异常
+     *
+     * @param accountType 账号类型
+     * @param accountName 账号名
+     * @param password    账号密码
+     * @return token
+     */
+    public static LoginResponse loginByAccount(String accountType, String accountName, String password) {
+        return loginByAccount(accountType, accountName, password, new LoginSetting());
     }
 
     /**
      * 根据账号密码进行会话登录，并指定所有登录参数
      * 账号名、账号密码错误会抛异常
      *
-     * @param account  账号名
-     * @param password 账号密码
-     * @param config   登录的参数
+     * @param accountType 账号类型
+     * @param accountName 账号名
+     * @param password    账号密码
+     * @param config      登录的参数
      * @return token
      */
-    public static LoginResponse loginByAccount(String account, String password, LoginSetting config) {
-        String accountType = config.getAccountType();
-        UserAccount userAccount = UserManager.findAccountByName(accountType, account);
+    public static LoginResponse loginByAccount(String accountType, String accountName, String password, LoginSetting config) {
+        UserAccount userAccount = UserManager.findAccountByName(accountType, accountName);
         UserManager.validatePassword(accountType, password, userAccount.getPassword());
         return login(userAccount.getId(), config);
     }
@@ -260,99 +263,91 @@ public final class SimpleTokens {
     /**
      * 登出（注销用户的所有登录信息）
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
+     * @param id 用户 id
      */
-    public static void logout(String accountType, Long id) {
+    public static void logout(Long id) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        logout(accountType, id.toString());
+        logout(id.toString());
     }
 
     /**
      * 登出（注销用户的所有登录信息）
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
+     * @param id 用户 id
      */
-    public static void logout(String accountType, String id) {
+    public static void logout(String id) {
         // 构建一个登出领域对象执行登出逻辑
-        new SimpleTokenLogout(accountType, id).exec();
+        new SimpleTokenLogout(id).exec();
     }
 
     /**
      * 登出（注销用户在某个应用的所有登录信息）
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
-     * @param app         应用
+     * @param id  用户 id
+     * @param app 应用
      */
-    public static void logout(String accountType, Long id, String app) {
+    public static void logout(Long id, String app) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        logout(accountType, id.toString(), app);
+        logout(id.toString(), app);
     }
 
     /**
      * 登出（注销用户在某个应用的所有登录信息）
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
-     * @param app         应用
+     * @param id  用户 id
+     * @param app 应用
      */
-    public static void logout(String accountType, String id, String app) {
+    public static void logout(String id, String app) {
         // 构建一个登出领域对象执行登出逻辑
-        new SimpleTokenLogout(accountType, id, app).exec();
+        new SimpleTokenLogout(id, app).exec();
     }
 
     /**
      * 踢用户下线
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
+     * @param id 用户 id
      */
-    public static void kickout(String accountType, Long id) {
+    public static void kickout(Long id) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        kickout(accountType, id.toString());
+        kickout(id.toString());
     }
 
     /**
      * 踢用户下线
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
+     * @param id 用户 id
      */
-    public static void kickout(String accountType, String id) {
-        new SimpleTokenKickout(accountType, id).exec();
+    public static void kickout(String id) {
+        new SimpleTokenKickout(id).exec();
     }
 
     /**
      * 踢用户下线
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
-     * @param app         应用
+     * @param id  用户 id
+     * @param app 应用
      */
-    public static void kickout(String accountType, Long id, String app) {
+    public static void kickout(Long id, String app) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        kickout(accountType, id.toString(), app);
+        kickout(id.toString(), app);
     }
 
     /**
      * 踢用户下线
      *
-     * @param accountType 账号类型
-     * @param id          用户 id
-     * @param app         应用
+     * @param id  用户 id
+     * @param app 应用
      */
-    public static void kickout(String accountType, String id, String app) {
-        new SimpleTokenKickout(accountType, id, app).exec();
+    public static void kickout(String id, String app) {
+        new SimpleTokenKickout(id, app).exec();
     }
 
     /**
@@ -365,7 +360,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 获取当前账号所拥有的权限集合
+     * 获取当前用户所拥有的权限集合
      *
      * @return 权限集合
      */
@@ -374,7 +369,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 判断当前账号是否有指定权限
+     * 判断当前用户是否有指定权限
      *
      * @param permission 权限
      */
@@ -383,7 +378,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的所有权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的所有权限，无权限抛异常 NotPermissionException
      *
      * @param permission 权限
      */
@@ -398,7 +393,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的所有权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的所有权限，无权限抛异常 NotPermissionException
      *
      * @param permissions 权限
      */
@@ -410,7 +405,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的任一权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的任一权限，无权限抛异常 NotPermissionException
      *
      * @param permission 权限
      */
@@ -425,7 +420,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的任一权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的任一权限，无权限抛异常 NotPermissionException
      *
      * @param permissions 权限
      */
@@ -437,7 +432,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 获取当前账号所拥有的角色集合
+     * 获取当前用户所拥有的角色集合
      *
      * @return 角色集合
      */
@@ -446,7 +441,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 判断当前账号是否有指定角色
+     * 判断当前用户是否有指定角色
      *
      * @param role 角色
      */
@@ -455,7 +450,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的所有角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的所有角色，无权限抛异常 NotRoleException
      *
      * @param role 角色
      */
@@ -470,7 +465,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的所有角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的所有角色，无权限抛异常 NotRoleException
      *
      * @param roles 角色
      */
@@ -482,7 +477,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的任一角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的任一角色，无权限抛异常 NotRoleException
      *
      * @param role 角色
      */
@@ -497,7 +492,7 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前账号是否有指定的任一角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的任一角色，无权限抛异常 NotRoleException
      *
      * @param roles 角色
      */
@@ -517,7 +512,7 @@ public final class SimpleTokens {
         SimpleTokenPermission permission = THREAD_LOCAL_PERMISSION.get();
         if (permission == null) {
             SessionInfo session = getSession();
-            permission = SimpleTokenPermission.of(session.getAccountType(), session.getLoginId());
+            permission = SimpleTokenPermission.of(session.getLoginId());
             THREAD_LOCAL_PERMISSION.set(permission);
         }
         return permission;

@@ -37,13 +37,12 @@ public final class UserManager {
     /**
      * 获取用户信息，查无用户时抛异常，状态异常时抛异常
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
+     * @param loginId 登录 id
      * @return 用户信息
      */
-    public static UserInfo findInfoById(String accountType, String loginId) {
+    public static UserInfo findInfoById(String loginId) {
         validQuery();
-        UserInfo info = QUERY.getInfoById(accountType, loginId);
+        UserInfo info = QUERY.getInfoById(loginId);
         if (info == null) {
             throw new LoginUserNotFoundException("Login user can not be found");
         }

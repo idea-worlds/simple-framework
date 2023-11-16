@@ -48,14 +48,13 @@ public final class SessionManager {
     /**
      * 构建一个新的会话值
      *
-     * @param accountType 账号类型
      * @param loginId     登录 id
      * @param expiredTime 过期时间
      * @return 会话值
      */
-    public static SessionInfo createSession(String accountType, String loginId, String userName, long expiredTime) {
+    public static SessionInfo createSession(String loginId, String userName, long expiredTime) {
         validGenerator();
-        SessionInfo session = new SessionInfo(accountType, loginId, userName, expiredTime);
+        SessionInfo session = new SessionInfo(loginId, userName, expiredTime);
         return GENERATOR.generate(session);
     }
 
@@ -95,43 +94,40 @@ public final class SessionManager {
     }
 
     /**
-     * 查找账号的所有应用会话值
+     * 查找用户的所有会话值
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
+     * @param loginId 登录 id
      * @return 应用会话值
      */
-    public static SimpleTokenApps findApps(String accountType, String loginId) {
+    public static SessionPerson findPerson(String loginId) {
         validStore();
-        SimpleTokenApps apps = STORE.getApps(accountType, loginId);
-        if (apps != null) {
+        SessionPerson person = STORE.getPerson(loginId);
+        if (person != null) {
             // 清除过期的数据
-            apps.removeExpired();
+            person.removeExpired();
         }
-        return apps;
+        return person;
     }
 
     /**
-     * 存储账号的所有应用会话值
+     * 存储用户的所有会话值
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
-     * @param apps        应用会话值
+     * @param loginId 登录 id
+     * @param person  会话值
      */
-    public static void storeApps(String accountType, String loginId, SimpleTokenApps apps) {
+    public static void storePerson(String loginId, SessionPerson person) {
         validStore();
-        STORE.setApps(accountType, loginId, apps);
+        STORE.setPerson(loginId, person);
     }
 
     /**
-     * 删除账号的所有应用会话值
+     * 删除用户的所有会话值
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
+     * @param loginId 登录 id
      */
-    public static void removeApps(String accountType, String loginId) {
+    public static void removePerson(String loginId) {
         validStore();
-        STORE.removeApps(accountType, loginId);
+        STORE.removePerson(loginId);
     }
 
     private static void validGenerator() {

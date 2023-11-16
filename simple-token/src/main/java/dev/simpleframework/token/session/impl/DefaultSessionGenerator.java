@@ -25,8 +25,7 @@ public class DefaultSessionGenerator implements SessionGenerator {
     }
 
     protected void setToken(SessionInfo info) {
-        String accountType = info.getAccountType();
-        SimpleTokenLoginConfig config = SimpleTokens.getGlobalConfig().findLoginConfig(accountType);
+        SimpleTokenLoginConfig config = SimpleTokens.getGlobalConfig().getLogin();
         String token;
         switch (config.getTokenStyle()) {
             case UUID32 -> token = Strings.uuid32();

@@ -4,7 +4,9 @@ import dev.simpleframework.token.path.PathInfo;
 import dev.simpleframework.token.path.PathPermission;
 import lombok.Data;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 路径配置
@@ -42,10 +44,6 @@ public class SimpleTokenPathConfig {
      * 路径权限
      */
     private List<PathPermission> permissions = new ArrayList<>();
-    /**
-     * 不同账号类型的个性化路径权限，key 为 账号类型，未配置时取默认值 {@link #permissions}
-     */
-    private Map<String, List<PathPermission>> accountPermissions = new HashMap<>();
 
     /**
      * 获取所有不需要鉴权的路径
@@ -64,20 +62,6 @@ public class SimpleTokenPathConfig {
             result.addAll(this.permit);
         }
         return result;
-    }
-
-    /**
-     * 获取账号类型对应的权限配置，未配置时取默认值 {@link #permissions}
-     *
-     * @param accountType 账号类型
-     * @return 路径权限集
-     */
-    public List<PathPermission> findPermission(String accountType) {
-        List<PathPermission> permissions = this.accountPermissions.get(accountType);
-        if (permissions == null) {
-            permissions = this.permissions;
-        }
-        return permissions;
     }
 
 }

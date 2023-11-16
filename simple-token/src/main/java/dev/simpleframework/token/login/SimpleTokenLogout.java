@@ -3,7 +3,7 @@ package dev.simpleframework.token.login;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
-import dev.simpleframework.token.session.SimpleTokenApps;
+import dev.simpleframework.token.session.SessionPerson;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,32 +13,27 @@ import java.util.List;
  */
 public class SimpleTokenLogout {
 
-    private String accountType;
     private String loginId;
     private String app;
 
     public SimpleTokenLogout() {
     }
 
-    public SimpleTokenLogout(String accountType, String loginId) {
-        this.accountType = accountType;
+    public SimpleTokenLogout(String loginId) {
         this.loginId = loginId;
     }
 
-    public SimpleTokenLogout(String accountType, String loginId, String app) {
-        this.accountType = accountType;
+    public SimpleTokenLogout(String loginId, String app) {
         this.loginId = loginId;
         this.app = app;
     }
 
     public void exec() {
-        if (this.accountType == null) {
+        if (this.loginId == null) {
             this.logoutByToken();
+        } else {
+            this.logoutByUserApp();
         }
-        if (this.accountType != null && this.loginId != null) {
-            this.logoutByApp();
-        }
-
     }
 
     private void logoutByToken() {
@@ -55,35 +50,34 @@ public class SimpleTokenLogout {
         // 删除 session
         SessionManager.removeSessionByToken(token);
 
-        // 删除应用会话中的 token
-        String accountType = session.getAccountType();
+        // 删除用户所有会话中对应的 token
         String loginId = session.getLoginId();
-        SimpleTokenApps apps = SessionManager.findApps(accountType, loginId);
-        if (apps != null) {
-            apps.removeTokens(Collections.singletonList(token));
-            SessionManager.storeApps(accountType, loginId, apps);
+        SessionPerson person = SessionManager.findPerson(loginId);
+        if (person != null) {
+            person.removeTokens(Collections.singletonList(token));
+            SessionManager.storePerson(loginId, person);
         }
     }
 
-    private void logoutByApp() {
-        SimpleTokenApps apps = SessionManager.findApps(this.accountType, this.loginId);
-        if (apps == null) {
-            // 查无应用会话，说明该账号未登录过
+    private void logoutByUserApp() {
+        SessionPerson person = SessionManager.findPerson(this.loginId);
+        if (person == null) {
+            // 查无会话，说明该账号未登录过
             return;
         }
         if (this.app == null) {
-            List<String> tokens = apps.findAllTokens();
+            List<String> tokens = person.findAllTokens();
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
-            // 删除应用会话
-            SessionManager.removeApps(this.accountType, this.loginId);
+            // 删除用户所有会话
+            SessionManager.removePerson(this.loginId);
         } else {
-            List<String> tokens = apps.findAllTokens(this.app);
+            List<String> tokens = person.findAllTokens(this.app);
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
-            // 删除应用会话中的 token
-            apps.removeTokens(tokens);
-            SessionManager.storeApps(this.accountType, this.loginId, apps);
+            // 删除用户所有会话中对应的 token
+            person.removeTokens(tokens);
+            SessionManager.storePerson(this.loginId, person);
         }
     }
 

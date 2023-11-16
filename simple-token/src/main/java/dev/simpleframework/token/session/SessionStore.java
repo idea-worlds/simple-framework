@@ -30,29 +30,26 @@ public interface SessionStore {
     void removeSession(String token);
 
     /**
-     * 存储应用会话值
+     * 存储用户所有会话值
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
-     * @param apps        应用会话值
+     * @param loginId 登录 id
+     * @param person  会话值
      */
-    void setApps(String accountType, String loginId, SimpleTokenApps apps);
+    void setPerson(String loginId, SessionPerson person);
 
     /**
-     * 获取应用会话值
+     * 获取用户所有会话值
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
+     * @param loginId 登录 id
      * @return 应用会话值
      */
-    SimpleTokenApps getApps(String accountType, String loginId);
+    SessionPerson getPerson(String loginId);
 
     /**
-     * 清楚应用会话值
+     * 清除用户所有会话值
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
+     * @param loginId 登录 id
      */
-    void removeApps(String accountType, String loginId);
+    void removePerson(String loginId);
 
 }

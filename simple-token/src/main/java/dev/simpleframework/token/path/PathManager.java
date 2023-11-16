@@ -91,8 +91,7 @@ public final class PathManager {
                     // 校验权限
                     List<PathMatcher> permissionMatchers = new ArrayList<>();
                     PathMatcher permissionMatcher;
-                    String accountType = SimpleTokens.getLoginAccountType();
-                    for (PathPermission permission : config.findPermission(accountType)) {
+                    for (PathPermission permission : config.getPermissions()) {
                         permissionMatcher = new PathMatcher()
                                 .anyMatchMethod(permission.getPath(), permission.getHttpMethods())
                                 .handler(() -> {

@@ -13,10 +13,6 @@ import java.time.Duration;
 public class LoginSetting {
 
     /**
-     * 账号类型
-     */
-    private String accountType;
-    /**
      * 当前登录的应用
      */
     private String app;
@@ -26,11 +22,10 @@ public class LoginSetting {
     private Duration timeout;
 
     public LoginSetting() {
-        this("default", "default");
+        this("default");
     }
 
-    public LoginSetting(String accountType, String app) {
-        this.accountType = accountType;
+    public LoginSetting(String app) {
         this.app = app;
     }
 

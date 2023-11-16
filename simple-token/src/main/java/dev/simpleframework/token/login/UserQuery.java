@@ -10,11 +10,10 @@ public interface UserQuery {
     /**
      * 获取用户信息
      *
-     * @param accountType 账号类型
-     * @param loginId     登录 id
+     * @param loginId 登录 id
      * @return 用户信息
      */
-    UserInfo getInfoById(String accountType, String loginId);
+    UserInfo getInfoById(String loginId);
 
     /**
      * 根据账号名获取账号信息
@@ -27,7 +26,7 @@ public interface UserQuery {
 
     UserQuery DEFAULT = new UserQuery() {
         @Override
-        public UserInfo getInfoById(String accountType, String loginId) {
+        public UserInfo getInfoById(String loginId) {
             return null;
         }
 

@@ -1,13 +1,13 @@
 package dev.simpleframework.token.session.impl;
 
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionStore;
-import dev.simpleframework.token.session.SimpleTokenApps;
+import dev.simpleframework.token.session.SessionPerson;
 
 import java.time.Duration;
-import java.util.Objects;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -33,21 +33,15 @@ public abstract class AbstractSessionStore implements SessionStore {
         SessionInfo session = this.get(key, SessionInfo.class);
         if (session == null) {
             // 未查到会话值时，尝试解析 jwt
-            session = SimpleTokens.getGlobalConfig()
-                    .listLoginConfigs()
-                    .stream()
-                    .filter(config -> config.getTokenStyle() == TokenStyle.JWT)
-                    .map(config -> {
-                        try {
-                            String secretKey = config.getTokenJwtSecretKey();
-                            return DefaultJwtToken.of(secretKey, token).getSession();
-                        } catch (Exception ignore) {
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .findFirst()
-                    .orElse(null);
+            SimpleTokenLoginConfig config = SimpleTokens.getGlobalConfig().getLogin();
+            if (config.getTokenStyle() == TokenStyle.JWT) {
+                try {
+                    String secretKey = config.getTokenJwtSecretKey();
+                    session = DefaultJwtToken.of(secretKey, token).getSession();
+                } catch (Exception ignore) {
+                    return null;
+                }
+            }
         }
         return session;
     }
@@ -59,26 +53,26 @@ public abstract class AbstractSessionStore implements SessionStore {
     }
 
     @Override
-    public void setApps(String accountType, String loginId, SimpleTokenApps apps) {
-        String key = this.toAppsKey(accountType, loginId);
-        long expiredTime = apps.findLastExpiredTime();
+    public void setPerson(String loginId, SessionPerson person) {
+        String key = this.toPersonKey(loginId);
+        long expiredTime = person.findLastExpiredTime();
         if (expiredTime == 0) {
             this.remove(key);
         } else {
-            Duration timeout = Duration.ofMillis(apps.findLastExpiredTime() - System.currentTimeMillis());
-            this.set(key, apps, timeout);
+            Duration timeout = Duration.ofMillis(person.findLastExpiredTime() - System.currentTimeMillis());
+            this.set(key, person, timeout);
         }
     }
 
     @Override
-    public SimpleTokenApps getApps(String accountType, String loginId) {
-        String key = this.toAppsKey(accountType, loginId);
-        return this.get(key, SimpleTokenApps.class);
+    public SessionPerson getPerson(String loginId) {
+        String key = this.toPersonKey(loginId);
+        return this.get(key, SessionPerson.class);
     }
 
     @Override
-    public void removeApps(String accountType, String loginId) {
-        String key = this.toAppsKey(accountType, loginId);
+    public void removePerson(String loginId) {
+        String key = this.toPersonKey(loginId);
         this.remove(key);
     }
 
@@ -87,9 +81,9 @@ public abstract class AbstractSessionStore implements SessionStore {
         return prefix + ":session:" + token;
     }
 
-    protected String toAppsKey(String accountType, String loginId) {
+    protected String toPersonKey(String loginId) {
         String prefix = SimpleTokens.getGlobalConfig().getTokenName();
-        return prefix + ":apps:" + accountType + ":" + loginId;
+        return prefix + ":person:" + ":" + loginId;
     }
 
 }

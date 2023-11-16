@@ -37,36 +37,9 @@ public class SimpleTokenConfig {
      */
     private SimpleTokenLoginConfig login = new SimpleTokenLoginConfig();
     /**
-     * 不同账号类型的个性化登录配置，key 为 账号类型，未配置时取默认值 {@link #login}
-     */
-    private Map<String, SimpleTokenLoginConfig> accountLogin = new HashMap<>();
-    /**
      * 路径配置
      */
     private SimpleTokenPathConfig path = new SimpleTokenPathConfig();
-
-    /**
-     * 获取账号类型对应的登录配置，未配置时取默认值 {@link #login}
-     *
-     * @param accountType 账号类型
-     * @return 登录配置
-     */
-    public SimpleTokenLoginConfig findLoginConfig(String accountType) {
-        SimpleTokenLoginConfig config = this.accountLogin.get(accountType);
-        if (config == null) {
-            config = this.login;
-        }
-        return config;
-    }
-
-    public List<SimpleTokenLoginConfig> listLoginConfigs() {
-        List<SimpleTokenLoginConfig> configs = new ArrayList<>();
-        if (this.login != null) {
-            configs.add(this.login);
-        }
-        configs.addAll(this.accountLogin.values());
-        return configs;
-    }
 
     public String splicingToken(String token) {
         if (token == null) {

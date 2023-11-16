@@ -10,24 +10,22 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 账号的所有应用会话值
+ * 用户的所有会话值
  *
  * @author loyayz (loyayz@foxmail.com)
  */
 @Data
-public class SimpleTokenApps implements Serializable {
+public class SessionPerson implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String accountType;
     private String loginId;
     private Map<String, List<App>> apps;
 
-    public SimpleTokenApps() {
+    public SessionPerson() {
         this.apps = new HashMap<>();
     }
 
-    public SimpleTokenApps(String accountType, String loginId) {
-        this.accountType = accountType;
+    public SessionPerson(String loginId) {
         this.loginId = loginId;
         this.apps = new HashMap<>();
     }

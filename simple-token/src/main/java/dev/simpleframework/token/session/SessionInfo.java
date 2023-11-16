@@ -16,10 +16,6 @@ public class SessionInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 账号类型
-     */
-    private String accountType;
-    /**
      * 登录 id
      */
     private String loginId;
@@ -50,8 +46,7 @@ public class SessionInfo implements Serializable {
         this.attrs = new HashMap<>();
     }
 
-    public SessionInfo(String accountType, String loginId, String userName, long expiredTime) {
-        this.accountType = accountType;
+    public SessionInfo(String loginId, String userName, long expiredTime) {
         this.loginId = loginId;
         this.userName = userName;
         this.createTime = System.currentTimeMillis();

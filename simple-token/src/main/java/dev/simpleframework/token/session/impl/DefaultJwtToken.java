@@ -1,6 +1,5 @@
 package dev.simpleframework.token.session.impl;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.RegisteredPayload;
@@ -49,7 +48,7 @@ public class DefaultJwtToken {
         JWT jwt = JWT.create()
                 .setKey(secretKey.getBytes(StandardCharsets.UTF_8))
                 .setSubject("token")
-                .setJWTId(this.session.getAccountType() + ":" + this.session.getLoginId())
+                .setJWTId(this.session.getLoginId())
                 .setIssuer(this.session.getUserName())
                 .setIssuedAt(new Date(this.session.getCreateTime()))
                 .setExpiresAt(new Date(this.session.getExpiredTime()))
@@ -65,9 +64,7 @@ public class DefaultJwtToken {
             SessionInfo session = new SessionInfo();
             session.setToken(this.token);
             JSONObject payload = jwt.getPayload().getClaimsJson();
-            String jwtId = payload.getStr(RegisteredPayload.JWT_ID);
-            session.setAccountType(StrUtil.subBefore(jwtId, ":", false));
-            session.setLoginId(StrUtil.subAfter(jwtId, ":", false));
+            session.setLoginId(payload.getStr(RegisteredPayload.JWT_ID));
             session.setUserName(payload.getStr(RegisteredPayload.ISSUER));
             session.setCreateTime(payload.getDate(RegisteredPayload.ISSUED_AT).getTime());
             session.setExpiredTime(payload.getDate(RegisteredPayload.EXPIRES_AT).getTime());

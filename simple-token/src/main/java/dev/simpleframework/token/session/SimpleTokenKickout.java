@@ -6,62 +6,59 @@ import java.util.List;
  * @author loyayz (loyayz@foxmail.com)
  */
 public class SimpleTokenKickout {
-    private String accountType;
     private String loginId;
     private String app;
-    private SimpleTokenApps apps;
+    private SessionPerson person;
 
     public SimpleTokenKickout() {
     }
 
-    public SimpleTokenKickout(String accountType, String loginId) {
-        this.accountType = accountType;
+    public SimpleTokenKickout(String loginId) {
         this.loginId = loginId;
     }
 
-    public SimpleTokenKickout(String accountType, String loginId, String app) {
-        this.accountType = accountType;
+    public SimpleTokenKickout(String loginId, String app) {
         this.loginId = loginId;
         this.app = app;
     }
 
     public void exec() {
-        this.setApps();
-        if (this.apps == null) {
+        this.setPerson();
+        if (this.person == null) {
             return;
         }
         if (this.app == null) {
-            List<String> tokens = this.apps.findAllTokens();
+            List<String> tokens = this.person.findAllTokens();
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
-            // 删除应用会话
-            SessionManager.removeApps(this.accountType, this.loginId);
+            // 删除用户所有会话
+            SessionManager.removePerson(this.loginId);
         } else {
-            List<String> tokens = this.apps.findAllTokens(this.app);
+            List<String> tokens = this.person.findAllTokens(this.app);
             // 删除 session
             SessionManager.removeSessionByToken(tokens);
-            // 删除应用会话中的 token
-            this.apps.removeTokens(tokens);
-            SessionManager.storeApps(this.accountType, this.loginId, this.apps);
+            // 删除应用会话中对应的 token
+            this.person.removeTokens(tokens);
+            SessionManager.storePerson(this.loginId, this.person);
         }
     }
 
     public void execByToken(List<String> tokens) {
-        this.setApps();
+        this.setPerson();
         // 删除 session
         SessionManager.removeSessionByToken(tokens);
-        // 删除应用会话中的 token
-        if (this.apps != null) {
-            this.apps.removeTokens(tokens);
-            SessionManager.storeApps(this.accountType, this.loginId, this.apps);
+        // 删除用户所有会话中对应的 token
+        if (this.person != null) {
+            this.person.removeTokens(tokens);
+            SessionManager.storePerson(this.loginId, this.person);
         }
     }
 
-    private void setApps() {
-        if (this.accountType == null || this.apps != null) {
+    private void setPerson() {
+        if (this.person != null) {
             return;
         }
-        this.apps = SessionManager.findApps(this.accountType, this.loginId);
+        this.person = SessionManager.findPerson(this.loginId);
     }
 
 }

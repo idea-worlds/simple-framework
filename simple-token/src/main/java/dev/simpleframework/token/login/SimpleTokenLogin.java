@@ -7,10 +7,11 @@ import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
-import dev.simpleframework.token.session.SimpleTokenApps;
+import dev.simpleframework.token.session.SessionPerson;
 import dev.simpleframework.util.Strings;
 import lombok.Getter;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,16 +22,17 @@ import java.util.List;
 public class SimpleTokenLogin {
 
     private final String id;
-    private final LoginSetting setting;
+    private final String app;
+    private Duration timeout;
     private final SimpleTokenLoginConfig config;
     private final long now = System.currentTimeMillis();
     private SessionInfo session;
     /**
-     * 当前账号的应用会话值
+     * 当前用户的会话值
      */
-    private SimpleTokenApps apps;
+    private SessionPerson person;
     /**
-     * 当前账号过期的 token
+     * 当前用户过期的 token
      */
     private List<String> expiredTokens;
 
@@ -39,37 +41,38 @@ public class SimpleTokenLogin {
             throw new SimpleTokenException("Login id can not be null");
         }
         this.id = id;
-        this.setting = setting;
-        this.config = SimpleTokens.getGlobalConfig().findLoginConfig(setting.getAccountType());
-        if (this.setting.getTimeout() == null) {
-            this.setting.setTimeout(this.config.getTokenTimeout());
+        this.app = setting.getApp();
+        this.timeout = setting.getTimeout();
+        this.config = SimpleTokens.getGlobalConfig().getLogin();
+        if (this.timeout == null) {
+            this.timeout = this.config.getTokenTimeout();
         }
     }
 
     public void exec() {
-        UserInfo user = UserManager.findInfoById(this.getType(), this.id);
+        UserInfo user = UserManager.findInfoById(this.id);
         // 过期时间
-        long expiredTime = this.setting.getTimeout().toMillis() + this.now;
+        long expiredTime = this.timeout.toMillis() + this.now;
         // 是否需要存储 session
         boolean needStore = this.needStore();
-        // 查找当前账号是否已登录，未登录时构建一个新的应用会话值
-        this.apps = needStore ? SessionManager.findApps(this.getType(), this.id) : null;
-        if (this.apps == null) {
-            this.apps = new SimpleTokenApps(this.getType(), this.id);
+        // 查找当前用户是否已登录，未登录时构建一个新的用户会话值
+        this.person = needStore ? SessionManager.findPerson(this.id) : null;
+        if (this.person == null) {
+            this.person = new SessionPerson(this.id);
         }
         // 共享 token 时查出最后过期的会话
         String shareToken = null;
         if (needStore && this.config.getShareToken()) {
-            shareToken = this.apps.findLastExpiredToken();
+            shareToken = this.person.findLastExpiredToken();
             this.session = SessionManager.findSession(shareToken);
         }
         if (this.session == null) {
             if (shareToken != null) {
                 // 有共享 token 又查无对应的会话值，说明是垃圾数据，应清除
-                this.apps.removeTokens(Collections.singleton(shareToken));
+                this.person.removeTokens(Collections.singleton(shareToken));
                 shareToken = null;
             }
-            this.session = SessionManager.createSession(this.getType(), this.id, user.getName(), expiredTime);
+            this.session = SessionManager.createSession(this.id, user.getName(), expiredTime);
         }
 
         if (needStore) {
@@ -77,15 +80,14 @@ public class SimpleTokenLogin {
             this.session.setExpiredTime(expiredTime);
             // 非共享 token 时添加应用会话信息，并根据配置的策略获取过期的 token 用于登录后踢出
             if (shareToken == null) {
-                String app = this.setting.getApp();
                 String token = this.session.getToken();
-                this.apps.addApp(app, token, this.now, expiredTime);
-                this.expiredTokens = this.apps.removeExpiredByConfig(this.config, app, token);
+                this.person.addApp(this.app, token, this.now, expiredTime);
+                this.expiredTokens = this.person.removeExpiredByConfig(this.config, this.app, token);
             }
             // 存储会话
             SessionManager.storeSession(this.session);
             // 存储应用会话
-            SessionManager.storeApps(this.getType(), this.id, this.apps);
+            SessionManager.storePerson(this.id, this.person);
         }
 
         // 存储 token 至上下文
@@ -97,10 +99,6 @@ public class SimpleTokenLogin {
             return null;
         }
         return this.session.getToken();
-    }
-
-    public String getType() {
-        return this.setting.getAccountType();
     }
 
     private boolean needStore() {

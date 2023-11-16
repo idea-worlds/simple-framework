@@ -10,7 +10,7 @@ import dev.simpleframework.token.login.UserAccountPasswordValidator;
 import dev.simpleframework.token.login.UserQuery;
 import dev.simpleframework.token.path.PathManager;
 import dev.simpleframework.token.permission.PermissionManager;
-import dev.simpleframework.token.permission.PermissionStore;
+import dev.simpleframework.token.permission.PermissionQuery;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SessionStore;
@@ -66,8 +66,8 @@ public class SimpleTokenSpringRegisterAutoConfiguration implements InitializingB
     }
 
     @Autowired(required = false)
-    public void setPermissionStore(PermissionStore store) {
-        PermissionManager.registerStore(store);
+    public void setPermissionQuery(PermissionQuery query) {
+        PermissionManager.registerQuery(query);
     }
 
     @Autowired(required = false)
