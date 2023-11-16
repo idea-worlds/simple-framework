@@ -3,7 +3,9 @@ package dev.simpleframework.token.config;
 import dev.simpleframework.token.exception.InvalidTokenException;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +57,15 @@ public class SimpleTokenConfig {
             config = this.login;
         }
         return config;
+    }
+
+    public List<SimpleTokenLoginConfig> listLoginConfigs() {
+        List<SimpleTokenLoginConfig> configs = new ArrayList<>();
+        if (this.login != null) {
+            configs.add(this.login);
+        }
+        configs.addAll(this.accountLogin.values());
+        return configs;
     }
 
     public String splicingToken(String token) {

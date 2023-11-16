@@ -1,11 +1,13 @@
 package dev.simpleframework.token.session.impl;
 
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionStore;
 import dev.simpleframework.token.session.SimpleTokenApps;
 
 import java.time.Duration;
+import java.util.Objects;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -28,7 +30,26 @@ public abstract class AbstractSessionStore implements SessionStore {
     @Override
     public SessionInfo getSession(String token) {
         String key = this.toSessionKey(token);
-        return this.get(key, SessionInfo.class);
+        SessionInfo session = this.get(key, SessionInfo.class);
+        if (session == null) {
+            // 未查到会话值时，尝试解析 jwt
+            session = SimpleTokens.getGlobalConfig()
+                    .listLoginConfigs()
+                    .stream()
+                    .filter(config -> config.getTokenStyle() == TokenStyle.JWT)
+                    .map(config -> {
+                        try {
+                            String secretKey = config.getTokenJwtSecretKey();
+                            return DefaultJwtToken.of(secretKey, token).getSession();
+                        } catch (Exception ignore) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+        }
+        return session;
     }
 
     @Override
