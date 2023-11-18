@@ -3,6 +3,7 @@ package dev.simpleframework.token.session;
 import dev.simpleframework.token.exception.ImplementationNotFoundException;
 import dev.simpleframework.token.session.impl.DefaultSessionGenerator;
 import dev.simpleframework.token.session.impl.DefaultSessionStore;
+import dev.simpleframework.token.user.UserInfo;
 
 import java.util.Collection;
 
@@ -48,14 +49,16 @@ public final class SessionManager {
     /**
      * 构建一个新的会话值
      *
-     * @param loginId     登录 id
+     * @param user        用户信息
      * @param expiredTime 过期时间
      * @return 会话值
      */
-    public static SessionInfo createSession(String loginId, String userName, long expiredTime) {
+    public static SessionInfo createSession(UserInfo user, long expiredTime) {
         validGenerator();
-        SessionInfo session = new SessionInfo(loginId, userName, expiredTime);
-        return GENERATOR.generate(session);
+        SessionInfo session = GENERATOR.generate(user, expiredTime);
+        session.setLoginId(user.getId());
+        session.setExpiredTime(expiredTime);
+        return session;
     }
 
     /**

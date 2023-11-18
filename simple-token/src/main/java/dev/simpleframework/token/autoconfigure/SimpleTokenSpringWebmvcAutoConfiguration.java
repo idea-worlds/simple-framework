@@ -5,7 +5,12 @@ import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.context.impl.SpringServletContext;
 import dev.simpleframework.token.filter.SimpleTokenFilter;
 import dev.simpleframework.token.filter.impl.SimpleTokenSpringServletFilter;
+import dev.simpleframework.token.path.PathManager;
 import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -24,7 +29,13 @@ import java.io.IOException;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @AutoConfigureAfter(SimpleTokenSpringRegisterAutoConfiguration.class)
 @Order(Ordered.LOWEST_PRECEDENCE - 100)
-public class SimpleTokenSpringWebmvcAutoConfiguration {
+public class SimpleTokenSpringWebmvcAutoConfiguration implements InitializingBean {
+
+    @Value("${server.servlet.context-path:}")
+    private String contextPath;
+
+    @Value("${spring.mvc.servlet.path:}")
+    private String servletPath;
 
     @Bean
     @ConditionalOnMissingBean(SimpleTokenFrameworkContext.class)
@@ -36,7 +47,7 @@ public class SimpleTokenSpringWebmvcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(SimpleTokenFilter.class)
     @ConditionalOnClass(name = "jakarta.servlet.Filter")
-    public SimpleTokenFilter simpleTokenDefaultFilter() {
+    public Filter simpleTokenDefaultFilter() {
         return new SimpleTokenSpringServletFilter();
     }
 
@@ -45,14 +56,21 @@ public class SimpleTokenSpringWebmvcAutoConfiguration {
         return new SimpleTokenGlobalFilter();
     }
 
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        PathManager.setPathPrefix(contextPath, servletPath);
+    }
+
     @Order(Ordered.HIGHEST_PRECEDENCE + 10)
     public static class SimpleTokenGlobalFilter implements Filter {
 
         @Override
         public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
             try {
+                SpringServletContext.setContext((HttpServletRequest) request, (HttpServletResponse) response);
                 chain.doFilter(request, response);
             } finally {
+                SpringServletContext.clearContext();
                 SimpleTokens.clearThreadCache();
             }
         }

@@ -17,11 +17,6 @@
     <description>Simple Token</description>
 
     <dependencies>
-        <dependency>
-            <groupId>dev.simpleframework</groupId>
-            <artifactId>simple-core</artifactId>
-        </dependency>
-
         <!-- 以下全为非必要依赖 -->
         <dependency>
             <groupId>org.slf4j</groupId>

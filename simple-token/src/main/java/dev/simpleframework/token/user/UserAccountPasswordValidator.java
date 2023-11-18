@@ -1,4 +1,4 @@
-package dev.simpleframework.token.login;
+package dev.simpleframework.token.user;
 
 /**
  * 账号密码校验器

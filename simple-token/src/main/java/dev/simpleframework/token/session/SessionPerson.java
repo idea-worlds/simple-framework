@@ -73,6 +73,25 @@ public class SessionPerson implements Serializable {
     /**
      * 清除 token 对应的数据
      */
+    public void removeToken(String token) {
+        if (token == null) {
+            return;
+        }
+        for (Map.Entry<String, List<Client>> entry : this.clients.entrySet()) {
+            entry.getValue().removeIf(client -> token.equals(client.getToken()));
+        }
+        List<String> emptyKeys = new ArrayList<>();
+        this.clients.forEach((k, v) -> {
+            if (v.isEmpty()) {
+                emptyKeys.add(k);
+            }
+        });
+        emptyKeys.forEach(k -> this.clients.remove(k));
+    }
+
+    /**
+     * 清除 token 对应的数据
+     */
     public void removeTokens(Collection<String> tokens) {
         for (Map.Entry<String, List<Client>> entry : this.clients.entrySet()) {
             entry.getValue().removeIf(client -> tokens.contains(client.getToken()));

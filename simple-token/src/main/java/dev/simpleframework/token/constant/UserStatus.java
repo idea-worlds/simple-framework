@@ -6,16 +6,22 @@ package dev.simpleframework.token.constant;
  * @author loyayz (loyayz@foxmail.com)
  */
 public enum UserStatus {
+
+    /**
+     * 未启用（未审核）
+     */
+    INACTIVE,
     /**
      * 正常
      */
-    NORMAL,
+    ENABLE,
     /**
-     * 禁用
+     * 禁用（停用）
      */
     DISABLED,
     /**
-     * 锁住
+     * 锁定
      */
     LOCKED
+
 }

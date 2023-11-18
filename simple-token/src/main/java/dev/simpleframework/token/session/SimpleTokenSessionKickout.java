@@ -5,19 +5,19 @@ import java.util.List;
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SimpleTokenKickout {
+public class SimpleTokenSessionKickout {
     private String loginId;
     private String client;
     private SessionPerson person;
 
-    public SimpleTokenKickout() {
+    public SimpleTokenSessionKickout() {
     }
 
-    public SimpleTokenKickout(String loginId) {
+    public SimpleTokenSessionKickout(String loginId) {
         this.loginId = loginId;
     }
 
-    public SimpleTokenKickout(String loginId, String client) {
+    public SimpleTokenSessionKickout(String loginId, String client) {
         this.loginId = loginId;
         this.client = client;
     }

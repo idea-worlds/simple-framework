@@ -1,6 +1,5 @@
 package dev.simpleframework.token.context.impl;
 
-import dev.simpleframework.core.Pair;
 import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.exception.InvalidContextException;
 import jakarta.servlet.http.Cookie;
@@ -21,20 +20,20 @@ public class SpringServletContext
         extends AbstractSimpleTokenContext<HttpServletRequest, HttpServletResponse, HttpServletRequest>
         implements SimpleTokenFrameworkContext {
 
-    private static final ThreadLocal<Pair<HttpServletRequest, HttpServletResponse>> threadLocal = new InheritableThreadLocal<>();
+    private static final ThreadLocal<Context> threadLocal = new InheritableThreadLocal<>();
 
     /**
      * 写入上下文对象，使用完毕必须清除 {@link #clearContext}
      */
     public static void setContext(HttpServletRequest request, HttpServletResponse response) {
-        threadLocal.set(new Pair<>(request, response));
+        threadLocal.set(new Context(request, response));
     }
 
     /**
      * 获取当前线程的上下文对象
      */
-    public static Pair<HttpServletRequest, HttpServletResponse> getContext() {
-        Pair<HttpServletRequest, HttpServletResponse> context = threadLocal.get();
+    public static Context getContext() {
+        Context context = threadLocal.get();
         if (context == null) {
             throw new InvalidContextException("Can not found a valid context");
         }
@@ -50,7 +49,7 @@ public class SpringServletContext
 
     @Override
     protected HttpServletRequest getRequest() {
-        HttpServletRequest request = getContext().getLeft();
+        HttpServletRequest request = getContext().request();
         if (request == null) {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs == null) {
@@ -63,7 +62,7 @@ public class SpringServletContext
 
     @Override
     protected HttpServletResponse getResponse() {
-        HttpServletResponse response = getContext().getRight();
+        HttpServletResponse response = getContext().response();
         if (response == null) {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs == null) {
@@ -143,6 +142,9 @@ public class SpringServletContext
     @Override
     public boolean enable() {
         return threadLocal.get() != null || RequestContextHolder.getRequestAttributes() != null;
+    }
+
+    public record Context(HttpServletRequest request, HttpServletResponse response) {
     }
 
 }

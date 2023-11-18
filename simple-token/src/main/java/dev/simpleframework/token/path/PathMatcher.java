@@ -1,6 +1,5 @@
 package dev.simpleframework.token.path;
 
-import dev.simpleframework.core.EmptyFunction;
 import dev.simpleframework.token.constant.HttpMethod;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -139,6 +138,11 @@ public class PathMatcher {
     public PathMatcher handler(EmptyFunction handler) {
         this.handler = handler;
         return this;
+    }
+
+    @FunctionalInterface
+    public interface EmptyFunction {
+        void run();
     }
 
 }

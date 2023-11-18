@@ -5,19 +5,16 @@ import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.context.SimpleTokenRpcContext;
-import dev.simpleframework.token.login.UserManager;
-import dev.simpleframework.token.login.UserAccountPasswordValidator;
-import dev.simpleframework.token.login.UserQuery;
-import dev.simpleframework.token.path.PathManager;
 import dev.simpleframework.token.permission.PermissionManager;
 import dev.simpleframework.token.permission.PermissionQuery;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SessionStore;
+import dev.simpleframework.token.user.UserAccountPasswordValidator;
+import dev.simpleframework.token.user.UserManager;
+import dev.simpleframework.token.user.UserQuery;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -30,15 +27,9 @@ import java.util.List;
  */
 @Configuration
 @RequiredArgsConstructor
-@AutoConfigureAfter(SimpleTokenSpringAutoConfiguration.class)
+@AutoConfigureAfter(SimpleTokenSpringRedisAutoConfiguration.class)
 @Order(Ordered.LOWEST_PRECEDENCE - 90)
-public class SimpleTokenSpringRegisterAutoConfiguration implements InitializingBean {
-
-    @Value("${server.servlet.context-path:}")
-    private String contextPath;
-
-    @Value("${spring.mvc.servlet.path:}")
-    private String servletPath;
+public class SimpleTokenSpringRegisterAutoConfiguration {
 
     @Autowired
     public void setConfig(SimpleTokenConfig config) {
@@ -78,36 +69,6 @@ public class SimpleTokenSpringRegisterAutoConfiguration implements InitializingB
     @Autowired(required = false)
     public void setSessionGenerator(SessionGenerator generator) {
         SessionManager.registerGenerator(generator);
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        this.setPathPrefix();
-    }
-
-    private void setPathPrefix() {
-        String prefix = parsePath(contextPath);
-        prefix = prefix + parsePath(servletPath);
-        if (prefix.isBlank() || "/".equals(prefix)) {
-            return;
-        }
-        PathManager.setPathPrefix(prefix);
-    }
-
-    /**
-     * path 最前加 / 最后去掉 /
-     */
-    private static String parsePath(String path) {
-        if (path == null || path.isBlank()) {
-            return "";
-        }
-        if (!path.startsWith("/")) {
-            path = "/" + path;
-        }
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-        return path;
     }
 
 }

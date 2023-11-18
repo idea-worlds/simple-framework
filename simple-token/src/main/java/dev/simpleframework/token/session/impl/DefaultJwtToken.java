@@ -31,8 +31,7 @@ public class DefaultJwtToken {
             throw new SimpleTokenException("Secret key for token jwt can not be empty. " +
                     "Please set in SimpleTokenLoginConfig.tokenJwtSecretKey.");
         }
-        return new DefaultJwtToken(secretKey, token)
-                .setSession();
+        return new DefaultJwtToken(secretKey, token);
     }
 
     public static DefaultJwtToken of(String secretKey, SessionInfo session) {
@@ -40,32 +39,28 @@ public class DefaultJwtToken {
             throw new SimpleTokenException("Secret key for token jwt can not be empty. " +
                     "Please set in SimpleTokenLoginConfig.tokenJwtSecretKey.");
         }
-        return new DefaultJwtToken(secretKey, session)
-                .setToken();
+        return new DefaultJwtToken(secretKey, session);
     }
 
-    private DefaultJwtToken setToken() {
-        JWT jwt = JWT.create()
-                .setKey(secretKey.getBytes(StandardCharsets.UTF_8))
-                .setSubject("token")
-                .setJWTId(this.session.getLoginId())
-                .setIssuer(this.session.getUserName())
-                .setIssuedAt(new Date(this.session.getCreateTime()))
-                .setExpiresAt(new Date(this.session.getExpiredTime()))
-                .setCharset(StandardCharsets.UTF_8);
-        this.session.getAttrs().forEach(jwt::setPayload);
-        this.token = jwt.sign();
-        return this;
+    private DefaultJwtToken(String secretKey, String token) {
+        this.secretKey = secretKey;
+        this.token = token;
+        this.setSession();
     }
 
-    private DefaultJwtToken setSession() {
+    private DefaultJwtToken(String secretKey, SessionInfo session) {
+        this.secretKey = secretKey;
+        this.session = session;
+        this.setToken();
+    }
+
+    private void setSession() {
         JWT jwt = JWT.of(this.token);
         if (jwt.validate(0)) {
             SessionInfo session = new SessionInfo();
             session.setToken(this.token);
             JSONObject payload = jwt.getPayload().getClaimsJson();
             session.setLoginId(payload.getStr(RegisteredPayload.JWT_ID));
-            session.setUserName(payload.getStr(RegisteredPayload.ISSUER));
             session.setCreateTime(payload.getDate(RegisteredPayload.ISSUED_AT).getTime());
             session.setExpiredTime(payload.getDate(RegisteredPayload.EXPIRES_AT).getTime());
             for (Map.Entry<String, Object> entry : payload.entrySet()) {
@@ -80,17 +75,18 @@ public class DefaultJwtToken {
             }
             this.session = session;
         }
-        return this;
     }
 
-    private DefaultJwtToken(String secretKey, String token) {
-        this.secretKey = secretKey;
-        this.token = token;
-    }
-
-    private DefaultJwtToken(String secretKey, SessionInfo session) {
-        this.secretKey = secretKey;
-        this.session = session;
+    private void setToken() {
+        JWT jwt = JWT.create()
+                .setKey(secretKey.getBytes(StandardCharsets.UTF_8))
+                .setSubject("token")
+                .setJWTId(this.session.getLoginId())
+                .setIssuedAt(new Date(this.session.getCreateTime()))
+                .setExpiresAt(new Date(this.session.getExpiredTime()))
+                .setCharset(StandardCharsets.UTF_8);
+        this.session.getAttrs().forEach(jwt::setPayload);
+        this.token = jwt.sign();
     }
 
 }

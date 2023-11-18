@@ -1,4 +1,4 @@
-package dev.simpleframework.token.login;
+package dev.simpleframework.token.session;
 
 import lombok.Getter;
 import lombok.Setter;

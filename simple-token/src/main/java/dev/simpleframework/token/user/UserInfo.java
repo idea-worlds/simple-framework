@@ -1,4 +1,4 @@
-package dev.simpleframework.token.login;
+package dev.simpleframework.token.user;
 
 import dev.simpleframework.token.constant.UserStatus;
 import lombok.Data;
@@ -10,7 +10,6 @@ import lombok.Data;
 public class UserInfo {
 
     private String id;
-    private String name;
     private UserStatus status;
 
     public UserInfo() {
@@ -18,18 +17,11 @@ public class UserInfo {
 
     public UserInfo(String id) {
         this.id = id;
-        this.status = UserStatus.NORMAL;
+        this.status = UserStatus.ENABLE;
     }
 
     public UserInfo(String id, UserStatus status) {
         this.id = id;
-        this.name = "";
-        this.status = status;
-    }
-
-    public UserInfo(String id, String name, UserStatus status) {
-        this.id = id;
-        this.name = name;
         this.status = status;
     }
 

@@ -1,29 +1,25 @@
-package dev.simpleframework.token.login;
+package dev.simpleframework.token.session;
 
 import dev.simpleframework.token.context.ContextManager;
-import dev.simpleframework.token.session.SessionInfo;
-import dev.simpleframework.token.session.SessionManager;
-import dev.simpleframework.token.session.SessionPerson;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SimpleTokenLogout {
+public class SimpleTokenSessionLogout {
 
     private String loginId;
     private String client;
 
-    public SimpleTokenLogout() {
+    public SimpleTokenSessionLogout() {
     }
 
-    public SimpleTokenLogout(String loginId) {
+    public SimpleTokenSessionLogout(String loginId) {
         this.loginId = loginId;
     }
 
-    public SimpleTokenLogout(String loginId, String client) {
+    public SimpleTokenSessionLogout(String loginId, String client) {
         this.loginId = loginId;
         this.client = client;
     }
@@ -54,7 +50,7 @@ public class SimpleTokenLogout {
         String loginId = session.getLoginId();
         SessionPerson person = SessionManager.findPerson(loginId);
         if (person != null) {
-            person.removeTokens(Collections.singletonList(token));
+            person.removeToken(token);
             SessionManager.storePerson(loginId, person);
         }
     }

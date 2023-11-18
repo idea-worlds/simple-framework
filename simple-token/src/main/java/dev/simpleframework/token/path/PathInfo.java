@@ -22,6 +22,10 @@ public class PathInfo implements Serializable {
     public PathInfo() {
     }
 
+    public PathInfo(String path) {
+        this.path = path;
+    }
+
     public PathInfo(String path, HttpMethod... methods) {
         this.path = path;
         if (methods != null) {

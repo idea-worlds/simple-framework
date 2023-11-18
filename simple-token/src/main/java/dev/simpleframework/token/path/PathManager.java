@@ -1,6 +1,5 @@
 package dev.simpleframework.token.path;
 
-import dev.simpleframework.core.EmptyFunction;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenPathConfig;
 import dev.simpleframework.token.constant.HttpMethod;
@@ -12,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -28,10 +28,27 @@ public final class PathManager {
 
     /**
      * 设置路径前缀
-     *
-     * @param prefix 路径前缀
      */
-    public static void setPathPrefix(String prefix) {
+    public static void setPathPrefix(String contextPath, String frameworkPath) {
+        Function<String, String> parsePath = path -> {
+            if (path == null || path.isBlank()) {
+                return "";
+            }
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+            if (path.endsWith("/")) {
+                path = path.substring(0, path.length() - 1);
+            }
+            return path;
+        };
+
+
+        String prefix = parsePath.apply(contextPath);
+        prefix = prefix + parsePath.apply(frameworkPath);
+        if (prefix.isBlank() || "/".equals(prefix)) {
+            return;
+        }
         pathPrefix = prefix;
     }
 
@@ -56,7 +73,7 @@ public final class PathManager {
         if (requestPath == null) {
             throw new InvalidContextException("Can not found the request path");
         }
-        requestPath = parsePath(requestPath);
+        requestPath = cutPath(requestPath);
 
         // options 请求不执行路径匹配器
         boolean permitOptions = SimpleTokens.getGlobalConfig().getPath().getPermitOptionsRequest();
@@ -65,7 +82,7 @@ public final class PathManager {
         }
 
         for (PathMatcher matcher : matchers) {
-            EmptyFunction handler = matcher.getHandler();
+            PathMatcher.EmptyFunction handler = matcher.getHandler();
             if (handler == null) {
                 continue;
             }
@@ -114,7 +131,7 @@ public final class PathManager {
         CUSTOM_MATCHERS.add(matcher);
     }
 
-    private static String parsePath(String path) {
+    private static String cutPath(String path) {
         if (pathPrefix == null || pathPrefix.isBlank() || "/".equals(pathPrefix)) {
             return path;
         }

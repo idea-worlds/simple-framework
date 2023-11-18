@@ -23,7 +23,7 @@ public class SimpleTokenPathConfig {
     /**
      * 静态路径
      */
-    private List<String> staticPaths = Arrays.asList("/css/**", "/js/**", "/images/**", "/webjars/**", "/**/favicon.ico", "/static/**");
+    private List<String> staticPaths = Arrays.asList("/css/**", "/js/**", "/fonts/**", "/images/**", "/favicon.ico", "/static/**");
     /**
      * 是否不鉴权所有公共路径
      */

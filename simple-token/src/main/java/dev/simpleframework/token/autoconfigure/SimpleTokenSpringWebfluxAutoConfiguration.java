@@ -5,6 +5,9 @@ import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.context.impl.SpringReactorContext;
 import dev.simpleframework.token.filter.SimpleTokenFilter;
 import dev.simpleframework.token.filter.impl.SimpleTokenSpringReactorFilter;
+import dev.simpleframework.token.path.PathManager;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -24,7 +27,13 @@ import reactor.core.publisher.Mono;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
 @AutoConfigureAfter(SimpleTokenSpringRegisterAutoConfiguration.class)
 @Order(Ordered.LOWEST_PRECEDENCE - 100)
-public class SimpleTokenSpringWebfluxAutoConfiguration {
+public class SimpleTokenSpringWebfluxAutoConfiguration implements InitializingBean {
+
+    @Value("${server.servlet.context-path:}")
+    private String contextPath;
+
+    @Value("${spring.webflux.base-path:}")
+    private String webfluxPath;
 
     @Bean
     @ConditionalOnMissingBean(SimpleTokenFrameworkContext.class)
@@ -34,7 +43,7 @@ public class SimpleTokenSpringWebfluxAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(SimpleTokenFilter.class)
-    public SimpleTokenFilter simpleTokenDefaultFilter() {
+    public WebFilter simpleTokenDefaultFilter() {
         return new SimpleTokenSpringReactorFilter();
     }
 
@@ -43,13 +52,20 @@ public class SimpleTokenSpringWebfluxAutoConfiguration {
         return new SimpleTokenGlobalFilter();
     }
 
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        PathManager.setPathPrefix(contextPath, webfluxPath);
+    }
+
     @Order(Ordered.HIGHEST_PRECEDENCE + 10)
     public static class SimpleTokenGlobalFilter implements WebFilter {
 
         @Override
         public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+            SpringReactorContext.setContext(exchange);
             return chain.filter(exchange)
                     .doFinally(r -> {
+                        SpringReactorContext.clearContext();
                         SimpleTokens.clearThreadCache();
                     });
         }

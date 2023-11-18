@@ -1,14 +1,12 @@
-package dev.simpleframework.token.login;
+package dev.simpleframework.token.session;
 
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.SimpleTokenException;
-import dev.simpleframework.token.session.SessionInfo;
-import dev.simpleframework.token.session.SessionManager;
-import dev.simpleframework.token.session.SessionPerson;
-import dev.simpleframework.util.Strings;
+import dev.simpleframework.token.user.UserInfo;
+import dev.simpleframework.token.user.UserManager;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -19,7 +17,7 @@ import java.util.List;
  * @author loyayz (loyayz@foxmail.com)
  */
 @Getter
-public class SimpleTokenLogin {
+public class SimpleTokenSessionLogin {
 
     private final String id;
     private final String client;
@@ -34,10 +32,10 @@ public class SimpleTokenLogin {
     /**
      * 当前用户过期的 token
      */
-    private List<String> expiredTokens;
+    private List<String> expiredTokens = Collections.emptyList();
 
-    public SimpleTokenLogin(String id, LoginSetting setting) {
-        if (Strings.isBlank(id)) {
+    public SimpleTokenSessionLogin(String id, LoginSetting setting) {
+        if (id == null || id.isBlank()) {
             throw new SimpleTokenException("Login id can not be null");
         }
         this.id = id;
@@ -66,18 +64,23 @@ public class SimpleTokenLogin {
             shareToken = this.person.findLastExpiredToken();
             this.session = SessionManager.findSession(shareToken);
         }
+
+        // 创建一个新的 session
+        SessionInfo newSession = SessionManager.createSession(user, expiredTime);
         if (this.session == null) {
             if (shareToken != null) {
                 // 有共享 token 又查无对应的会话值，说明是垃圾数据，应清除
-                this.person.removeTokens(Collections.singleton(shareToken));
+                this.person.removeToken(shareToken);
                 shareToken = null;
             }
-            this.session = SessionManager.createSession(this.id, user.getName(), expiredTime);
+            this.session = newSession;
+        } else {
+            // 共享 token 时替换新的属性值
+            this.session.setAttrs(newSession.getAttrs());
+            this.session.setExpiredTime(expiredTime);
         }
 
         if (needStore) {
-            // 修改会话过期时间
-            this.session.setExpiredTime(expiredTime);
             // 非共享 token 时添加客户端会话信息，并根据配置的策略获取过期的 token 用于登录后踢出
             if (shareToken == null) {
                 String token = this.session.getToken();
