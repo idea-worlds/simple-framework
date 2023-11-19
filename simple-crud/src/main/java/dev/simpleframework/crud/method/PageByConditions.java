@@ -20,7 +20,7 @@ public interface PageByConditions<T> {
      * @return 分页结果
      */
     default <R extends T> Page<R> pageByConditions(int pageNum, int pageSize, QueryConfig... configs) {
-        return PageByConditionsDefinition.exec(this, pageNum, pageSize, configs);
+        return PageByConditionsDefinition.exec(this, pageNum, pageSize, true, configs);
     }
 
 }

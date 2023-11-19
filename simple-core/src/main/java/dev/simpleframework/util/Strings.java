@@ -196,7 +196,7 @@ public final class Strings {
         // 只有一个关键字时：全模糊或者全匹配
         if (keywordSize == 1) {
             String keyword = keywords.get(0);
-            return likeStr.equals(keyword) ? true : keyword.equals(str);
+            return likeStr.equals(keyword) || keyword.equals(str);
         }
         String matchStr = str;
         String keyword;

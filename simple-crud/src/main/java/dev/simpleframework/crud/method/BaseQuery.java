@@ -5,6 +5,7 @@ package dev.simpleframework.crud.method;
  */
 public interface BaseQuery<T> extends
         FindById<T>,
+        FindOneByConditions<T>,
         ListByIds<T>,
         ListByConditions<T>,
         PageByConditions<T>,
