@@ -28,7 +28,7 @@ public class SimpleTokenSpringReactorFilter implements SimpleTokenFilter, WebFil
     }
 
     protected void doAuth(ServerWebExchange exchange) {
-        PathManager.execMatchers();
+        PathManager.execAction();
     }
 
     protected void afterAuth(ServerWebExchange exchange) {

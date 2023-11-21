@@ -10,7 +10,6 @@ import dev.simpleframework.token.exception.InvalidContextException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 /**
@@ -22,9 +21,16 @@ public final class PathManager {
      */
     private static String pathPrefix;
     /**
-     * 所有自定义路径匹配器
+     * 所有自定义路径方法执行器
      */
-    private static final List<PathMatcher> CUSTOM_MATCHERS = new CopyOnWriteArrayList<>();
+    private static List<PathActionExecutor> CUSTOM_ACTION_EXECUTOR = PathActionBuilder.DEFAULT.init();
+
+    public static void registerActionBuilder(PathActionBuilder builder) {
+        if (builder == null) {
+            return;
+        }
+        CUSTOM_ACTION_EXECUTOR = builder.init();
+    }
 
     /**
      * 设置路径前缀
@@ -43,7 +49,6 @@ public final class PathManager {
             return path;
         };
 
-
         String prefix = parsePath.apply(contextPath);
         prefix = prefix + parsePath.apply(frameworkPath);
         if (prefix.isBlank() || "/".equals(prefix)) {
@@ -53,18 +58,18 @@ public final class PathManager {
     }
 
     /**
-     * 执行路径匹配器
+     * 执行路径方法
      * 1. 获取当前上下文请求路径和方法
      * 2. 请求路径裁剪掉前缀
-     * 3，依次执行匹配的回调
+     * 3，依次执行匹配的方法
      */
-    public static void execMatchers() {
-        execMatchers(buildConfigMatchers());
-        execMatchers(CUSTOM_MATCHERS);
+    public static void execAction() {
+        execAction(buildConfigActionExecutors());
+        execAction(CUSTOM_ACTION_EXECUTOR);
     }
 
-    private static void execMatchers(List<PathMatcher> matchers) {
-        if (matchers.isEmpty()) {
+    private static void execAction(List<PathActionExecutor> executors) {
+        if (executors.isEmpty()) {
             return;
         }
         SimpleTokenContext context = ContextManager.findContext();
@@ -75,19 +80,19 @@ public final class PathManager {
         }
         requestPath = cutPath(requestPath);
 
-        // options 请求不执行路径匹配器
+        // options 请求不执行路径方法
         boolean permitOptions = SimpleTokens.getGlobalConfig().getPath().getPermitOptionsRequest();
         if (permitOptions && HttpMethod.OPTIONS.name().equals(requestMethod)) {
             return;
         }
 
-        for (PathMatcher matcher : matchers) {
-            PathMatcher.EmptyFunction handler = matcher.getHandler();
+        for (PathActionExecutor executor : executors) {
+            PathActionExecutor.Action handler = executor.getAction();
             if (handler == null) {
                 continue;
             }
-            List<PathInfo> includes = matcher.getIncludes();
-            List<PathInfo> excludes = matcher.getExcludes();
+            List<PathInfo> includes = executor.getIncludes();
+            List<PathInfo> excludes = executor.getExcludes();
             boolean match = (includes.isEmpty() || anyMatchPath(context, requestPath, requestMethod, includes))
                     && (excludes.isEmpty() || !anyMatchPath(context, requestPath, requestMethod, excludes));
             if (match) {
@@ -96,39 +101,30 @@ public final class PathManager {
         }
     }
 
-    private static List<PathMatcher> buildConfigMatchers() {
+    private static List<PathActionExecutor> buildConfigActionExecutors() {
         SimpleTokenPathConfig config = SimpleTokens.getGlobalConfig().getPath();
-        PathMatcher configMatcher = new PathMatcher()
+        PathActionExecutor configExecutor = PathActionExecutor.of()
                 // 不匹配不需要鉴权的路径才执行回调
                 .notMatchInfo(config.getAllPermitPaths())
-                .handler(() -> {
+                .action(() -> {
                     // 校验登录
                     SimpleTokens.checkLogin();
 
                     // 校验权限
-                    List<PathMatcher> permissionMatchers = new ArrayList<>();
-                    PathMatcher permissionMatcher;
+                    List<PathActionExecutor> permissionExecutors = new ArrayList<>();
+                    PathActionExecutor permissionExecutor;
                     for (PathPermission permission : config.getPermissions()) {
-                        permissionMatcher = new PathMatcher()
+                        permissionExecutor = PathActionExecutor.of()
                                 .anyMatchMethod(permission.getPath(), permission.getHttpMethods())
-                                .handler(() -> {
+                                .action(() -> {
                                     SimpleTokens.checkAnyPermission(permission.getPermissions());
                                     SimpleTokens.checkAnyRole(permission.getRoles());
                                 });
-                        permissionMatchers.add(permissionMatcher);
+                        permissionExecutors.add(permissionExecutor);
                     }
-                    execMatchers(permissionMatchers);
+                    execAction(permissionExecutors);
                 });
-        return Collections.singletonList(configMatcher);
-    }
-
-    /**
-     * 添加路径匹配器
-     *
-     * @param matcher 路径匹配器
-     */
-    static void addMatcher(PathMatcher matcher) {
-        CUSTOM_MATCHERS.add(matcher);
+        return Collections.singletonList(configExecutor);
     }
 
     private static String cutPath(String path) {

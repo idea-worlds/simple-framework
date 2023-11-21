@@ -5,6 +5,8 @@ import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.context.SimpleTokenRpcContext;
+import dev.simpleframework.token.path.PathActionBuilder;
+import dev.simpleframework.token.path.PathManager;
 import dev.simpleframework.token.permission.PermissionManager;
 import dev.simpleframework.token.permission.PermissionQuery;
 import dev.simpleframework.token.session.SessionGenerator;
@@ -54,6 +56,11 @@ public class SimpleTokenSpringRegisterAutoConfiguration {
     @Autowired(required = false)
     public void setUserAccountPasswordValidator(UserAccountPasswordValidator validator) {
         UserManager.registerPasswordValidator(validator);
+    }
+
+    @Autowired(required = false)
+    public void setPathActionBuilder(PathActionBuilder builder) {
+        PathManager.registerActionBuilder(builder);
     }
 
     @Autowired(required = false)

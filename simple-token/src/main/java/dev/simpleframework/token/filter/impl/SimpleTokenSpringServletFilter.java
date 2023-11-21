@@ -27,7 +27,7 @@ public class SimpleTokenSpringServletFilter implements SimpleTokenFilter, Filter
     }
 
     protected void doAuth(ServletRequest request, ServletResponse response) {
-        PathManager.execMatchers();
+        PathManager.execAction();
     }
 
     protected void afterAuth(ServletRequest request, ServletResponse response) {
