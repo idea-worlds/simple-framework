@@ -53,4 +53,9 @@ public class SessionInfo implements Serializable {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T attr(String key) {
+        return (T) this.attrs.get(key);
+    }
+
 }

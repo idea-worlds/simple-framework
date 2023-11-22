@@ -1,5 +1,8 @@
 package dev.simpleframework.token.context;
 
+import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.config.SimpleTokenConfig;
+
 /**
  * 上下文处理器
  *
@@ -8,49 +11,84 @@ package dev.simpleframework.token.context;
 public interface SimpleTokenContext {
 
     /**
+     * 获取当前上下文请求对象
+     */
+    ContextRequest request();
+
+    /**
+     * 获取当前上下文返回值对象
+     */
+    ContextResponse response();
+
+    /**
+     * 获取当前上下文存储器对象
+     */
+    ContextStore store();
+
+    /**
      * 存储 token
      *
      * @param token       token
      * @param expiredTime 过期时间
      */
-    void setToken(String token, long expiredTime);
+    default void setToken(String token, long expiredTime) {
+        SimpleTokenConfig config = SimpleTokens.getGlobalConfig();
+        token = config.splicingToken(token);
+        String key = config.getTokenName();
+        this.store().set(key, token);
+
+        if (config.getTokenInCookie()) {
+            int maxAge = (int) (expiredTime - System.currentTimeMillis()) / 1000;
+            this.response().addCookie(config.getTokenName(), token, maxAge);
+        }
+    }
 
     /**
      * 获取 token
+     * * 依次从 store / request param / request header / request cookie 获取 token 值，再根据配置裁剪掉前缀
      *
      * @return token
      */
-    String getToken();
+    default String getToken() {
+        SimpleTokenConfig config = SimpleTokens.getGlobalConfig();
+        String key = config.getTokenName();
+        // 从 store 获取
+        String token = this.store().get(key);
+        if (token == null) {
+            // 从 request 获取
+            ContextRequest request = this.request();
+            token = request.getParam(key);
+            if (token == null) {
+                token = request.getHeader(key);
+            }
+            if (token == null && config.getTokenInCookie()) {
+                token = request.getCookie(key);
+            }
+        }
+        token = config.parseToken(token);
+        return token.isBlank() ? null : token;
+    }
 
     /**
      * 删除 token
+     * * 依次删除 store / cookie 中的 token
      *
      * @return token
      */
-    String removeToken();
+    default String removeToken() {
+        SimpleTokenConfig config = SimpleTokens.getGlobalConfig();
+        String token = this.getToken();
+        if (token == null) {
+            return null;
+        }
+        String key = config.getTokenName();
+        this.store().remove(key);
 
-    /**
-     * 获取请求的路径
-     *
-     * @return 路径
-     */
-    String getRequestPath();
-
-    /**
-     * 获取请求的方法
-     *
-     * @return 方法
-     */
-    String getRequestMethod();
-
-    /**
-     * 指定路由匹配符是否匹配指定路径
-     *
-     * @param pattern 路由匹配符
-     * @param path    需要匹配的路径
-     * @return 是否匹配
-     */
-    boolean matchPath(String pattern, String path);
+        if (config.getTokenInCookie()) {
+            this.response().removeCookie(config.getTokenName());
+        }
+        return token;
+    }
 
     /**
      * 在本次请求中此上下文是否可用

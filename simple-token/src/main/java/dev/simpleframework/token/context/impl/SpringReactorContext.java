@@ -1,14 +1,10 @@
 package dev.simpleframework.token.context.impl;
 
+import dev.simpleframework.token.context.ContextRequest;
+import dev.simpleframework.token.context.ContextResponse;
+import dev.simpleframework.token.context.ContextStore;
 import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
-import dev.simpleframework.token.exception.InvalidContextException;
-import org.springframework.http.HttpCookie;
-import org.springframework.http.server.PathContainer;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.util.pattern.PathPattern;
-import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
  * Spring reactor 上下文处理器
@@ -17,9 +13,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  *
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SpringReactorContext
-        extends AbstractSimpleTokenContext<ServerHttpRequest, ServerHttpResponse, ServerWebExchange>
-        implements SimpleTokenFrameworkContext {
+public class SpringReactorContext extends AbstractContext implements SimpleTokenFrameworkContext {
 
     private static final ThreadLocal<ServerWebExchange> threadLocal = new InheritableThreadLocal<>();
 
@@ -27,96 +21,17 @@ public class SpringReactorContext
      * 写入上下文对象，使用完毕必须清除 {@link #clearContext}
      */
     public static void setContext(ServerWebExchange exchange) {
-        threadLocal.set(exchange);
-    }
-
-    /**
-     * 获取当前线程的上下文对象
-     */
-    public static ServerWebExchange getContext() {
-        ServerWebExchange context = threadLocal.get();
-        if (context == null) {
-            throw new InvalidContextException("Can not found a valid context");
-        }
-        return context;
+        ContextRequest contextRequest = new SpringReactorContextRequest(exchange.getRequest());
+        ContextResponse contextResponse = new SpringReactorContextResponse(exchange.getResponse());
+        ContextStore contextStore = new SpringReactorContextStore(exchange);
+        AbstractContext.setContextData(contextRequest, contextResponse, contextStore);
     }
 
     /**
      * 清除当前线程的上下文对象
      */
     public static void clearContext() {
-        threadLocal.remove();
-    }
-
-    @Override
-    protected ServerHttpRequest getRequest() {
-        return getContext().getRequest();
-    }
-
-    @Override
-    protected ServerHttpResponse getResponse() {
-        return getContext().getResponse();
-    }
-
-    @Override
-    protected ServerWebExchange getStore() {
-        return getContext();
-    }
-
-    @Override
-    protected String getParam(ServerHttpRequest request, String key) {
-        return request.getQueryParams().getFirst(key);
-    }
-
-    @Override
-    protected String getHeader(ServerHttpRequest request, String key) {
-        return request.getHeaders().getFirst(key);
-    }
-
-    @Override
-    protected String getCookie(ServerHttpRequest request, String key) {
-        HttpCookie cookie = request.getCookies().getFirst(key);
-        if (cookie == null) {
-            return null;
-        }
-        return cookie.getValue();
-    }
-
-    @Override
-    protected void addHeader(ServerHttpResponse response, String key, String value) {
-        response.getHeaders().add(key, value);
-    }
-
-    @Override
-    protected Object get(ServerWebExchange store, String key) {
-        return store.getAttributes().get(key);
-    }
-
-    @Override
-    protected void set(ServerWebExchange store, String key, Object value) {
-        store.getAttributes().put(key, value);
-    }
-
-    @Override
-    protected void remove(ServerWebExchange store, String key) {
-        store.getAttributes().remove(key);
-    }
-
-    @Override
-    public String getRequestPath() {
-        return getRequest().getPath().toString();
-    }
-
-    @Override
-    public String getRequestMethod() {
-        return getRequest().getMethod().name();
-    }
-
-    @Override
-    public boolean matchPath(String pattern, String path) {
-        PathPattern pathPattern = PathPatternParser.defaultInstance.parse(pattern);
-        PathContainer pathContainer = PathContainer.parsePath(path);
-        return pathPattern.matches(pathContainer);
+        AbstractContext.removeContextData();
     }
 
     @Override

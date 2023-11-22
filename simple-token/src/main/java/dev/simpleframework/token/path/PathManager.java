@@ -4,7 +4,7 @@ import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenPathConfig;
 import dev.simpleframework.token.constant.HttpMethod;
 import dev.simpleframework.token.context.ContextManager;
-import dev.simpleframework.token.context.SimpleTokenContext;
+import dev.simpleframework.token.context.ContextRequest;
 import dev.simpleframework.token.exception.InvalidContextException;
 
 import java.util.ArrayList;
@@ -72,9 +72,9 @@ public final class PathManager {
         if (executors.isEmpty()) {
             return;
         }
-        SimpleTokenContext context = ContextManager.findContext();
-        String requestPath = context.getRequestPath();
-        String requestMethod = context.getRequestMethod();
+        ContextRequest request = ContextManager.findContext().request();
+        String requestPath = request.getPath();
+        String requestMethod = request.getMethod();
         if (requestPath == null) {
             throw new InvalidContextException("Can not found the request path");
         }
@@ -93,8 +93,8 @@ public final class PathManager {
             }
             List<PathInfo> includes = executor.getIncludes();
             List<PathInfo> excludes = executor.getExcludes();
-            boolean match = (includes.isEmpty() || anyMatchPath(context, requestPath, requestMethod, includes))
-                    && (excludes.isEmpty() || !anyMatchPath(context, requestPath, requestMethod, excludes));
+            boolean match = (includes.isEmpty() || anyMatchPath(request, requestPath, requestMethod, includes))
+                    && (excludes.isEmpty() || !anyMatchPath(request, requestPath, requestMethod, excludes));
             if (match) {
                 handler.run();
             }
@@ -137,14 +137,14 @@ public final class PathManager {
         return path;
     }
 
-    private static boolean anyMatchPath(SimpleTokenContext context, String path, String method, List<PathInfo> patterns) {
+    private static boolean anyMatchPath(ContextRequest request, String path, String method, List<PathInfo> patterns) {
         if (patterns == null || patterns.isEmpty()) {
             return false;
         }
         HttpMethod httpMethod = HttpMethod.valueOf(method);
         for (PathInfo pattern : patterns) {
             if (HttpMethod.contains(pattern.getHttpMethods(), httpMethod)
-                    && context.matchPath(pattern.getPath(), path)) {
+                    && request.matchPath(pattern.getPath(), path)) {
                 return true;
             }
         }
