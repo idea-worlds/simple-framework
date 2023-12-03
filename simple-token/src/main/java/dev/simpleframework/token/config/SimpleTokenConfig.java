@@ -3,11 +3,6 @@ package dev.simpleframework.token.config;
 import dev.simpleframework.token.exception.InvalidTokenException;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * 配置类
  *
@@ -19,7 +14,7 @@ public class SimpleTokenConfig {
     /**
      * token 名称，用于 session 前缀、cookie 名称
      */
-    private String tokenName = "stoken";
+    private String tokenName = "simple-token";
     /**
      * token 前缀
      */
@@ -53,7 +48,7 @@ public class SimpleTokenConfig {
 
     public String parseToken(String token) {
         if (token == null) {
-            return null;
+            return "";
         }
         if (this.tokenPrefix == null || this.tokenPrefix.isBlank()) {
             return token;

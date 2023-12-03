@@ -27,7 +27,7 @@ public interface FindOneByConditions<T> {
         } catch (SimpleCrudException e) {
             list = ListByConditionsDefinition.exec(this, configs);
         }
-        return list == null ? null : list.get(0);
+        return list == null || list.isEmpty() ? null : list.get(0);
     }
 
 }

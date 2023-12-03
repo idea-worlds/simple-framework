@@ -22,7 +22,7 @@ public class DefaultSessionGenerator implements SessionGenerator {
         SessionInfo session = new SessionInfo(user.getId(), expiredTime);
         session.setAttrs(this.generateAttrs(user, expiredTime));
         session.setToken(this.generateToken(session));
-        return null;
+        return session;
     }
 
     protected Map<String, Object> generateAttrs(UserInfo user, long expiredTime) {
