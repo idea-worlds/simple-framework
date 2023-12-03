@@ -15,7 +15,6 @@ import dev.simpleframework.token.session.SessionStore;
 import dev.simpleframework.token.user.UserAccountPasswordValidator;
 import dev.simpleframework.token.user.UserManager;
 import dev.simpleframework.token.user.UserQuery;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Configuration;
@@ -28,13 +27,11 @@ import java.util.List;
  * @author loyayz (loyayz@foxmail.com)
  */
 @Configuration
-@RequiredArgsConstructor
 @AutoConfigureAfter(SimpleTokenSpringRedisAutoConfiguration.class)
 @Order(Ordered.LOWEST_PRECEDENCE - 90)
 public class SimpleTokenSpringRegisterAutoConfiguration {
 
-    @Autowired
-    public void setConfig(SimpleTokenConfig config) {
+    public SimpleTokenSpringRegisterAutoConfiguration(SimpleTokenConfig config) {
         SimpleTokens.setGlobalConfig(config);
     }
 
