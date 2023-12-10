@@ -2,15 +2,17 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.core.ConditionType;
+import dev.simpleframework.crud.core.QueryConditionField;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.core.QuerySorters;
 import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
+import dev.simpleframework.util.Strings;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -25,19 +27,15 @@ public final class MybatisScripts {
      * @return <if test="类字段名 != null">script</if>
      */
     public static String wrapperIf(ModelField<?> field, String script) {
+        return wrapperIf(null, field, script);
+    }
+
+    public static String wrapperIf(String namePrefix, ModelField<?> field, String script) {
         if (field.fieldType().isPrimitive()) {
             return script;
         }
-        return wrapperIf(field.fieldName(), script);
-    }
-
-    /**
-     * 转换成 if 标签的脚本片段
-     *
-     * @param script script
-     * @return <if test="类字段名 != null">script</if>
-     */
-    public static String wrapperIf(String fieldName, String script) {
+        String fieldName = Strings.isBlank(namePrefix) ?
+                field.fieldName() : namePrefix + "." + field.fieldName();
         return String.format("<if test=\"%s != null\">%s</if>", fieldName, script);
     }
 
@@ -106,11 +104,7 @@ public final class MybatisScripts {
      * @param fields 模型字段
      */
     public static String conditionScript(List<? extends ModelField<?>> fields) {
-        QueryConditions.ConditionInfo defaultCondition = QueryConditions.ConditionInfo.of(ConditionType.equal, null);
-        String script = fields.stream()
-                .map(field -> CONDITION_SCRIPT_PROVIDER.apply(field, defaultCondition))
-                .collect(Collectors.joining("\n"));
-        return " \n<where>\n" + script + "\n</where> ";
+        return conditionScript(fields, null);
     }
 
     /**
@@ -120,97 +114,124 @@ public final class MybatisScripts {
      * @param conditions 条件配置
      */
     public static String conditionScript(List<? extends ModelField<?>> fields, QueryConditions conditions) {
-        QueryConditions.ConditionInfo defaultCondition = QueryConditions.ConditionInfo.of(ConditionType.equal, null);
-        String script = fields.stream()
-                .flatMap(field -> {
-                            List<String> fieldScripts = new ArrayList<>();
-                            List<QueryConditions.ConditionInfo> fieldConditions = conditions.getConditionInfos(field.fieldName());
-                            if (fieldConditions.isEmpty()) {
-                                fieldScripts.add(CONDITION_SCRIPT_PROVIDER.apply(field, defaultCondition));
-                            } else {
-                                for (QueryConditions.ConditionInfo fieldCondition : fieldConditions) {
-                                    fieldScripts.add(CONDITION_SCRIPT_PROVIDER.apply(field, fieldCondition));
-                                }
-                            }
-                            return fieldScripts.stream();
-                        }
-                )
-                .collect(Collectors.joining("\n"));
+        Map<String, ModelField<?>> fieldMap = new HashMap<>(16);
+        QueryConditions actualConditions = QueryConditions.and();
+        for (ModelField<?> field : fields) {
+            fieldMap.put(field.fieldName(), field);
+            actualConditions.add(field.fieldName(), ConditionType.equal, (Object) null);
+        }
+        actualConditions.add(conditions, false);
+
+        String script = resolveConditions(fieldMap, actualConditions, "model");
         return " \n<where>\n" + script + "\n</where> ";
     }
 
-    private static final BiFunction<ModelField<?>, QueryConditions.ConditionInfo, String> CONDITION_SCRIPT_PROVIDER =
-            (field, condition) -> {
-                String script;
-                String column = field.columnName();
-                String fieldName = field.fieldName();
-                String fieldKey;
-                if (condition.getValue() == null) {
-                    fieldKey = String.format("%s.%s", "model", fieldName);
-                } else {
-                    fieldKey = String.format("%s.%s", "data", condition.getKey(fieldName));
-                }
-                String fieldParam = MybatisTypeHandler.resolveFieldName(field, fieldKey);
-                boolean needWrapIf = true;
-                switch (condition.getType()) {
-                    case equal:
-                        script = String.format("%s = #{%s}", column, fieldParam);
-                        break;
-                    case not_equal:
-                        script = String.format("%s <![CDATA[ <> ]]> #{%s}", column, fieldParam);
-                        break;
-                    case like_all:
-                        script = String.format("%s LIKE concat('%%', #{%s}, '%%')", column, fieldParam);
-                        break;
-                    case like_left:
-                        script = String.format("%s LIKE concat('%%', #{%s})", column, fieldParam);
-                        break;
-                    case like_right:
-                        script = String.format("%s LIKE concat(#{%s}, '%%')", column, fieldParam);
-                        break;
-                    case greater_than:
-                        script = String.format("%s <![CDATA[ > ]]> #{%s}", column, fieldParam);
-                        break;
-                    case great_equal:
-                        script = String.format("%s <![CDATA[ >= ]]> #{%s}", column, fieldParam);
-                        break;
-                    case less_than:
-                        script = String.format("%s <![CDATA[ < ]]> #{%s}", column, fieldParam);
-                        break;
-                    case less_equal:
-                        script = String.format("%s <![CDATA[ <= ]]> #{%s}", column, fieldParam);
-                        break;
-                    case is_null:
-                        script = String.format("%s IS NULL", column);
-                        needWrapIf = false;
-                        break;
-                    case not_null:
-                        script = String.format("%s IS NOT NULL", column);
-                        needWrapIf = false;
-                        break;
-                    case in:
-                        script = String.format("%s IN %s", column, foreach(fieldKey, "_" + fieldName, field));
-                        break;
-                    case not_in:
-                        script = String.format("%s NOT IN %s", column, foreach(fieldKey, "_" + fieldName, field));
-                        break;
-                    case array_contains:
-                        script = String.format("%s <![CDATA[ @> ]]> #{%s}", column, fieldParam);
-                        break;
-                    case array_contained_by:
-                        script = String.format("%s <![CDATA[ <@ ]]> #{%s}", column, fieldParam);
-                        break;
-                    case array_overlap:
-                        script = String.format("%s <![CDATA[ && ]]> #{%s}", column, fieldParam);
-                        break;
-                    default:
-                        throw new ModelExecuteException("Not support conditionType [" + condition.getType() + "]");
-                }
-                script = " AND " + script + " ";
-                if (field.fieldType().isPrimitive()) {
-                    return script;
-                }
-                return needWrapIf ? wrapperIf(fieldKey, script) : script;
-            };
+    private static String resolveConditions(Map<String, ModelField<?>> fields, QueryConditions conditions, String owner) {
+        if (conditions == null) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder();
+        String logic = QueryConditions.TYPE_OR.equals(conditions.getType()) ? "OR" : "AND";
+        for (QueryConditionField condition : conditions.getFields()) {
+            ModelField<?> field = fields.get(condition.getName());
+            String script = resolveCondition(field, condition, owner, logic);
+            if (script.isBlank()) {
+                continue;
+            }
+            result.append(script).append("\n");
+        }
+        for (QueryConditions subConditions : conditions.getSubConditions()) {
+            String script = resolveConditions(fields, subConditions, "data");
+            if (script.isBlank()) {
+                continue;
+            }
+            script = script.trim();
+            if (script.startsWith("AND")) {
+                script = script.substring(3);
+            } else if (script.startsWith("OR")) {
+                script = script.substring(2);
+            }
+            script = script.trim();
+            while (script.startsWith("(") && script.endsWith(")")) {
+                script = script.substring(1);
+                script = script.substring(0, script.length() - 1);
+                script = script.trim();
+            }
+            result.append(logic).append(" (\n").append(script).append("\n)\n");
+        }
+        return result.toString();
+    }
+
+    public static String resolveCondition(ModelField<?> field, QueryConditionField condition, String owner, String logic) {
+        if (field == null || condition == null) {
+            return "";
+        }
+        String script;
+        String column = field.columnName();
+        String fieldName = field.fieldName();
+        String fieldNameKey = owner + "." + condition.getKey();
+        String fieldNameParam = MybatisTypeHandler.resolveFieldName(field, fieldNameKey);
+        boolean needWrapIfNull = true;
+        switch (condition.getType()) {
+            case equal:
+                script = String.format("%s = #{%s}", column, fieldNameParam);
+                break;
+            case not_equal:
+                script = String.format("%s <![CDATA[ <> ]]> #{%s}", column, fieldNameParam);
+                break;
+            case like_all:
+                script = String.format("%s LIKE concat('%%', #{%s}, '%%')", column, fieldNameParam);
+                break;
+            case like_left:
+                script = String.format("%s LIKE concat('%%', #{%s})", column, fieldNameParam);
+                break;
+            case like_right:
+                script = String.format("%s LIKE concat(#{%s}, '%%')", column, fieldNameParam);
+                break;
+            case greater_than:
+                script = String.format("%s <![CDATA[ > ]]> #{%s}", column, fieldNameParam);
+                break;
+            case great_equal:
+                script = String.format("%s <![CDATA[ >= ]]> #{%s}", column, fieldNameParam);
+                break;
+            case less_than:
+                script = String.format("%s <![CDATA[ < ]]> #{%s}", column, fieldNameParam);
+                break;
+            case less_equal:
+                script = String.format("%s <![CDATA[ <= ]]> #{%s}", column, fieldNameParam);
+                break;
+            case is_null:
+                script = String.format("%s IS NULL", column);
+                needWrapIfNull = false;
+                break;
+            case not_null:
+                script = String.format("%s IS NOT NULL", column);
+                needWrapIfNull = false;
+                break;
+            case in:
+                script = String.format("%s IN %s", column, foreach(fieldNameKey, "_" + fieldName, field));
+                break;
+            case not_in:
+                script = String.format("%s NOT IN %s", column, foreach(fieldNameKey, "_" + fieldName, field));
+                break;
+            case array_contains:
+                script = String.format("%s <![CDATA[ @> ]]> #{%s}", column, fieldNameParam);
+                break;
+            case array_contained_by:
+                script = String.format("%s <![CDATA[ <@ ]]> #{%s}", column, fieldNameParam);
+                break;
+            case array_overlap:
+                script = String.format("%s <![CDATA[ && ]]> #{%s}", column, fieldNameParam);
+                break;
+            default:
+                throw new ModelExecuteException("Not support conditionType [" + condition.getType() + "]");
+        }
+        script = logic + " " + script;
+        if ("model".equals(owner)) {
+            return needWrapIfNull ? wrapperIf(owner, field, script) : script;
+        } else {
+            return needWrapIfNull && condition.getValue() == null ? "" : script;
+        }
+    }
 
 }

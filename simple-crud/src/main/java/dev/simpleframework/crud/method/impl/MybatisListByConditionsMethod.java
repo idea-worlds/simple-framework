@@ -2,10 +2,12 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
+import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.core.QueryConfig;
 import dev.simpleframework.crud.util.MybatisHelper;
 import org.apache.ibatis.mapping.SqlCommandType;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +35,13 @@ public final class MybatisListByConditionsMethod {
     public static <T, R extends T> List<R> exec(ModelInfo<?> info, String methodId, T model, QueryConfig queryConfig) {
         return MybatisHelper.exec(info.datasourceType(), info.datasourceName(),
                 session -> {
+                    QueryConditions conditions = queryConfig.getConditions();
+                    Map<String, Object> conditionData = conditions == null ?
+                            Collections.emptyMap() : conditions.getConditionData();
                     Map<String, Object> param = new HashMap<>(6);
                     param.put("model", model);
                     param.put("config", queryConfig);
-                    param.put("data", queryConfig.getConditions().getConditionData());
+                    param.put("data", conditionData);
                     return session.selectList(methodId, param);
                 }
         );

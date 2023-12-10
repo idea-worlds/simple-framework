@@ -3,6 +3,7 @@ package dev.simpleframework.crud.test;
 import dev.simpleframework.crud.annotation.Condition;
 import dev.simpleframework.crud.annotation.Conditions;
 import dev.simpleframework.crud.core.ConditionType;
+import dev.simpleframework.crud.core.QueryConditionField;
 import dev.simpleframework.crud.core.QueryConditions;
 import lombok.Data;
 import org.junit.jupiter.api.Assertions;
@@ -21,37 +22,36 @@ public class ConditionTest {
     public void testAnnotation() {
         ConditionData data = new ConditionData();
         data.setId(1L);
-        QueryConditions conditions = QueryConditions.of().addFromAnnotation(data);
+        QueryConditions conditions = QueryConditions.and().addFromAnnotation(data);
         Assertions.assertEquals(7, conditions.getConditionData().size());
 
-        for (Map.Entry<String, List<QueryConditions.ConditionInfo>> entry : conditions.getConditions().entrySet()) {
-            String fieldName = entry.getKey();
-            QueryConditions.ConditionInfo condition = entry.getValue().get(0);
-            if ("id".equals(fieldName)) {
-                Assertions.assertEquals(ConditionType.equal, condition.getType());
-                Assertions.assertEquals(data.getId(), condition.getValue());
-            } else if ("ids".equals(fieldName)) {
-                Assertions.assertEquals(ConditionType.equal, condition.getType());
-                Assertions.assertEquals(data.getId(), condition.getValue());
-            } else if ("name".equals(fieldName)) {
-                Assertions.assertEquals(2, entry.getValue().size());
-                for (QueryConditions.ConditionInfo info : entry.getValue()) {
-                    Assertions.assertNull(info.getValue());
-                }
-            } else if ("age".equals(fieldName)) {
-                Assertions.assertEquals(ConditionType.great_equal, condition.getType());
-                Assertions.assertNull(condition.getValue());
-            } else if ("user_age".equals(fieldName)) {
-                Assertions.assertEquals(ConditionType.equal, condition.getType());
-                Assertions.assertEquals(1, condition.getValue());
-            } else if ("person_age".equals(fieldName)) {
-                Assertions.assertEquals(ConditionType.equal, condition.getType());
-                Assertions.assertNull(condition.getValue());
-            } else if ("birthDay".equals(fieldName)) {
-                Assertions.assertEquals(ConditionType.not_equal, condition.getType());
-                Assertions.assertEquals(new Date(1000000), condition.getValue());
+        for (QueryConditionField field : conditions.getFields()) {
+            String name = field.getName();
+            ConditionType type = field.getType();
+            Object value = field.getValue();
+            if ("id".equals(name)) {
+                Assertions.assertEquals(ConditionType.equal, type);
+                Assertions.assertEquals(data.getId(), value);
+            } else if ("ids".equals(name)) {
+                Assertions.assertEquals(ConditionType.equal, type);
+                Assertions.assertEquals(data.getId(), value);
+            } else if ("name".equals(name)) {
+                Assertions.assertEquals(2, conditions.getFieldSize().get(name));
+                Assertions.assertNull(value);
+            } else if ("age".equals(name)) {
+                Assertions.assertEquals(ConditionType.great_equal, type);
+                Assertions.assertNull(value);
+            } else if ("user_age".equals(name)) {
+                Assertions.assertEquals(ConditionType.equal, type);
+                Assertions.assertEquals(1, value);
+            } else if ("person_age".equals(name)) {
+                Assertions.assertEquals(ConditionType.equal, type);
+                Assertions.assertNull(value);
+            } else if ("birthDay".equals(name)) {
+                Assertions.assertEquals(ConditionType.not_equal, type);
+                Assertions.assertEquals(new Date(1000000), value);
             } else {
-                throw new IllegalArgumentException("");
+                throw new IllegalArgumentException(field.toString());
             }
         }
     }

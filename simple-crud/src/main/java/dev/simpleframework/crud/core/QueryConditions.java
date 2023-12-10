@@ -1,15 +1,17 @@
 package dev.simpleframework.crud.core;
 
 import dev.simpleframework.crud.annotation.Condition;
+import dev.simpleframework.crud.annotation.Conditions;
 import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.util.Classes;
 import dev.simpleframework.util.Functions;
 import dev.simpleframework.util.SerializedFunction;
 import dev.simpleframework.util.Strings;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Setter;
 import lombok.SneakyThrows;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,15 +21,25 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Data
 public class QueryConditions {
+    public static final String TYPE_AND = "AND";
+    public static final String TYPE_OR = "OR";
 
-    /**
-     * key: 类字段名
-     * value: 条件信息
-     */
-    private final Map<String, List<ConditionInfo>> conditions = new LinkedHashMap<>();
+    private final String type;
+    @Setter(AccessLevel.PRIVATE)
+    private Map<String, Integer> fieldSize = new HashMap<>();
+    private final List<QueryConditionField> fields = new ArrayList<>();
+    private final List<QueryConditions> subConditions = new ArrayList<>();
 
-    public static QueryConditions of() {
-        return new QueryConditions();
+    public static QueryConditions and() {
+        return new QueryConditions(TYPE_AND);
+    }
+
+    public static QueryConditions or() {
+        return new QueryConditions(TYPE_OR);
+    }
+
+    private QueryConditions(String type) {
+        this.type = type;
     }
 
     /**
@@ -37,7 +49,7 @@ public class QueryConditions {
      * @return 条件对象
      */
     public static QueryConditions fromAnnotation(Object annotation) {
-        return new QueryConditions().addFromAnnotation(annotation);
+        return QueryConditions.and().addFromAnnotation(annotation);
     }
 
     /**
@@ -48,34 +60,30 @@ public class QueryConditions {
      */
     public static QueryConditions combineConditions(QueryConditions... conditions) {
         if (conditions == null || conditions.length == 0) {
-            return QueryConditions.of();
+            return QueryConditions.and();
         }
-        return conditions[0].combine(conditions);
-    }
-
-    /**
-     * 获取条件数据
-     * key: 根据 {@link #conditions} 的 key 获取 {@link ConditionInfo#getKey(String)} 的结果值
-     * value: ConditionInfo 的值
-     *
-     * @return 条件数据
-     */
-    public Map<String, Object> getConditionData() {
-        Map<String, Object> result = new HashMap<>(8);
-        for (Map.Entry<String, List<ConditionInfo>> entry : this.conditions.entrySet()) {
-            ConditionInfo.append(result, entry.getKey(), entry.getValue());
+        if (conditions.length == 1) {
+            return conditions[0];
+        }
+        QueryConditions result = QueryConditions.and();
+        for (QueryConditions condition : conditions) {
+            result.add(condition);
         }
         return result;
     }
 
     /**
-     * 获取条件信息列表
-     *
-     * @param fieldName 类字段名
-     * @return 条件信息列表
+     * 获取条件数据
      */
-    public List<ConditionInfo> getConditionInfos(String fieldName) {
-        return this.conditions.getOrDefault(fieldName, new ArrayList<>());
+    public Map<String, Object> getConditionData() {
+        Map<String, Object> result = new HashMap<>(8);
+        for (QueryConditionField field : this.fields) {
+            result.put(field.getKey(), field.getValue());
+        }
+        for (QueryConditions sub : this.subConditions) {
+            result.putAll(sub.getConditionData());
+        }
+        return result;
     }
 
     public QueryConditions add(String fieldName, Object value) {
@@ -106,11 +114,8 @@ public class QueryConditions {
     }
 
     public QueryConditions addFromAnnotation(Object annotation) {
-        annotationFieldConditions(annotation).forEach((fieldName, fieldConditions) -> {
-            fieldConditions.forEach(fieldCondition -> {
-                this.add(fieldName, fieldCondition.getType(), fieldCondition.getValue());
-            });
-        });
+        annotationConditionFields(annotation)
+                .forEach(field -> this.add(field.getName(), field.getType(), field.getValue()));
         return this;
     }
 
@@ -120,15 +125,25 @@ public class QueryConditions {
      * @param conditions 另一条件对象
      * @return this
      */
-    public QueryConditions add(QueryConditions conditions) {
-        if (conditions == this) {
+    public synchronized QueryConditions add(QueryConditions conditions) {
+        return this.add(conditions, true);
+    }
+
+    /**
+     * 添加条件
+     *
+     * @param conditions 另一条件对象
+     * @param flushKey   是否重置条件字段的key值
+     * @return this
+     */
+    public synchronized QueryConditions add(QueryConditions conditions, boolean flushKey) {
+        if (conditions == null || conditions == this) {
             return this;
         }
-        conditions.getConditions().forEach((fieldName, fieldConditions) -> {
-            fieldConditions.forEach(fieldCondition -> {
-                this.add(fieldName, fieldCondition.getType(), fieldCondition.getValue());
-            });
-        });
+        if (flushKey) {
+            conditions.flushFieldKey(this.fieldSize);
+        }
+        this.subConditions.add(conditions);
         return this;
     }
 
@@ -144,21 +159,32 @@ public class QueryConditions {
         if (conditionType == null) {
             conditionType = ConditionType.equal;
         }
-        List<ConditionInfo> infos = this.conditions.computeIfAbsent(fieldName, k -> new ArrayList<>());
+        int size = this.fieldSize.getOrDefault(fieldName, 0);
+        this.fieldSize.put(fieldName, size + 1);
+
         Object value = transToValue(conditionType, values);
-        ConditionInfo info = ConditionInfo.of(infos.size(), conditionType, value);
-        infos.add(info);
+        QueryConditionField field = QueryConditionField.of(fieldName, conditionType, value);
+        if (size > 0) {
+            field.setKey(fieldName + size);
+        }
+
+        this.fields.add(field);
         return this;
     }
 
-    private QueryConditions combine(QueryConditions... conditions) {
-        for (QueryConditions condition : conditions) {
-            if (condition == this) {
-                continue;
+    private void flushFieldKey(Map<String, Integer> fieldSize) {
+        this.fieldSize = fieldSize;
+        for (QueryConditionField field : this.fields) {
+            String fieldName = field.getName();
+            int size = fieldSize.getOrDefault(fieldName, 0);
+            fieldSize.put(fieldName, size + 1);
+            if (size > 0) {
+                field.setKey(fieldName + size);
             }
-            this.add(condition);
         }
-        return this;
+        for (QueryConditions sub : this.subConditions) {
+            sub.flushFieldKey(fieldSize);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -188,71 +214,35 @@ public class QueryConditions {
     private static final Map<Class<?>, List<Field>> CONDITION_CACHES = new ConcurrentHashMap<>();
 
     @SneakyThrows
-    private static Map<String, List<ConditionInfo>> annotationFieldConditions(Object annotation) {
+    private static List<QueryConditionField> annotationConditionFields(Object annotation) {
         if (annotation == null) {
-            return Collections.emptyMap();
+            return Collections.emptyList();
         }
         Class<?> annotationClass = annotation.getClass();
         List<Field> fields = CONDITION_CACHES.computeIfAbsent(annotationClass,
-                c -> Classes.getFieldsByAnnotations(annotationClass, Condition.class, dev.simpleframework.crud.annotation.Conditions.class));
+                c -> Classes.getFieldsByAnnotations(annotationClass, Condition.class, Conditions.class));
         if (fields.isEmpty()) {
             throw new ModelExecuteException("Can not found any field declared by @Condition from " + annotationClass.getName());
         }
-        Map<String, List<ConditionInfo>> result = new LinkedHashMap<>();
+        List<QueryConditionField> result = new ArrayList<>();
         for (Field field : fields) {
-            boolean accessible = field.isAccessible();
             field.setAccessible(true);
-            for (Condition conditionData : field.getAnnotationsByType(Condition.class)) {
-                String fieldName = conditionData.field();
+            for (Condition condition : field.getAnnotationsByType(Condition.class)) {
+                String fieldName = condition.field();
                 if (Strings.isBlank(fieldName)) {
                     fieldName = field.getName();
                 }
                 Object conditionValue = field.get(annotation);
                 if (conditionValue == null) {
-                    String defaultValue = conditionData.defaultValueIfNull();
+                    String defaultValue = condition.defaultValueIfNull();
                     if (Strings.hasText(defaultValue)) {
                         conditionValue = Strings.cast(defaultValue, field.getType());
                     }
                 }
-                ConditionInfo condition = ConditionInfo.of(conditionData.type(), conditionValue);
-                result.computeIfAbsent(fieldName, f -> new ArrayList<>())
-                        .add(condition);
-            }
-            if (!accessible) {
-                field.setAccessible(false);
+                result.add(QueryConditionField.of(fieldName, condition.type(), conditionValue));
             }
         }
         return result;
-    }
-
-    @Data
-    public static class ConditionInfo implements Serializable {
-        private int index;
-        private ConditionType type;
-        private Object value;
-
-        public static ConditionInfo of(ConditionType type, Object value) {
-            return of(0, type, value);
-        }
-
-        public static ConditionInfo of(int index, ConditionType type, Object value) {
-            ConditionInfo result = new ConditionInfo();
-            result.setIndex(index);
-            result.setType(type);
-            result.setValue(value);
-            return result;
-        }
-
-        public String getKey(String fieldName) {
-            return fieldName + this.getIndex();
-        }
-
-        static void append(Map<String, Object> result, String fieldName, List<ConditionInfo> conditions) {
-            for (ConditionInfo condition : conditions) {
-                result.put(condition.getKey(fieldName), condition.getValue());
-            }
-        }
-
     }
 
 }

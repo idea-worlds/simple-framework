@@ -25,7 +25,7 @@ public final class MybatisUpdateByConditionsMethod {
                             .map(field -> {
                                 String fieldName = "model." + field.fieldName();
                                 String tmp = String.format("%s = #{%s},", field.columnName(), MybatisTypeHandler.resolveFieldName(field, fieldName));
-                                return MybatisScripts.wrapperIf(fieldName, tmp);
+                                return MybatisScripts.wrapperIf("model", field, tmp);
                             })
                             .collect(Collectors.joining("\n"));
                     String condition = MybatisScripts.conditionScript(info.getAllFields(), conditions);

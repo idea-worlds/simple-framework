@@ -11,11 +11,14 @@ import dev.simpleframework.util.SimpleSpringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
 @Configuration
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class SimpleCrudAutoConfiguration implements InitializingBean {
 
     @Override

@@ -26,17 +26,8 @@ public class PageResponse<T> extends AbstractResponse<PageData<T>> {
         return result;
     }
 
-    public List<T> getItems() {
+    public List<T> items() {
         return super.getData().getItems();
-    }
-
-    public boolean isEmpty() {
-        List<T> items = this.getItems();
-        return items == null || items.isEmpty();
-    }
-
-    public boolean isNotEmpty() {
-        return !isEmpty();
     }
 
 }

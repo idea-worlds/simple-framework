@@ -18,7 +18,7 @@ public class QueryConfig {
     /**
      * 条件
      */
-    private QueryConditions conditions = QueryConditions.of();
+    private QueryConditions conditions;
     /**
      * 排序
      */
@@ -56,27 +56,43 @@ public class QueryConfig {
     }
 
     public QueryConfig addCondition(String fieldName, Object value) {
+        if (this.conditions == null) {
+            this.conditions = QueryConditions.and();
+        }
         this.conditions.add(fieldName, value);
         return this;
     }
 
     public <T, R> QueryConfig addCondition(SerializedFunction<T, R> fieldNameFunc, Object value) {
+        if (this.conditions == null) {
+            this.conditions = QueryConditions.and();
+        }
         this.conditions.add(fieldNameFunc, value);
         return this;
     }
 
     public QueryConfig addCondition(String fieldName, ConditionType conditionType, Object... values) {
+        if (this.conditions == null) {
+            this.conditions = QueryConditions.and();
+        }
         this.conditions.add(fieldName, conditionType, values);
         return this;
     }
 
     public <T, R> QueryConfig addCondition(SerializedFunction<T, R> fieldNameFunc, ConditionType conditionType, Object... values) {
+        if (this.conditions == null) {
+            this.conditions = QueryConditions.and();
+        }
         this.conditions.add(fieldNameFunc, conditionType, values);
         return this;
     }
 
     public QueryConfig addCondition(QueryConditions conditions) {
-        this.conditions.add(conditions);
+        if (this.conditions == null) {
+            this.conditions = conditions;
+        } else {
+            this.conditions.add(conditions);
+        }
         return this;
     }
 

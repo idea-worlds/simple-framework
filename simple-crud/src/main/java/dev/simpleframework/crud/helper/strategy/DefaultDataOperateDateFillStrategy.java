@@ -18,4 +18,9 @@ public class DefaultDataOperateDateFillStrategy implements DataFillStrategy {
         return DataOperateDate.class;
     }
 
+    @Override
+    public FillType type() {
+        return FillType.NULL;
+    }
+
 }
