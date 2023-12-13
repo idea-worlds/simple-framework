@@ -9,10 +9,7 @@ import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
 import dev.simpleframework.util.Strings;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +33,13 @@ public final class MybatisScripts {
         }
         String fieldName = Strings.isBlank(namePrefix) ?
                 field.fieldName() : namePrefix + "." + field.fieldName();
+        Class<?> fieldType = field.fieldType();
+        if (fieldType.isArray()) {
+            return String.format("<if test=\"%s != null and %s.length != 0\">%s</if>", fieldName, fieldName, script);
+        }
+        if (Collection.class.isAssignableFrom(fieldType)) {
+            return String.format("<if test=\"%s != null and !%s.isEmpty()\">%s</if>", fieldName, fieldName, script);
+        }
         return String.format("<if test=\"%s != null\">%s</if>", fieldName, script);
     }
 
@@ -117,8 +121,12 @@ public final class MybatisScripts {
         Map<String, ModelField<?>> fieldMap = new HashMap<>(16);
         QueryConditions actualConditions = QueryConditions.and();
         for (ModelField<?> field : fields) {
-            fieldMap.put(field.fieldName(), field);
-            actualConditions.add(field.fieldName(), ConditionType.equal, (Object) null);
+            String fieldName = field.fieldName();
+            Class<?> fieldType = field.fieldType();
+            ConditionType conditionType = fieldType.isArray() || Collection.class.isAssignableFrom(fieldType) ?
+                    ConditionType.array_contains : ConditionType.equal;
+            actualConditions.add(fieldName, conditionType, (Object) null);
+            fieldMap.put(fieldName, field);
         }
         actualConditions.add(conditions, false);
 
@@ -216,12 +224,21 @@ public final class MybatisScripts {
                 break;
             case array_contains:
                 script = String.format("%s <![CDATA[ @> ]]> #{%s}", column, fieldNameParam);
+                if (String.class.isAssignableFrom(field.fieldComponentType())) {
+                    script = script + "::text[]";
+                }
                 break;
             case array_contained_by:
                 script = String.format("%s <![CDATA[ <@ ]]> #{%s}", column, fieldNameParam);
+                if (String.class.isAssignableFrom(field.fieldComponentType())) {
+                    script = script + "::text[]";
+                }
                 break;
             case array_overlap:
                 script = String.format("%s <![CDATA[ && ]]> #{%s}", column, fieldNameParam);
+                if (String.class.isAssignableFrom(field.fieldComponentType())) {
+                    script = script + "::text[]";
+                }
                 break;
             default:
                 throw new ModelExecuteException("Not support conditionType [" + condition.getType() + "]");

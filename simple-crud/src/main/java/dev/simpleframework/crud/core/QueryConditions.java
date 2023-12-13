@@ -197,7 +197,11 @@ public class QueryConditions {
         if (valuesLength == 0) {
             return null;
         }
-        if (type == ConditionType.in || type == ConditionType.not_in) {
+        if (type == ConditionType.in
+                || type == ConditionType.not_in
+                || type == ConditionType.array_contains
+                || type == ConditionType.array_contained_by
+                || type == ConditionType.array_overlap) {
             List<Object> result = new ArrayList<>();
             for (Object temp : values) {
                 if (temp instanceof Collection) {
