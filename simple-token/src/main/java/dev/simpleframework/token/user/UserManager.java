@@ -1,6 +1,5 @@
 package dev.simpleframework.token.user;
 
-import dev.simpleframework.token.constant.UserStatus;
 import dev.simpleframework.token.exception.*;
 
 /**
@@ -44,15 +43,10 @@ public final class UserManager {
         validQuery();
         UserInfo info = QUERY.getInfoById(loginId);
         if (info == null) {
-            throw new LoginUserNotFoundException("Login user can not be found");
+            throw new UserNotFoundException("User [" + loginId + "] can not be found");
         }
-        UserStatus status = info.getStatus();
-        if (status == UserStatus.INACTIVE) {
-            throw new LoginUserInactiveException("Login user inactive");
-        } else if (status == UserStatus.DISABLED) {
-            throw new LoginUserDisabledException("Login user disabled");
-        } else if (status == UserStatus.LOCKED) {
-            throw new LoginUserLockedException("Login user locked");
+        if (!info.isEnable()) {
+            throw new UserDisabledException("User " + loginId + " disabled");
         }
         return info;
     }

@@ -1,6 +1,5 @@
 package dev.simpleframework.token.user;
 
-import dev.simpleframework.token.constant.UserStatus;
 import lombok.Data;
 
 /**
@@ -10,19 +9,18 @@ import lombok.Data;
 public class UserInfo {
 
     private String id;
-    private UserStatus status;
+    private boolean enable = true;
 
     public UserInfo() {
     }
 
     public UserInfo(String id) {
         this.id = id;
-        this.status = UserStatus.ENABLE;
     }
 
-    public UserInfo(String id, UserStatus status) {
+    public UserInfo(String id, boolean enable) {
         this.id = id;
-        this.status = status;
+        this.enable = enable;
     }
 
 }
