@@ -30,9 +30,9 @@ public class SimpleTokenLoginConfig {
      */
     private String tokenJwtSecretKey;
     /**
-     * token 超时时间，默认 1 天
+     * token 超时时间，默认 30 天
      */
-    private Duration tokenTimeout = Duration.ofDays(1);
+    private Duration tokenTimeout = Duration.ofDays(30);
     /**
      * 最大登录数量，默认 -1
      * <0 : 不限数量

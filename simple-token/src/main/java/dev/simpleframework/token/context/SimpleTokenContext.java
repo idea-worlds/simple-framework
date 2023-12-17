@@ -34,13 +34,14 @@ public interface SimpleTokenContext {
     default void setToken(String token, long expiredTime) {
         SimpleTokenConfig config = SimpleTokens.getGlobalConfig();
         token = config.splicingToken(token);
-        String key = config.getTokenName();
-        this.store().set(key, token);
+        String tokenName = config.getTokenName();
+        this.store().set(tokenName, token);
 
-        if (config.getTokenInCookie()) {
-            int maxAge = (int) (expiredTime - System.currentTimeMillis()) / 1000;
-            this.response().addCookie(config.getTokenName(), token, maxAge);
-        }
+        ContextResponse response = this.response();
+        response.addHeader(tokenName, token);
+
+        int cookieAge = (int) (expiredTime - System.currentTimeMillis()) / 1000;
+        response.addCookie(tokenName, token, cookieAge);
     }
 
     /**
@@ -61,7 +62,7 @@ public interface SimpleTokenContext {
             if (token == null) {
                 token = request.getHeader(key);
             }
-            if (token == null && config.getTokenInCookie()) {
+            if (token == null) {
                 token = request.getCookie(key);
             }
         }
@@ -83,10 +84,7 @@ public interface SimpleTokenContext {
         }
         String key = config.getTokenName();
         this.store().remove(key);
-
-        if (config.getTokenInCookie()) {
-            this.response().removeCookie(config.getTokenName());
-        }
+        this.response().removeCookie(config.getTokenName());
         return token;
     }
 

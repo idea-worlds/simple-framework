@@ -1,5 +1,7 @@
 package dev.simpleframework.token.session;
 
+import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.exception.ImplementationNotFoundException;
 import dev.simpleframework.token.session.impl.DefaultSessionGenerator;
 import dev.simpleframework.token.session.impl.DefaultSessionStore;
@@ -67,6 +69,12 @@ public final class SessionManager {
      * @param session 会话值
      */
     public static void storeSession(SessionInfo session) {
+        if (SimpleTokens.getGlobalConfig().tokenStyleCheck(TokenStyle.JWT)) {
+            return;
+        }
+        if (session == null) {
+            return;
+        }
         validStore();
         STORE.setSession(session);
     }
@@ -77,6 +85,9 @@ public final class SessionManager {
      * @param token token
      */
     public static void removeSessionByToken(String token) {
+        if (token == null) {
+            return;
+        }
         validStore();
         STORE.removeSession(token);
     }
@@ -103,6 +114,9 @@ public final class SessionManager {
      * @return 会话值
      */
     public static SessionPerson findPerson(String loginId) {
+        if (loginId == null) {
+            return null;
+        }
         validStore();
         SessionPerson person = STORE.getPerson(loginId);
         if (person != null) {
@@ -119,6 +133,12 @@ public final class SessionManager {
      * @param person  会话值
      */
     public static void storePerson(String loginId, SessionPerson person) {
+        if (SimpleTokens.getGlobalConfig().tokenStyleCheck(TokenStyle.JWT)) {
+            return;
+        }
+        if (person == null) {
+            return;
+        }
         validStore();
         STORE.setPerson(loginId, person);
     }
@@ -129,6 +149,9 @@ public final class SessionManager {
      * @param loginId 登录 id
      */
     public static void removePerson(String loginId) {
+        if (loginId == null) {
+            return;
+        }
         validStore();
         STORE.removePerson(loginId);
     }

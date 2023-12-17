@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * simple-token 权限认证工具类
@@ -25,6 +26,7 @@ import java.util.List;
 public final class SimpleTokens {
     private static final ThreadLocal<SessionInfo> THREAD_LOCAL_SESSION = new InheritableThreadLocal<>();
     private static final ThreadLocal<SimpleTokenPermission> THREAD_LOCAL_PERMISSION = new InheritableThreadLocal<>();
+    private static final List<String> REFRESH_TOKENS = new CopyOnWriteArrayList<>();
 
     private static SimpleTokenConfig CONFIG = null;
 
@@ -60,6 +62,35 @@ public final class SimpleTokens {
             THREAD_LOCAL_SESSION.set(session);
         }
         return session;
+    }
+
+    /**
+     * 重置当前会话值
+     */
+    public static void refreshSession() {
+        SessionInfo session = getSession();
+        String token = session.getToken();
+        if (REFRESH_TOKENS.contains(token)) {
+            return;
+        }
+        REFRESH_TOKENS.add(token);
+        try {
+            long expiredTime = getGlobalConfig().tokenExpiredTime();
+            new SimpleTokenSessionRefresh(session, expiredTime).exec();
+            // 存储 token 至上下文
+            ContextManager.storeToken(session.getToken(), session.getExpiredTime());
+        } finally {
+            REFRESH_TOKENS.remove(token);
+        }
+    }
+
+    /**
+     * 重置用户的会话值
+     *
+     * @param loginId 用户 id
+     */
+    public static void refreshSession(String loginId) {
+        new SimpleTokenSessionRefresh(loginId).exec();
     }
 
     /**

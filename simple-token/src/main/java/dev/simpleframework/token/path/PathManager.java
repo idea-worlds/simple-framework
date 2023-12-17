@@ -1,6 +1,7 @@
 package dev.simpleframework.token.path;
 
 import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.config.SimpleTokenPathConfig;
 import dev.simpleframework.token.constant.HttpMethod;
 import dev.simpleframework.token.context.ContextManager;
@@ -102,10 +103,11 @@ public final class PathManager {
     }
 
     private static List<PathActionExecutor> buildConfigActionExecutors() {
-        SimpleTokenPathConfig config = SimpleTokens.getGlobalConfig().getPath();
+        SimpleTokenConfig globalConfig = SimpleTokens.getGlobalConfig();
+        SimpleTokenPathConfig pathConfig = globalConfig.getPath();
         PathActionExecutor configExecutor = PathActionExecutor.of()
                 // 不匹配不需要鉴权的路径才执行回调
-                .notMatchInfo(config.getAllPermitPaths())
+                .notMatchInfo(pathConfig.getAllPermitPaths())
                 .action(() -> {
                     // 校验登录
                     SimpleTokens.checkLogin();
@@ -113,7 +115,7 @@ public final class PathManager {
                     // 校验权限
                     List<PathActionExecutor> permissionExecutors = new ArrayList<>();
                     PathActionExecutor permissionExecutor;
-                    for (PathPermission permission : config.getPermissions()) {
+                    for (PathPermission permission : pathConfig.getPermissions()) {
                         permissionExecutor = PathActionExecutor.of()
                                 .anyMatchMethod(permission.getPath(), permission.getHttpMethods())
                                 .action(() -> {
@@ -123,6 +125,14 @@ public final class PathManager {
                         permissionExecutors.add(permissionExecutor);
                     }
                     execAction(permissionExecutors);
+
+                    // 自动续签
+                    if (globalConfig.getTokenAutoRenew()) {
+                        long leaveTime = SimpleTokens.getSession().getExpiredTime() - System.currentTimeMillis();
+                        if (leaveTime <= globalConfig.tokenExpiredTime()) {
+                            SimpleTokens.refreshSession();
+                        }
+                    }
                 });
         return Collections.singletonList(configExecutor);
     }

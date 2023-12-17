@@ -43,15 +43,7 @@ public interface ContextResponse {
      * @param name 名
      */
     default void removeCookie(String name) {
-        SimpleTokenCookieConfig cookieConfig = SimpleTokens.getGlobalConfig().getCookie();
-        ContextCookie cookie = new ContextCookie(name, null)
-                .setMaxAge(0)
-                .setDomain(cookieConfig.getDomain())
-                .setPath(cookieConfig.getPath())
-                .setSecure(cookieConfig.getSecure())
-                .setHttpOnly(cookieConfig.getHttpOnly())
-                .setSameSite(cookieConfig.getSameSite());
-        this.addHeader(ContextCookie.HEADER_NAME, cookie.toString());
+        this.addCookie(name, null, 0);
     }
 
 }

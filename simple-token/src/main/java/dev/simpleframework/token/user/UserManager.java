@@ -41,7 +41,7 @@ public final class UserManager {
      */
     public static UserInfo findInfoById(String loginId) {
         validQuery();
-        UserInfo info = QUERY.getInfoById(loginId);
+        UserInfo info = loginId == null ? null : QUERY.getInfoById(loginId);
         if (info == null) {
             throw new UserNotFoundException("User [" + loginId + "] can not be found");
         }

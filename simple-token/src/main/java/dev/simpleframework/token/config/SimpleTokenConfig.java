@@ -1,5 +1,6 @@
 package dev.simpleframework.token.config;
 
+import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.exception.InvalidTokenException;
 import lombok.Data;
 
@@ -10,9 +11,10 @@ import lombok.Data;
  */
 @Data
 public class SimpleTokenConfig {
+    private static long TOKEN_RENEW_LIMIT_TIME = 0;
 
     /**
-     * token 名称，用于 session 前缀、cookie 名称
+     * token 名称，用于 session key、cookie name、header name
      */
     private String tokenName = "simple-token";
     /**
@@ -20,9 +22,9 @@ public class SimpleTokenConfig {
      */
     private String tokenPrefix = "";
     /**
-     * cookie 里是否有 token
+     * token 是否自动续签
      */
-    private Boolean tokenInCookie = Boolean.TRUE;
+    private Boolean tokenAutoRenew = Boolean.TRUE;
     /**
      * cookie 配置
      */
@@ -57,6 +59,22 @@ public class SimpleTokenConfig {
             throw new InvalidTokenException("don't have the prefix " + this.tokenPrefix);
         }
         return token.substring(this.tokenPrefix.length() + 1);
+    }
+
+    public boolean tokenStyleCheck(TokenStyle style) {
+        return this.getLogin().getTokenStyle() == style;
+    }
+
+    public long tokenExpiredTime() {
+        return System.currentTimeMillis()
+                + this.login.getTokenTimeout().toMillis();
+    }
+
+    public long tokenRenewLimitTime() {
+        if (TOKEN_RENEW_LIMIT_TIME == 0) {
+            TOKEN_RENEW_LIMIT_TIME = this.login.getTokenTimeout().toMillis() / 4;
+        }
+        return TOKEN_RENEW_LIMIT_TIME;
     }
 
 }
