@@ -42,7 +42,7 @@
         <hutool.version>5.8.22</hutool.version>
         <mybatis.version>3.5.14</mybatis.version>
         <mybatis-spring-boot-starter.version>3.0.2</mybatis-spring-boot-starter.version>
-        <pagehelper.version>6.0.0</pagehelper.version>
+        <pagehelper.version>6.1.0</pagehelper.version>
         <pagehelper-spring-boot-starter.version>2.0.0</pagehelper-spring-boot-starter.version>
         <druid.version>1.2.20</druid.version>
         <fastjson2.version>2.0.42</fastjson2.version>
