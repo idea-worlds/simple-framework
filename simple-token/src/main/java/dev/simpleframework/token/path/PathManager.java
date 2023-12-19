@@ -24,9 +24,9 @@ public final class PathManager {
     /**
      * 所有自定义路径方法执行器
      */
-    private static List<PathActionExecutor> CUSTOM_ACTION_EXECUTOR = PathActionBuilder.DEFAULT.init();
+    private static List<PathActionExecutor> CUSTOM_ACTION_EXECUTOR = PathActionInit.DEFAULT.init();
 
-    public static void registerActionBuilder(PathActionBuilder builder) {
+    public static void registerActionInit(PathActionInit builder) {
         if (builder == null) {
             return;
         }

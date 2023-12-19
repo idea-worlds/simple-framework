@@ -5,7 +5,7 @@ import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
 import dev.simpleframework.token.context.SimpleTokenRpcContext;
-import dev.simpleframework.token.path.PathActionBuilder;
+import dev.simpleframework.token.path.PathActionInit;
 import dev.simpleframework.token.path.PathManager;
 import dev.simpleframework.token.permission.PermissionManager;
 import dev.simpleframework.token.permission.PermissionQuery;
@@ -56,8 +56,8 @@ public class SimpleTokenSpringRegisterAutoConfiguration {
     }
 
     @Autowired(required = false)
-    public void setPathActionBuilder(PathActionBuilder builder) {
-        PathManager.registerActionBuilder(builder);
+    public void setPathActionInit(PathActionInit init) {
+        PathManager.registerActionInit(init);
     }
 
     @Autowired(required = false)
