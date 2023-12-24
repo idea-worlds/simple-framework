@@ -6,32 +6,88 @@ package dev.simpleframework.crud.core;
 public enum ConditionType {
 
     /**
-     * 等于，不等于
+     * 等于
      */
-    equal, not_equal,
+    equal,
     /**
-     * 全模糊，左模糊，右模糊
+     * 不等于
      */
-    like_all, like_left, like_right,
+    not_equal,
     /**
-     * 大于，大于等于
+     * 全模糊
      */
-    greater_than, great_equal,
+    like_all,
     /**
-     * 小于，小于等于
+     * 左模糊
      */
-    less_than, less_equal,
+    like_left,
     /**
-     * 为 null，不为 null
+     * 右模糊
      */
-    is_null, not_null,
+    like_right,
     /**
-     * 包含，不包含
+     * 大于
      */
-    in, not_in,
+    greater_than,
     /**
-     * 包含，被包含，相交
+     * 大于等于
      */
-    array_contains, array_contained_by, array_overlap
+    great_equal,
+    /**
+     * 小于
+     */
+    less_than,
+    /**
+     * 小于等于
+     */
+    less_equal,
+    /**
+     * 包含
+     */
+    in,
+    /**
+     * 不包含
+     */
+    not_in,
+    /**
+     * 为 null
+     */
+    is_null,
+    /**
+     * 不为 null
+     */
+    not_null,
+    /**
+     * 数组：包含
+     */
+    array_contains,
+    /**
+     * 数组：被包含
+     */
+    array_contained_by,
+    /**
+     * 数组：相交
+     */
+    array_overlap,
+    /**
+     * json 包含对象
+     */
+    json_contains,
+    /**
+     * json 被对象包含
+     */
+    json_contained_by,
+    /**
+     * json 有指定 key
+     */
+    json_exist_key,
+    /**
+     * json 有任一 key
+     */
+    json_exist_key_any,
+    /**
+     * json 有所有 key
+     */
+    json_exist_key_all,
 
 }

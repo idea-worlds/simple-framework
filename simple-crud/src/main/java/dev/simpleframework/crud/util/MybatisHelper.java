@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -61,7 +62,7 @@ public final class MybatisHelper {
                                           String methodId,
                                           SqlCommandType commandType,
                                           Class<?> resultType,
-                                          Function<Object, String> sqlProvider) {
+                                          BiFunction<Configuration, Object, String> sqlProvider) {
         DatasourceProvider<SqlSession> provider = ModelCache.provider(DatasourceType.Mybatis);
         SqlSession sqlSession = provider.get(info.datasourceName());
         try {
@@ -86,7 +87,10 @@ public final class MybatisHelper {
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
-            SqlSource sqlSource = buildSqlSource(configuration, sqlProvider);
+            SqlSource sqlSource = param -> configuration
+                    .getDefaultScriptingLanguageInstance()
+                    .createSqlSource(configuration, sqlProvider.apply(configuration, param), null)
+                    .getBoundSql(param);
             MappedStatement ms = new MappedStatement.Builder(configuration, methodId, sqlSource, commandType)
                     .resultMaps(Collections.singletonList(
                             new ResultMap.Builder(configuration, methodId, resultType, resultMappings).build()
@@ -101,13 +105,6 @@ public final class MybatisHelper {
                 sqlSession.close();
             }
         }
-    }
-
-    private static SqlSource buildSqlSource(Configuration config, Function<Object, String> sqlProvider) {
-        return param -> config
-                .getDefaultScriptingLanguageInstance()
-                .createSqlSource(config, sqlProvider.apply(param), null)
-                .getBoundSql(param);
     }
 
 }

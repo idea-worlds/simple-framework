@@ -16,7 +16,7 @@ public final class MybatisInsertMethod {
 
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.INSERT, Integer.class,
-                param -> {
+                (configuration, param) -> {
                     List<? extends ModelField<?>> fields = info.getInsertFields();
                     String columnScript = fields.stream()
                             .map(field -> MybatisScripts.wrapperIf(field, field.columnName() + ","))

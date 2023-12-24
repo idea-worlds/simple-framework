@@ -18,7 +18,7 @@ public final class MybatisInsertBatchMethod {
 
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.INSERT, Integer.class,
-                param -> {
+                (configuration, param) -> {
                     List<? extends ModelField<?>> fields = info.getInsertFields();
                     String columnScript = fields.stream()
                             .map(ModelField::columnName)

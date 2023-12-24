@@ -16,10 +16,10 @@ public final class MybatisDeleteByConditionsMethod {
 
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.DELETE, Integer.class,
-                param -> {
+                (configuration, param) -> {
                     Map<String, Object> params = (Map<String, Object>) param;
                     QueryConditions conditions = (QueryConditions) params.get("config");
-                    String condition = MybatisScripts.conditionScript(info.getAllFields(), conditions);
+                    String condition = MybatisScripts.conditionScript(configuration, info.getAllFields(), conditions);
                     return String.format("<script>DELETE FROM %s %s</script>",
                             info.name(), condition);
                 });

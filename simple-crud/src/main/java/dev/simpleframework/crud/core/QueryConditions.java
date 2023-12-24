@@ -197,11 +197,16 @@ public class QueryConditions {
         if (valuesLength == 0) {
             return null;
         }
+        if (type == ConditionType.json_exist_key && valuesLength > 1) {
+            type = ConditionType.json_exist_key_all;
+        }
         if (type == ConditionType.in
                 || type == ConditionType.not_in
                 || type == ConditionType.array_contains
                 || type == ConditionType.array_contained_by
-                || type == ConditionType.array_overlap) {
+                || type == ConditionType.array_overlap
+                || type == ConditionType.json_exist_key_any
+                || type == ConditionType.json_exist_key_all) {
             List<Object> result = new ArrayList<>();
             for (Object temp : values) {
                 if (temp instanceof Collection) {

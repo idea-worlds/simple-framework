@@ -5,9 +5,14 @@ import dev.simpleframework.crud.core.ConditionType;
 import dev.simpleframework.crud.core.QueryConditionField;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.core.QuerySorters;
-import dev.simpleframework.crud.exception.ModelExecuteException;
+import dev.simpleframework.crud.dialect.Dialects;
+import dev.simpleframework.crud.dialect.condition.ConditionDialect;
+import dev.simpleframework.crud.exception.CrudOperatorException;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
 import dev.simpleframework.util.Strings;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.ArrayTypeHandler;
+import org.apache.ibatis.type.TypeHandler;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,17 +52,9 @@ public final class MybatisScripts {
      * 循环的脚本片段
      */
     public static String foreach(String collection, String item) {
-        return foreach(collection, item, null);
-    }
-
-    /**
-     * 循环的脚本片段
-     */
-    public static String foreach(String collection, String item, ModelField<?> field) {
-        String itemValue = field == null ? item : MybatisTypeHandler.resolveFieldName(field, item);
         return String.format(
                 "<foreach collection=\"%s\" item=\"%s\" open=\"(\" separator=\",\" close=\")\">#{%s}</foreach>",
-                collection, item, itemValue);
+                collection, item, item);
     }
 
     /**
@@ -105,36 +102,35 @@ public final class MybatisScripts {
     /**
      * 条件脚本
      *
-     * @param fields 模型字段
+     * @param configuration mybatis 配置
+     * @param fields        模型字段
+     * @param conditions    条件配置
      */
-    public static String conditionScript(List<? extends ModelField<?>> fields) {
-        return conditionScript(fields, null);
-    }
-
-    /**
-     * 条件脚本
-     *
-     * @param fields     模型字段
-     * @param conditions 条件配置
-     */
-    public static String conditionScript(List<? extends ModelField<?>> fields, QueryConditions conditions) {
+    public static String conditionScript(Configuration configuration, List<? extends ModelField<?>> fields, QueryConditions conditions) {
+        ConditionDialect dialect = Dialects.condition(configuration.getEnvironment().getDataSource());
         Map<String, ModelField<?>> fieldMap = new HashMap<>(16);
         QueryConditions actualConditions = QueryConditions.and();
         for (ModelField<?> field : fields) {
+            ConditionType conditionType;
+            TypeHandler<?> typedHandler = MybatisTypeHandler.typeHandler(field.fieldType());
+            if (typedHandler instanceof ArrayTypeHandler) {
+                conditionType = ConditionType.array_contains;
+            } else if (typedHandler instanceof MybatisTypeHandler.JsonTypeHandler) {
+                conditionType = ConditionType.json_contains;
+            } else {
+                conditionType = ConditionType.equal;
+            }
             String fieldName = field.fieldName();
-            Class<?> fieldType = field.fieldType();
-            ConditionType conditionType = fieldType.isArray() || Collection.class.isAssignableFrom(fieldType) ?
-                    ConditionType.array_contains : ConditionType.equal;
             actualConditions.add(fieldName, conditionType, (Object) null);
             fieldMap.put(fieldName, field);
         }
         actualConditions.add(conditions, false);
 
-        String script = resolveConditions(fieldMap, actualConditions, "model");
+        String script = resolveConditions(dialect, fieldMap, actualConditions, "model");
         return " \n<where>\n" + script + "\n</where> ";
     }
 
-    private static String resolveConditions(Map<String, ModelField<?>> fields, QueryConditions conditions, String owner) {
+    private static String resolveConditions(ConditionDialect dialect, Map<String, ModelField<?>> fields, QueryConditions conditions, String owner) {
         if (conditions == null) {
             return "";
         }
@@ -142,14 +138,14 @@ public final class MybatisScripts {
         String logic = QueryConditions.TYPE_OR.equals(conditions.getType()) ? "OR" : "AND";
         for (QueryConditionField condition : conditions.getFields()) {
             ModelField<?> field = fields.get(condition.getName());
-            String script = resolveCondition(field, condition, owner, logic);
+            String script = resolveCondition(dialect, field, condition, owner, logic);
             if (script.isBlank()) {
                 continue;
             }
             result.append(script).append("\n");
         }
         for (QueryConditions subConditions : conditions.getSubConditions()) {
-            String script = resolveConditions(fields, subConditions, "data");
+            String script = resolveConditions(dialect, fields, subConditions, "data");
             if (script.isBlank()) {
                 continue;
             }
@@ -170,84 +166,79 @@ public final class MybatisScripts {
         return result.toString();
     }
 
-    public static String resolveCondition(ModelField<?> field, QueryConditionField condition, String owner, String logic) {
+    private static String resolveCondition(ConditionDialect dialect, ModelField<?> field, QueryConditionField condition, String owner, String logic) {
         if (field == null || condition == null) {
             return "";
         }
         String script;
-        String column = field.columnName();
-        String fieldName = field.fieldName();
-        String fieldNameKey = owner + "." + condition.getKey();
-        String fieldNameParam = MybatisTypeHandler.resolveFieldName(field, fieldNameKey);
-        boolean needWrapIfNull = true;
+        String ownerFieldName = owner + "." + condition.getKey();
+        String ownerFieldNameParam = "#{" + ownerFieldName + "}";
+        boolean byModel = "model".equals(owner);
+        boolean valueMaybeNull = true;
         switch (condition.getType()) {
-            case equal:
-                script = String.format("%s = #{%s}", column, fieldNameParam);
-                break;
-            case not_equal:
-                script = String.format("%s <![CDATA[ <> ]]> #{%s}", column, fieldNameParam);
-                break;
-            case like_all:
-                script = String.format("%s LIKE concat('%%', #{%s}, '%%')", column, fieldNameParam);
-                break;
-            case like_left:
-                script = String.format("%s LIKE concat('%%', #{%s})", column, fieldNameParam);
-                break;
-            case like_right:
-                script = String.format("%s LIKE concat(#{%s}, '%%')", column, fieldNameParam);
-                break;
-            case greater_than:
-                script = String.format("%s <![CDATA[ > ]]> #{%s}", column, fieldNameParam);
-                break;
-            case great_equal:
-                script = String.format("%s <![CDATA[ >= ]]> #{%s}", column, fieldNameParam);
-                break;
-            case less_than:
-                script = String.format("%s <![CDATA[ < ]]> #{%s}", column, fieldNameParam);
-                break;
-            case less_equal:
-                script = String.format("%s <![CDATA[ <= ]]> #{%s}", column, fieldNameParam);
-                break;
-            case is_null:
-                script = String.format("%s IS NULL", column);
-                needWrapIfNull = false;
-                break;
-            case not_null:
-                script = String.format("%s IS NOT NULL", column);
-                needWrapIfNull = false;
-                break;
-            case in:
-                script = String.format("%s IN %s", column, foreach(fieldNameKey, "_" + fieldName, field));
-                break;
-            case not_in:
-                script = String.format("%s NOT IN %s", column, foreach(fieldNameKey, "_" + fieldName, field));
-                break;
-            case array_contains:
-                script = String.format("%s <![CDATA[ @> ]]> #{%s}", column, fieldNameParam);
-                if (String.class.isAssignableFrom(field.fieldComponentType())) {
-                    script = script + "::text[]";
-                }
-                break;
-            case array_contained_by:
-                script = String.format("%s <![CDATA[ <@ ]]> #{%s}", column, fieldNameParam);
-                if (String.class.isAssignableFrom(field.fieldComponentType())) {
-                    script = script + "::text[]";
-                }
-                break;
-            case array_overlap:
-                script = String.format("%s <![CDATA[ && ]]> #{%s}", column, fieldNameParam);
-                if (String.class.isAssignableFrom(field.fieldComponentType())) {
-                    script = script + "::text[]";
-                }
-                break;
-            default:
-                throw new ModelExecuteException("Not support conditionType [" + condition.getType() + "]");
+            case equal -> script = dialect.equal(field, ownerFieldNameParam, true);
+            case not_equal -> script = dialect.notEqual(field, ownerFieldNameParam, true);
+            case like_all -> script = dialect.likeAll(field, ownerFieldNameParam, true);
+            case like_left -> script = dialect.likeLeft(field, ownerFieldNameParam, true);
+            case like_right -> script = dialect.likeRight(field, ownerFieldNameParam, true);
+            case greater_than -> script = dialect.greaterThan(field, ownerFieldNameParam, true);
+            case great_equal -> script = dialect.greatEqual(field, ownerFieldNameParam, true);
+            case less_than -> script = dialect.lessThan(field, ownerFieldNameParam, true);
+            case less_equal -> script = dialect.lessEqual(field, ownerFieldNameParam, true);
+            case in -> {
+                String val = foreach(ownerFieldName, "_" + field.fieldName());
+                script = dialect.in(field, val, true);
+            }
+            case not_in -> {
+                String val = foreach(ownerFieldName, "_" + field.fieldName());
+                script = dialect.notIn(field, val, true);
+            }
+            case is_null -> {
+                script = dialect.isNull(field, ownerFieldNameParam, true);
+                valueMaybeNull = false;
+            }
+            case not_null -> {
+                script = dialect.notNull(field, ownerFieldNameParam, true);
+                valueMaybeNull = false;
+            }
+            case array_contains -> {
+                String val = "#{" + MybatisTypeHandler.resolveFieldName(field, ownerFieldName) + "}";
+                script = dialect.arrayContains(field, val, true);
+            }
+            case array_contained_by -> {
+                String val = "#{" + MybatisTypeHandler.resolveFieldName(field, ownerFieldName) + "}";
+                script = dialect.arrayContainedBy(field, val, true);
+            }
+            case array_overlap -> {
+                String val = "#{" + MybatisTypeHandler.resolveFieldName(field, ownerFieldName) + "}";
+                script = dialect.arrayOverlap(field, val, true);
+            }
+            case json_contains -> {
+                String val = "#{" + MybatisTypeHandler.resolveFieldName(Map.class, ownerFieldName) + "}";
+                script = dialect.jsonContains(field, val, true);
+            }
+            case json_contained_by -> {
+                String val = "#{" + MybatisTypeHandler.resolveFieldName(Map.class, ownerFieldName) + "}";
+                script = dialect.jsonContainedBy(field, val, true);
+            }
+            case json_exist_key -> {
+                script = dialect.jsonExistKey(field, ownerFieldName, true);
+            }
+            case json_exist_key_any -> {
+                String val = "#{" + MybatisTypeHandler.resolveFieldName(List.class, ownerFieldName) + "}";
+                script = dialect.jsonExistKeyAny(field, val, true);
+            }
+            case json_exist_key_all -> {
+                String val = "#{" + MybatisTypeHandler.resolveFieldName(List.class, ownerFieldName) + "}";
+                script = dialect.jsonExistKeyAll(field, val, true);
+            }
+            default -> throw new CrudOperatorException("Not support conditionType [" + condition.getType() + "]");
         }
         script = logic + " " + script;
-        if ("model".equals(owner)) {
-            return needWrapIfNull ? wrapperIf(owner, field, script) : script;
+        if (byModel) {
+            return valueMaybeNull ? wrapperIf(owner, field, script) : script;
         } else {
-            return needWrapIfNull && condition.getValue() == null ? "" : script;
+            return valueMaybeNull && condition.getValue() == null ? "" : script;
         }
     }
 

@@ -2,6 +2,7 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
+import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlCommandType;
@@ -15,8 +16,7 @@ public final class MybatisUpdateByIdMethod {
 
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.UPDATE, Integer.class,
-                param -> {
-                    ModelField<?> idField = info.id();
+                (configuration, param) -> {
                     String script = info.getUpdateFields().stream()
                             .map(field -> {
                                 String fieldName = MybatisTypeHandler.resolveFieldName(field, field.fieldName());
@@ -24,8 +24,11 @@ public final class MybatisUpdateByIdMethod {
                                 return MybatisScripts.wrapperIf(field, tmp);
                             })
                             .collect(Collectors.joining("\n"));
-                    return String.format("<script>UPDATE %s \n<set>\n%s\n</set>\n WHERE %s = #{%s}</script>",
-                            info.name(), script, idField.columnName(), idField.fieldName());
+                    ModelField<?> id = info.id();
+                    String idParam = "#{" + id.fieldName() + "}";
+                    String condition = SqlConditionDialect.DEFAULT.equal(info.id(), idParam, true);
+                    return String.format("<script>UPDATE %s \n<set>\n%s\n</set>\n WHERE %s</script>",
+                            info.name(), script, condition);
                 });
     }
 

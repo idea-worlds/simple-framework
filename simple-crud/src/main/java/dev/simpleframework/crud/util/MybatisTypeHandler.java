@@ -1,14 +1,14 @@
 package dev.simpleframework.crud.util;
 
 import dev.simpleframework.crud.ModelField;
-import org.apache.ibatis.type.ArrayTypeHandler;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeException;
-import org.apache.ibatis.type.TypeHandler;
+import dev.simpleframework.util.Jsons;
+import dev.simpleframework.util.Strings;
+import org.apache.ibatis.type.*;
 
-import java.sql.Array;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.net.URL;
+import java.sql.*;
+import java.time.temporal.TemporalAccessor;
+import java.util.Date;
 import java.util.*;
 
 public final class MybatisTypeHandler {
@@ -18,6 +18,22 @@ public final class MybatisTypeHandler {
 
     public static TypeHandler<?> typeHandler(ModelField<?> field) {
         Class<?> fieldType = field.fieldType();
+        return typeHandler(fieldType);
+    }
+
+    public static TypeHandler<?> typeHandler(Class<?> fieldType) {
+        if (fieldType.isPrimitive()
+                || String.class.isAssignableFrom(fieldType)
+                || Boolean.class.isAssignableFrom(fieldType)
+                || Enum.class.isAssignableFrom(fieldType)
+                || Number.class.isAssignableFrom(fieldType)
+                || Character.class.isAssignableFrom(fieldType)
+                || Calendar.class.isAssignableFrom(fieldType)
+                || Date.class.isAssignableFrom(fieldType)
+                || TemporalAccessor.class.isAssignableFrom(fieldType)
+                || URL.class.isAssignableFrom(fieldType)) {
+            return null;
+        }
         if (fieldType.isArray()) {
             return ARRAY;
         }
@@ -27,39 +43,49 @@ public final class MybatisTypeHandler {
         if (Set.class.isAssignableFrom(fieldType)) {
             return SET;
         }
-        return null;
+        return new JsonTypeHandler(fieldType);
     }
 
     /**
-     * 当字段为 Array 或者 Collection 时，将 {@param fieldName} 转为 "fieldName,jdbcType=,typeHandler="
+     * 将 {@param fieldName} 转为 "fieldName,jdbcType=,typeHandler="
      *
      * @param field     字段信息
      * @param fieldName 字段名
      * @return 转换后的字符串
      */
     public static String resolveFieldName(ModelField<?> field, String fieldName) {
-        Class<?> componentType = field.fieldComponentType();
-        if (componentType == null) {
+        TypeHandler<?> typeHandler = typeHandler(field);
+        if (typeHandler == null) {
             return fieldName;
         }
-        TypeHandler<?> typeHandler = null;
-        JdbcType jdbcType;
-        Class<?> fieldType = field.fieldType();
-        if (fieldType.isArray()) {
-            typeHandler = ARRAY;
-            jdbcType = JdbcType.ARRAY;
-        } else {
-            String name = LIST.resolveTypeName(componentType);
+        JdbcType jdbcType = null;
+        if (typeHandler instanceof CollectionTypeHandler<?> handler) {
+            String name = handler.resolveTypeName(field.fieldComponentType());
             jdbcType = JdbcType.valueOf(name);
+        } else if (typeHandler instanceof ArrayTypeHandler) {
+            jdbcType = JdbcType.ARRAY;
+        } else if (typeHandler instanceof JsonTypeHandler) {
+            jdbcType = JdbcType.VARCHAR;
         }
-        if (List.class.isAssignableFrom(fieldType)) {
-            typeHandler = LIST;
+        if (jdbcType == null) {
+            return fieldName;
         }
-        if (Set.class.isAssignableFrom(fieldType)) {
-            typeHandler = SET;
+        return String.format("%s,jdbcType=%s,typeHandler=%s", fieldName, jdbcType.name(), typeHandler.getClass().getName());
+    }
+
+    /**
+     * 将 {@param fieldName} 转为 "fieldName,typeHandler="
+     *
+     * @param fieldType 字段类型
+     * @param fieldName 字段名
+     * @return 转换后的字符串
+     */
+    public static String resolveFieldName(Class<?> fieldType, String fieldName) {
+        TypeHandler<?> typeHandler = typeHandler(fieldType);
+        if (typeHandler == null) {
+            return fieldName;
         }
-        return typeHandler == null ? fieldName :
-                String.format("%s,jdbcType=%s,typeHandler=%s", fieldName, jdbcType.name(), typeHandler.getClass().getName());
+        return String.format("%s,typeHandler=%s", fieldName, typeHandler.getClass().getName());
     }
 
     static abstract class CollectionTypeHandler<T> extends ArrayTypeHandler {
@@ -90,6 +116,9 @@ public final class MybatisTypeHandler {
             if (!Collection.class.isAssignableFrom(parameter.getClass())) {
                 throw new TypeException("CollectionType Handler requires Collection parameter and does not support type " + parameter.getClass());
             }
+            if (jdbcType == null) {
+                jdbcType = JdbcType.VARCHAR;
+            }
             Object[] objects = ((Collection<?>) parameter).toArray();
             Array array = ps.getConnection().createArrayOf(jdbcType.name(), objects);
             ps.setArray(i, array);
@@ -114,7 +143,8 @@ public final class MybatisTypeHandler {
     public static class ListTypeHandler extends CollectionTypeHandler<List<?>> {
         @Override
         protected List<?> parseResult(Object[] result) {
-            return Arrays.asList(result);
+            List<Object> list = Arrays.asList(result);
+            return new ArrayList<>(list);
         }
     }
 
@@ -124,6 +154,43 @@ public final class MybatisTypeHandler {
             List<Object> list = Arrays.asList(result);
             return new LinkedHashSet<>(list);
         }
+    }
+
+    public static class JsonTypeHandler extends BaseTypeHandler<Object> {
+        private final Class<?> type;
+
+        public JsonTypeHandler(Class<?> type) {
+            this.type = type;
+        }
+
+        @Override
+        public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType) throws SQLException {
+            String json = Jsons.write(parameter);
+            ps.setString(i, json);
+        }
+
+        @Override
+        public Object getNullableResult(ResultSet rs, String columnName) throws SQLException {
+            return this.extractJson(rs.getString(columnName));
+        }
+
+        @Override
+        public Object getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+            return this.extractJson(rs.getString(columnIndex));
+        }
+
+        @Override
+        public Object getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+            return this.extractJson(cs.getString(columnIndex));
+        }
+
+        protected Object extractJson(String json) {
+            if (Strings.isBlank(json)) {
+                return null;
+            }
+            return Jsons.read(json, this.type);
+        }
+
     }
 
 }

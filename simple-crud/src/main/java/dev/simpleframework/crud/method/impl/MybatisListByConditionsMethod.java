@@ -20,12 +20,12 @@ public final class MybatisListByConditionsMethod {
 
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.SELECT, info.modelClass(),
-                param -> {
+                (configuration, param) -> {
                     Map<String, Object> params = (Map<String, Object>) param;
                     QueryConfig queryConfig = (QueryConfig) params.get("config");
                     List<? extends ModelField<?>> allFields = info.getAllFields();
                     String column = MybatisScripts.columnScript(queryConfig.getFields().find(info.getSelectFields()));
-                    String condition = MybatisScripts.conditionScript(allFields, queryConfig.getConditions());
+                    String condition = MybatisScripts.conditionScript(configuration, allFields, queryConfig.getConditions());
                     String sort = MybatisScripts.sortScript(allFields, queryConfig.getSorters());
                     return String.format("<script>SELECT %s FROM %s %s %s</script>",
                             column, info.name(), condition, sort);

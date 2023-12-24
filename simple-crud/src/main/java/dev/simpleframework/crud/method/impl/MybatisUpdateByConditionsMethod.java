@@ -18,7 +18,7 @@ public final class MybatisUpdateByConditionsMethod {
 
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.UPDATE, Integer.class,
-                param -> {
+                (configuration, param) -> {
                     Map<String, Object> params = (Map<String, Object>) param;
                     QueryConditions conditions = (QueryConditions) params.get("config");
                     String column = info.getUpdateFields().stream()
@@ -28,7 +28,7 @@ public final class MybatisUpdateByConditionsMethod {
                                 return MybatisScripts.wrapperIf("model", field, tmp);
                             })
                             .collect(Collectors.joining("\n"));
-                    String condition = MybatisScripts.conditionScript(info.getAllFields(), conditions);
+                    String condition = MybatisScripts.conditionScript(configuration, info.getAllFields(), conditions);
                     return String.format("<script>UPDATE %s \n<set>\n%s\n</set>\n %s</script>",
                             info.name(), column, condition);
                 });
