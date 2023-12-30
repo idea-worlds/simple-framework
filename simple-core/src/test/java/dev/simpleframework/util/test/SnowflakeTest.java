@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
@@ -60,8 +62,8 @@ public class SnowflakeTest {
         long centerIdBits = ThreadLocalRandom.current().nextLong(0, 5);
         long workerIdBits = ThreadLocalRandom.current().nextLong(0, 5);
 
-        Set<Long> ids = new HashSet<>();
-        List<Long> repeatedIds = new ArrayList<>();
+        Set<Long> ids = new CopyOnWriteArraySet<>();
+        List<Long> repeatedIds = new CopyOnWriteArrayList<>();
         long maxDatacenterId = ~(-1L << centerIdBits);
         long maxWorkerId = ~(-1L << workerIdBits);
         System.out.printf("c:%s/%s, w:%s%s", centerIdBits, maxDatacenterId, workerIdBits, maxWorkerId);

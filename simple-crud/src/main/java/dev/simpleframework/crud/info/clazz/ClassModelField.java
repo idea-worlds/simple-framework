@@ -10,7 +10,6 @@ import lombok.SneakyThrows;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.Collection;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -40,10 +39,7 @@ public class ClassModelField<T> extends AbstractModelField<T> {
             columnName = Strings.camelToUnderline(fieldName).toUpperCase();
         }
         Class<?> fieldType = field.getType();
-        Class<?> fieldComponentType = null;
-        if (Collection.class.isAssignableFrom(fieldType)) {
-            fieldComponentType = Classes.getGenericClass(field, Object.class);
-        }
+        Class<?> fieldComponentType = Classes.getGenericClass(field);
         super.setColumn(columnName, fieldName, fieldType, fieldComponentType);
         super.setInsertable(insertable);
         super.setUpdatable(updatable);

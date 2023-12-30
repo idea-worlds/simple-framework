@@ -3,6 +3,7 @@ package dev.simpleframework.crud.util;
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.util.Jsons;
 import dev.simpleframework.util.Strings;
+import lombok.Setter;
 import org.apache.ibatis.type.*;
 
 import java.net.URL;
@@ -18,7 +19,11 @@ public final class MybatisTypeHandler {
 
     public static TypeHandler<?> typeHandler(ModelField<?> field) {
         Class<?> fieldType = field.fieldType();
-        return typeHandler(fieldType);
+        TypeHandler<?> typedHandler = typeHandler(fieldType);
+        if (typedHandler instanceof JsonTypeHandler handler) {
+            handler.setComponentType(field.fieldComponentType());
+        }
+        return typedHandler;
     }
 
     public static TypeHandler<?> typeHandler(Class<?> fieldType) {
@@ -158,6 +163,8 @@ public final class MybatisTypeHandler {
 
     public static class JsonTypeHandler extends BaseTypeHandler<Object> {
         private final Class<?> type;
+        @Setter
+        private Class<?> componentType;
 
         public JsonTypeHandler(Class<?> type) {
             this.type = type;
@@ -188,7 +195,13 @@ public final class MybatisTypeHandler {
             if (Strings.isBlank(json)) {
                 return null;
             }
-            return Jsons.read(json, this.type);
+            if (this.componentType == null) {
+                return Jsons.read(json, this.type);
+            }
+            if (Map.class.isAssignableFrom(this.type)) {
+                return Jsons.readWithGeneric(json, this.type, String.class, this.componentType);
+            }
+            return Jsons.readWithGeneric(json, this.type, this.componentType);
         }
 
     }

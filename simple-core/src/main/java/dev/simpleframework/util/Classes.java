@@ -104,20 +104,28 @@ public final class Classes {
     }
 
     /**
-     * 获取字段的泛型
+     * 获取 Collection/Map 字段的泛型
      *
-     * @param field        类字段
-     * @param defaultClass 默认结果
-     * @return 泛型
+     * @param field 类字段
+     * @return Collection<结果> / Map<?,结果>
      */
-    public static Class<?> getGenericClass(Field field, Class<?> defaultClass) {
-        Class<?> result = defaultClass;
-        Type genericType = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+    public static Class<?> getGenericClass(Field field) {
+        Class<?> fieldType = field.getType();
+        Type genericTypeArg = null;
+        if (Collection.class.isAssignableFrom(fieldType)) {
+            genericTypeArg = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+        } else if (Map.class.isAssignableFrom(fieldType)) {
+            genericTypeArg = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[1];
+        }
+        if (genericTypeArg == null) {
+            return null;
+        }
+        Class<?> result = null;
         try {
-            result = (Class<?>) genericType;
+            result = (Class<?>) genericTypeArg;
         } catch (Exception ignore) {
             try {
-                result = (Class<?>) ((ParameterizedType) genericType).getRawType();
+                result = (Class<?>) ((ParameterizedType) genericTypeArg).getRawType();
             } catch (Exception ignored) {
             }
         }

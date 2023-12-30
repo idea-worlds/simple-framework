@@ -1,17 +1,16 @@
 package dev.simpleframework.util;
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.util.function.Consumer;
 
 /**
@@ -77,7 +76,19 @@ public final class Jsons {
     }
 
     @SneakyThrows
-    public static <T> String write(T json) {
+    public static <T> T readWithGeneric(String json, Class<T> clazz, Class<?>... components) {
+        if (jacksonExist) {
+            JavaType type = OBJECT_MAPPER.getTypeFactory().constructParametricType(clazz, components);
+            return OBJECT_MAPPER.readValue(json, type);
+        } else if (fastjsonExist) {
+            Type type = TypeReference.parametricType(clazz, components);
+            return JSON.parseObject(json, type);
+        }
+        throw new ClassNotFoundException("No dependency found for json");
+    }
+
+    @SneakyThrows
+    public static String write(Object json) {
         if (jacksonExist) {
             return OBJECT_MAPPER.writeValueAsString(json);
         } else if (fastjsonExist) {
@@ -87,12 +98,12 @@ public final class Jsons {
     }
 
     @SneakyThrows
-    public static void write(File out, Object value) {
+    public static void write(Object json, File out) {
         if (jacksonExist) {
-            OBJECT_MAPPER.writeValue(out, value);
+            OBJECT_MAPPER.writeValue(out, json);
         } else if (fastjsonExist) {
             try (OutputStream outputStream = new FileOutputStream(out)) {
-                JSON.writeTo(outputStream, value);
+                JSON.writeTo(outputStream, json);
             }
         }
         throw new ClassNotFoundException("No dependency found for json");

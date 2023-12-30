@@ -143,21 +143,21 @@ public class SqlConditionDialect implements ConditionDialect {
     @Override
     public String jsonExistKey(ModelField<?> field, String value, boolean xml) {
         String column = field.columnName();
-        String operator = parseOperator("?", xml);
+        String operator = parseOperator("??", xml);
         return column + operator + value;
     }
 
     @Override
     public String jsonExistKeyAny(ModelField<?> field, String value, boolean xml) {
         String column = field.columnName();
-        String operator = parseOperator("?|", xml);
+        String operator = parseOperator("??|", xml);
         return column + operator + value;
     }
 
     @Override
     public String jsonExistKeyAll(ModelField<?> field, String value, boolean xml) {
         String column = field.columnName();
-        String operator = parseOperator("?&", xml);
+        String operator = parseOperator("??&", xml);
         return column + operator + value;
     }
 

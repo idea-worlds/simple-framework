@@ -112,7 +112,7 @@ public final class MybatisScripts {
         QueryConditions actualConditions = QueryConditions.and();
         for (ModelField<?> field : fields) {
             ConditionType conditionType;
-            TypeHandler<?> typedHandler = MybatisTypeHandler.typeHandler(field.fieldType());
+            TypeHandler<?> typedHandler = MybatisTypeHandler.typeHandler(field);
             if (typedHandler instanceof ArrayTypeHandler) {
                 conditionType = ConditionType.array_contains;
             } else if (typedHandler instanceof MybatisTypeHandler.JsonTypeHandler) {
@@ -222,7 +222,7 @@ public final class MybatisScripts {
                 script = dialect.jsonContainedBy(field, val, true);
             }
             case json_exist_key -> {
-                script = dialect.jsonExistKey(field, ownerFieldName, true);
+                script = dialect.jsonExistKey(field, ownerFieldNameParam, true);
             }
             case json_exist_key_any -> {
                 String val = "#{" + MybatisTypeHandler.resolveFieldName(List.class, ownerFieldName) + "}";
