@@ -16,7 +16,7 @@ public interface CountByConditions<T> {
      * @param conditions 查询条件
      * @return 统计的记录数
      */
-    default long countByConditions(QueryConditions... conditions) {
+    default long countByConditions(QueryConditions conditions) {
         return CountByConditionsDefinition.exec(this, conditions);
     }
 

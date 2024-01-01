@@ -19,7 +19,7 @@ public interface PageByConditions<T> {
      * @param configs  查询配置
      * @return 分页结果
      */
-    default <R extends T> Page<R> pageByConditions(int pageNum, int pageSize, QueryConfig... configs) {
+    default <R extends T> Page<R> pageByConditions(int pageNum, int pageSize, QueryConfig configs) {
         return PageByConditionsDefinition.exec(this, pageNum, pageSize, true, configs);
     }
 

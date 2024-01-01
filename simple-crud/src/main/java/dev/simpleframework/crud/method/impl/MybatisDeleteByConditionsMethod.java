@@ -25,13 +25,12 @@ public final class MybatisDeleteByConditionsMethod {
                 });
     }
 
-    public static <T> int exec(ModelInfo<?> info, String methodId, T model, QueryConditions conditions) {
+    public static <T> int exec(ModelInfo<?> info, String methodId, QueryConditions conditions) {
         return MybatisHelper.exec(info.datasourceType(), info.datasourceName(),
                 session -> {
-                    Map<String, Object> param = new HashMap<>(3);
-                    param.put("model", model);
+                    Map<String, Object> param = new HashMap<>(4);
                     param.put("config", conditions);
-                    param.put("data", conditions.getConditionData());
+                    param.put(QueryConditions.KEY_NAME, conditions.getConditionData());
                     return session.delete(methodId, param);
                 }
         );

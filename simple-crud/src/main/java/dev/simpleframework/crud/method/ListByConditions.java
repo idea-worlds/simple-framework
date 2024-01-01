@@ -18,7 +18,7 @@ public interface ListByConditions<T> {
      * @param configs 查询配置
      * @return 列表结果
      */
-    default <R extends T> List<R> listByConditions(QueryConfig... configs) {
+    default <R extends T> List<R> listByConditions(QueryConfig configs) {
         return ListByConditionsDefinition.exec(this, configs);
     }
 

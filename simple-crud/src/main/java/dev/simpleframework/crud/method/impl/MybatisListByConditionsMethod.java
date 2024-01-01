@@ -32,16 +32,15 @@ public final class MybatisListByConditionsMethod {
                 });
     }
 
-    public static <T, R extends T> List<R> exec(ModelInfo<?> info, String methodId, T model, QueryConfig queryConfig) {
+    public static <T, R extends T> List<R> exec(ModelInfo<?> info, String methodId, QueryConfig queryConfig) {
         return MybatisHelper.exec(info.datasourceType(), info.datasourceName(),
                 session -> {
                     QueryConditions conditions = queryConfig.getConditions();
                     Map<String, Object> conditionData = conditions == null ?
                             Collections.emptyMap() : conditions.getConditionData();
-                    Map<String, Object> param = new HashMap<>(6);
-                    param.put("model", model);
+                    Map<String, Object> param = new HashMap<>(4);
                     param.put("config", queryConfig);
-                    param.put("data", conditionData);
+                    param.put(QueryConditions.KEY_NAME, conditionData);
                     return session.selectList(methodId, param);
                 }
         );

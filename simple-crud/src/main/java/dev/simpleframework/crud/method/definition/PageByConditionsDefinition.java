@@ -24,8 +24,7 @@ public class PageByConditionsDefinition implements ModelMethodDefinition {
         }
     }
 
-    public static <T, R extends T> Page<R> exec(T model, int pageNum, int pageSize, boolean needCount, QueryConfig... configs) {
-        QueryConfig queryConfig = QueryConfig.combineConfigs(configs);
+    public static <T, R extends T> Page<R> exec(T model, int pageNum, int pageSize, boolean needCount, QueryConfig queryConfig) {
         long total = needCount ? CountByConditionsDefinition.exec(model, queryConfig.getConditions()) : 0;
         if (needCount && total == 0) {
             return Page.of(pageNum, pageSize, total);

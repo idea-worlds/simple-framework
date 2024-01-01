@@ -22,14 +22,13 @@ public class DeleteByConditionsDefinition implements ModelMethodDefinition {
         }
     }
 
-    public static <T> int exec(T model, QueryConditions... conditions) {
-        QueryConditions combinedConditions = QueryConditions.combineConditions(conditions);
+    public static <T> int exec(T model, QueryConditions conditions) {
         ModelInfo<T> info = ModelCache.info(model);
 
         String methodId = methodId(info);
         DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
-            return MybatisDeleteByConditionsMethod.exec(info, methodId, model, combinedConditions);
+            return MybatisDeleteByConditionsMethod.exec(info, methodId, conditions);
         }
         return 0;
     }

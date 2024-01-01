@@ -40,7 +40,7 @@ public final class MybatisUpdateByConditionsMethod {
                     Map<String, Object> param = new HashMap<>(6);
                     param.put("model", model);
                     param.put("config", conditions);
-                    param.put("data", conditions.getConditionData());
+                    param.put(QueryConditions.KEY_NAME, conditions.getConditionData());
                     return session.update(methodId, param);
                 }
         );

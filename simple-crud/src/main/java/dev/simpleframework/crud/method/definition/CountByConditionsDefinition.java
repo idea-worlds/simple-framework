@@ -22,14 +22,13 @@ public class CountByConditionsDefinition implements ModelMethodDefinition {
         }
     }
 
-    public static <T> long exec(T model, QueryConditions... conditions) {
-        QueryConditions combinedConditions = QueryConditions.combineConditions(conditions);
+    public static <T> long exec(T model, QueryConditions conditions) {
         ModelInfo<T> info = ModelCache.info(model);
 
         String methodId = methodId(info);
         DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
-            return MybatisCountByConditionsMethod.exec(info, methodId, model, combinedConditions);
+            return MybatisCountByConditionsMethod.exec(info, methodId, conditions);
         }
         return 0;
     }

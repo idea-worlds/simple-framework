@@ -17,7 +17,7 @@ public interface UpdateByConditions<T> {
      * @param conditions 条件
      * @return 修改记录数
      */
-    default int updateByConditions(QueryConditions... conditions) {
+    default int updateByConditions(QueryConditions conditions) {
         return UpdateByConditionsDefinition.exec(this, conditions);
     }
 

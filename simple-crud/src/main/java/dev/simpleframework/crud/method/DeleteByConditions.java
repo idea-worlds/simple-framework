@@ -17,7 +17,7 @@ public interface DeleteByConditions<T> {
      * @param conditions 条件
      * @return 删除记录数
      */
-    default int deleteByConditions(QueryConditions... conditions) {
+    default int deleteByConditions(QueryConditions conditions) {
         return DeleteByConditionsDefinition.exec(this, conditions);
     }
 

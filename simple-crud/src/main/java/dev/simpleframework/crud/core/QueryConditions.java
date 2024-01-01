@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Data
 public class QueryConditions {
+    public static final String KEY_NAME = "data";
     public static final String TYPE_AND = "AND";
     public static final String TYPE_OR = "OR";
 
@@ -53,26 +54,6 @@ public class QueryConditions {
     }
 
     /**
-     * 聚合多个条件对象
-     *
-     * @param conditions 条件列表
-     * @return 条件列表为 null 时返回一个空条件，不为 null 时返回第一个条件
-     */
-    public static QueryConditions combineConditions(QueryConditions... conditions) {
-        if (conditions == null || conditions.length == 0) {
-            return QueryConditions.and();
-        }
-        if (conditions.length == 1) {
-            return conditions[0];
-        }
-        QueryConditions result = QueryConditions.and();
-        for (QueryConditions condition : conditions) {
-            result.add(condition);
-        }
-        return result;
-    }
-
-    /**
      * 获取条件数据
      */
     public Map<String, Object> getConditionData() {
@@ -86,15 +67,24 @@ public class QueryConditions {
         return result;
     }
 
+    /**
+     * 是否无查询条件
+     */
+    public boolean isEmpty() {
+        return this.fields.isEmpty() && this.subConditions.isEmpty();
+    }
+
     public QueryConditions add(String fieldName, Object value) {
         if (value instanceof ConditionType) {
             return this.add(fieldName, (ConditionType) value, (Object) null);
         }
         if (value instanceof Collection) {
             return this.add(fieldName, ConditionType.in, value);
-        } else {
-            return this.add(fieldName, ConditionType.equal, value);
         }
+        if (value instanceof Map) {
+            return this.add(fieldName, ConditionType.json_contains, value);
+        }
+        return this.add(fieldName, ConditionType.equal, value);
     }
 
     public <T, R> QueryConditions add(SerializedFunction<T, R> fieldNameFunc, Object value) {
@@ -126,23 +116,10 @@ public class QueryConditions {
      * @return this
      */
     public synchronized QueryConditions add(QueryConditions conditions) {
-        return this.add(conditions, true);
-    }
-
-    /**
-     * 添加条件
-     *
-     * @param conditions 另一条件对象
-     * @param flushKey   是否重置条件字段的key值
-     * @return this
-     */
-    public synchronized QueryConditions add(QueryConditions conditions, boolean flushKey) {
         if (conditions == null || conditions == this) {
             return this;
         }
-        if (flushKey) {
-            conditions.flushFieldKey(this.fieldSize);
-        }
+        conditions.flushFieldKey(this.fieldSize);
         this.subConditions.add(conditions);
         return this;
     }

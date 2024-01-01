@@ -24,14 +24,13 @@ public class ListByConditionsDefinition implements ModelMethodDefinition {
         }
     }
 
-    public static <T, R extends T> List<R> exec(T model, QueryConfig... configs) {
-        QueryConfig queryConfig = QueryConfig.combineConfigs(configs);
+    public static <T, R extends T> List<R> exec(T model, QueryConfig queryConfig) {
         ModelInfo<T> info = ModelCache.info(model);
 
         String methodId = methodId(info);
         DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
-            return MybatisListByConditionsMethod.exec(info, methodId, model, queryConfig);
+            return MybatisListByConditionsMethod.exec(info, methodId, queryConfig);
         }
         return null;
     }

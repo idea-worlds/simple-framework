@@ -19,7 +19,7 @@ public interface FindOneByConditions<T> {
      * @param configs 查询配置
      * @return 查询结果
      */
-    default <R extends T> R findOneByConditions(QueryConfig... configs) {
+    default <R extends T> R findOneByConditions(QueryConfig configs) {
         List<R> list;
         try {
             Page<R> page = PageByConditionsDefinition.exec(this, 1, 1, false, configs);

@@ -23,15 +23,14 @@ public class UpdateByConditionsDefinition implements ModelMethodDefinition {
         }
     }
 
-    public static <T> int exec(T model, QueryConditions... conditions) {
-        QueryConditions combinedConditions = QueryConditions.combineConditions(conditions);
+    public static <T> int exec(T model, QueryConditions conditions) {
         ModelInfo<T> info = ModelCache.info(model);
         fillValue(info, model);
 
         String methodId = methodId(info);
         DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
-            return MybatisUpdateByConditionsMethod.exec(info, methodId, model, combinedConditions);
+            return MybatisUpdateByConditionsMethod.exec(info, methodId, model, conditions);
         }
         return 0;
     }
