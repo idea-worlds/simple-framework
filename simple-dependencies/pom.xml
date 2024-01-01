@@ -38,7 +38,7 @@
         <simple-framework.version>0.2-SNAPSHOT</simple-framework.version>
 
 
-        <guava.version>32.1.3-jre</guava.version>
+        <guava.version>33.0.0-jre</guava.version>
         <hutool.version>5.8.24</hutool.version>
         <mybatis.version>3.5.15</mybatis.version>
         <mybatis-spring-boot-starter.version>3.0.2</mybatis-spring-boot-starter.version>
