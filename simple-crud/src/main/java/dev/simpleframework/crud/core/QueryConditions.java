@@ -88,14 +88,8 @@ public class QueryConditions {
     }
 
     public <T, R> QueryConditions add(SerializedFunction<T, R> fieldNameFunc, Object value) {
-        if (value instanceof ConditionType) {
-            return this.add(fieldNameFunc, (ConditionType) value, (Object) null);
-        }
-        if (value instanceof Collection) {
-            return this.add(fieldNameFunc, ConditionType.in, value);
-        } else {
-            return this.add(fieldNameFunc, ConditionType.equal, value);
-        }
+        String fieldName = Functions.getLambdaFieldName(fieldNameFunc);
+        return this.add(fieldName, value);
     }
 
     public <T, R> QueryConditions add(SerializedFunction<T, R> fieldNameFunc, ConditionType conditionType, Object... values) {

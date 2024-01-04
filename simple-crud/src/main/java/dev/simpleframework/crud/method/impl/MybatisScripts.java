@@ -38,13 +38,6 @@ public final class MybatisScripts {
         }
         String fieldName = Strings.isBlank(namePrefix) ?
                 field.fieldName() : namePrefix + "." + field.fieldName();
-        Class<?> fieldType = field.fieldType();
-        if (fieldType.isArray()) {
-            return String.format("<if test=\"%s != null and %s.length != 0\">%s</if>", fieldName, fieldName, script);
-        }
-        if (Collection.class.isAssignableFrom(fieldType)) {
-            return String.format("<if test=\"%s != null and !%s.isEmpty()\">%s</if>", fieldName, fieldName, script);
-        }
         return String.format("<if test=\"%s != null\">%s</if>", fieldName, script);
     }
 
