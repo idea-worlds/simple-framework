@@ -6,6 +6,7 @@ import dev.simpleframework.token.context.impl.SpringServletContext;
 import dev.simpleframework.token.filter.SimpleTokenFilter;
 import dev.simpleframework.token.filter.impl.SimpleTokenSpringServletFilter;
 import dev.simpleframework.token.path.PathManager;
+import dev.simpleframework.token.permission.PermissionManager;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
 
@@ -56,6 +59,11 @@ public class SimpleTokenSpringWebmvcAutoConfiguration implements InitializingBea
         return new SimpleTokenGlobalFilter();
     }
 
+    @Bean
+    public HandlerInterceptor simpleTokenGlobalInterceptor() {
+        return new SimpleTokenGlobalInterceptor();
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         PathManager.setPathPrefix(contextPath, servletPath);
@@ -73,6 +81,19 @@ public class SimpleTokenSpringWebmvcAutoConfiguration implements InitializingBea
                 SpringServletContext.clearContext();
                 SimpleTokens.clearThreadCache();
             }
+        }
+
+    }
+
+    @Order(Ordered.LOWEST_PRECEDENCE - 10)
+    public static class SimpleTokenGlobalInterceptor implements HandlerInterceptor {
+
+        @Override
+        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+            if (handler instanceof HandlerMethod method) {
+                PermissionManager.checkAnnotation(method.getMethod());
+            }
+            return true;
         }
 
     }

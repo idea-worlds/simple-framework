@@ -2,9 +2,9 @@ package dev.simpleframework.token;
 
 import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
+import dev.simpleframework.token.exception.InvalidPermissionException;
+import dev.simpleframework.token.exception.InvalidRoleException;
 import dev.simpleframework.token.exception.InvalidTokenException;
-import dev.simpleframework.token.exception.NotPermissionException;
-import dev.simpleframework.token.exception.NotRoleException;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.permission.SimpleTokenPermission;
 import dev.simpleframework.token.session.*;
@@ -398,22 +398,22 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前用户是否有指定的所有权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的所有权限，无权限抛异常 InvalidPermissionException
      *
-     * @param permission 权限
+     * @param permissions 权限
      */
-    public static void checkHasPermission(String... permission) {
-        if (permission == null) {
+    public static void checkHasPermission(String... permissions) {
+        if (permissions == null) {
             return;
         }
         SimpleTokenPermission perm = findPermission();
-        if (!perm.hasPermission(permission)) {
-            throw new NotPermissionException(perm.getNotMatch());
+        if (!perm.hasPermission(permissions)) {
+            throw new InvalidPermissionException(perm.getLastMatchArg(), false);
         }
     }
 
     /**
-     * 校验当前用户是否有指定的所有权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的所有权限，无权限抛异常 InvalidPermissionException
      *
      * @param permissions 权限
      */
@@ -425,22 +425,22 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前用户是否有指定的任一权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的任一权限，无权限抛异常 InvalidPermissionException
      *
-     * @param permission 权限
+     * @param permissions 权限
      */
-    public static void checkAnyPermission(String... permission) {
-        if (permission == null) {
+    public static void checkAnyPermission(String... permissions) {
+        if (permissions == null) {
             return;
         }
         SimpleTokenPermission perm = findPermission();
-        if (!perm.anyPermission(permission)) {
-            throw new NotPermissionException(perm.getNotMatch());
+        if (!perm.anyPermission(permissions)) {
+            throw new InvalidPermissionException(perm.getLastMatchArg(), false);
         }
     }
 
     /**
-     * 校验当前用户是否有指定的任一权限，无权限抛异常 NotPermissionException
+     * 校验当前用户是否有指定的任一权限，无权限抛异常 InvalidPermissionException
      *
      * @param permissions 权限
      */
@@ -449,6 +449,33 @@ public final class SimpleTokens {
             return;
         }
         checkAnyPermission(permissions.toArray(new String[0]));
+    }
+
+    /**
+     * 校验当前用户是否无指定的所有权限，有权限抛异常 InvalidPermissionException
+     *
+     * @param permissions 权限
+     */
+    public static void checkNotPermission(String... permissions) {
+        if (permissions == null) {
+            return;
+        }
+        SimpleTokenPermission perm = findPermission();
+        if (perm.anyPermission(permissions)) {
+            throw new InvalidPermissionException(perm.getLastMatchArg(), true);
+        }
+    }
+
+    /**
+     * 校验当前用户是否无指定的所有权限，有权限抛异常 InvalidPermissionException
+     *
+     * @param permissions 权限
+     */
+    public static void checkNotPermission(List<String> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return;
+        }
+        checkNotPermission(permissions.toArray(new String[0]));
     }
 
     /**
@@ -470,22 +497,22 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前用户是否有指定的所有角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的所有角色，无角色抛异常 InvalidRoleException
      *
-     * @param role 角色
+     * @param roles 角色
      */
-    public static void checkHasRole(String... role) {
-        if (role == null) {
+    public static void checkHasRole(String... roles) {
+        if (roles == null) {
             return;
         }
         SimpleTokenPermission perm = findPermission();
-        if (!perm.hasRole(role)) {
-            throw new NotRoleException(perm.getNotMatch());
+        if (!perm.hasRole(roles)) {
+            throw new InvalidRoleException(perm.getLastMatchArg(), false);
         }
     }
 
     /**
-     * 校验当前用户是否有指定的所有角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的所有角色，无角色抛异常 InvalidRoleException
      *
      * @param roles 角色
      */
@@ -497,26 +524,53 @@ public final class SimpleTokens {
     }
 
     /**
-     * 校验当前用户是否有指定的任一角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的任一角色，无角色抛异常 InvalidRoleException
      *
-     * @param role 角色
+     * @param roles 角色
      */
-    public static void checkAnyRole(String... role) {
-        if (role == null) {
+    public static void checkAnyRole(String... roles) {
+        if (roles == null) {
             return;
         }
         SimpleTokenPermission perm = findPermission();
-        if (!perm.anyRole(role)) {
-            throw new NotRoleException(perm.getNotMatch());
+        if (!perm.anyRole(roles)) {
+            throw new InvalidRoleException(perm.getLastMatchArg(), false);
         }
     }
 
     /**
-     * 校验当前用户是否有指定的任一角色，无权限抛异常 NotRoleException
+     * 校验当前用户是否有指定的任一角色，无角色抛异常 InvalidRoleException
      *
      * @param roles 角色
      */
     public static void checkAnyRole(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return;
+        }
+        checkAnyRole(roles.toArray(new String[0]));
+    }
+
+    /**
+     * 校验当前用户是否无指定的所有角色，有角色抛异常 InvalidRoleException
+     *
+     * @param roles 角色
+     */
+    public static void checkNotRole(String... roles) {
+        if (roles == null) {
+            return;
+        }
+        SimpleTokenPermission perm = findPermission();
+        if (perm.anyRole(roles)) {
+            throw new InvalidRoleException(perm.getLastMatchArg(), true);
+        }
+    }
+
+    /**
+     * 校验当前用户是否无指定的所有角色，有角色抛异常 InvalidRoleException
+     *
+     * @param roles 角色
+     */
+    public static void checkNotRole(List<String> roles) {
         if (roles == null || roles.isEmpty()) {
             return;
         }
@@ -528,11 +582,10 @@ public final class SimpleTokens {
         THREAD_LOCAL_PERMISSION.remove();
     }
 
-    private static SimpleTokenPermission findPermission() {
+    public static SimpleTokenPermission findPermission() {
         SimpleTokenPermission permission = THREAD_LOCAL_PERMISSION.get();
         if (permission == null) {
-            SessionInfo session = getSession();
-            permission = SimpleTokenPermission.of(session.getLoginId());
+            permission = new SimpleTokenPermission();
             THREAD_LOCAL_PERMISSION.set(permission);
         }
         return permission;

@@ -129,7 +129,7 @@ public final class PathManager {
                     // 自动续签
                     if (globalConfig.getTokenAutoRenew()) {
                         long leaveTime = SimpleTokens.getSession().getExpiredTime() - System.currentTimeMillis();
-                        if (leaveTime <= globalConfig.tokenExpiredTime()) {
+                        if (leaveTime <= globalConfig.tokenRenewLimitTime()) {
                             SimpleTokens.refreshSession();
                         }
                     }

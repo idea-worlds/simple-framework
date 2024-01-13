@@ -11,30 +11,28 @@ import java.util.List;
 public interface PermissionQuery {
 
     /**
-     * 获取用户的权限集
+     * 获取当前用户的权限集
      *
-     * @param loginId 用户 id
      * @return 权限集
      */
-    List<String> listPermissions(String loginId);
+    List<String> listPermissions();
 
     /**
-     * 获取用户的角色集
+     * 获取当前用户的角色集
      *
-     * @param loginId 用户 id
      * @return 角色集
      */
-    List<String> listRoles(String loginId);
+    List<String> listRoles();
 
 
     PermissionQuery DEFAULT = new PermissionQuery() {
         @Override
-        public List<String> listPermissions(String loginId) {
+        public List<String> listPermissions() {
             return Collections.emptyList();
         }
 
         @Override
-        public List<String> listRoles(String loginId) {
+        public List<String> listRoles() {
             return Collections.emptyList();
         }
     };

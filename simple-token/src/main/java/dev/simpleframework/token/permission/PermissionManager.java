@@ -1,7 +1,11 @@
 package dev.simpleframework.token.permission;
 
+import dev.simpleframework.token.SimpleTokens;
+import dev.simpleframework.token.annotation.TokenCheckPermission;
+import dev.simpleframework.token.annotation.TokenCheckRole;
 import dev.simpleframework.token.exception.ImplementationNotFoundException;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -15,28 +19,59 @@ public final class PermissionManager {
     }
 
     /**
-     * 获取用户的权限集
+     * 获取当前用户的权限集
      *
-     * @param loginId 用户 id
      * @return 权限集
      */
-    public static List<String> listPermissions(String loginId) {
-        validStore();
-        return QUERY.listPermissions(loginId);
+    public static List<String> findPermissions() {
+        validQuery();
+        return QUERY.listPermissions();
     }
 
     /**
-     * 获取用户的角色集
+     * 获取当前用户的角色集
      *
-     * @param loginId 用户 id
      * @return 角色集
      */
-    public static List<String> listRoles(String loginId) {
-        validStore();
-        return QUERY.listRoles(loginId);
+    public static List<String> findRoles() {
+        validQuery();
+        return QUERY.listRoles();
     }
 
-    private static void validStore() {
+    /**
+     * 校验方法上的注解权限
+     */
+    public static void checkAnnotation(Method method) {
+        Class<?> clazz = method.getDeclaringClass();
+        checkAnnotation(clazz.getAnnotation(TokenCheckPermission.class));
+        checkAnnotation(clazz.getAnnotation(TokenCheckRole.class));
+        checkAnnotation(method.getAnnotation(TokenCheckPermission.class));
+        checkAnnotation(method.getAnnotation(TokenCheckRole.class));
+    }
+
+    private static void checkAnnotation(TokenCheckPermission permission) {
+        if (permission == null) {
+            return;
+        }
+        switch (permission.mode()) {
+            case ANY -> SimpleTokens.checkAnyPermission(permission.value());
+            case ALL -> SimpleTokens.checkHasPermission(permission.value());
+            case NOT -> SimpleTokens.checkNotPermission(permission.value());
+        }
+    }
+
+    private static void checkAnnotation(TokenCheckRole role) {
+        if (role == null) {
+            return;
+        }
+        switch (role.mode()) {
+            case ANY -> SimpleTokens.checkAnyRole(role.value());
+            case ALL -> SimpleTokens.checkHasRole(role.value());
+            case NOT -> SimpleTokens.checkNotRole(role.value());
+        }
+    }
+
+    private static void validQuery() {
         if (QUERY == null) {
             throw new ImplementationNotFoundException(PermissionQuery.class, PermissionManager.class);
         }

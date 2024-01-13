@@ -43,10 +43,10 @@ public final class UserManager {
         validQuery();
         UserInfo info = loginId == null ? null : QUERY.getInfoById(loginId);
         if (info == null) {
-            throw new UserNotFoundException("User [" + loginId + "] can not be found");
+            throw new LoginUserNotFoundException("User [" + loginId + "] can not be found");
         }
         if (!info.isEnable()) {
-            throw new UserDisabledException("User " + loginId + " disabled");
+            throw new LoginUserDisabledException("User " + loginId + " disabled");
         }
         return info;
     }

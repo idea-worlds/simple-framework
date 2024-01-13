@@ -179,7 +179,7 @@ public class SessionPerson implements Serializable {
         // 先淘汰同客户端的数据
         List<Client> clients = this.clients.get(currentClient);
         SimpleTokenLoginConfig.ClientConfig clientConfig = config.findClientConfig(currentClient);
-        List<String> expiredTokens = findByStrategy(clients, currentToken, clientConfig.getMaxStrategy(), clientConfig.getMaxNum());
+        List<String> expiredTokens = findExpiredTokensByStrategy(clients, currentToken, clientConfig.getMaxStrategy(), clientConfig.getMaxNum());
         result.addAll(expiredTokens);
         this.removeTokens(expiredTokens);
 
@@ -188,13 +188,13 @@ public class SessionPerson implements Serializable {
         for (List<Client> clientList : this.clients.values()) {
             clients.addAll(clientList);
         }
-        expiredTokens = findByStrategy(clients, currentToken, config.getMaxStrategy(), config.getMaxNum());
+        expiredTokens = findExpiredTokensByStrategy(clients, currentToken, config.getMaxStrategy(), config.getMaxNum());
         result.addAll(expiredTokens);
         this.removeTokens(expiredTokens);
         return result.stream().toList();
     }
 
-    private static List<String> findByStrategy(List<Client> clients, String currentToken, LoginMaxStrategy strategy, int max) {
+    private static List<String> findExpiredTokensByStrategy(List<Client> clients, String currentToken, LoginMaxStrategy strategy, int max) {
         if (clients == null || clients.isEmpty()) {
             return Collections.emptyList();
         }

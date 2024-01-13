@@ -10,17 +10,12 @@ import java.util.List;
  */
 public class SimpleTokenPermission {
 
-    private final String loginId;
     private List<String> permissions;
     private List<String> roles;
     private boolean foundPermissions = false;
     private boolean foundRoles = false;
     @Getter
-    private String notMatch = "";
-
-    public static SimpleTokenPermission of(String loginId) {
-        return new SimpleTokenPermission(loginId);
-    }
+    private String lastMatchArg = "";
 
     public List<String> getPermissions() {
         this.setPermissions();
@@ -38,8 +33,8 @@ public class SimpleTokenPermission {
         }
         this.setPermissions();
         for (String permission : permissions) {
+            this.lastMatchArg = permission;
             if (!match(this.permissions, permission)) {
-                this.notMatch = permission;
                 return false;
             }
         }
@@ -52,6 +47,7 @@ public class SimpleTokenPermission {
         }
         this.setPermissions();
         for (String permission : permissions) {
+            this.lastMatchArg = permission;
             if (match(this.permissions, permission)) {
                 return true;
             }
@@ -65,8 +61,8 @@ public class SimpleTokenPermission {
         }
         this.setRoles();
         for (String role : roles) {
+            this.lastMatchArg = role;
             if (!match(this.roles, role)) {
-                this.notMatch = role;
                 return false;
             }
         }
@@ -79,6 +75,7 @@ public class SimpleTokenPermission {
         }
         this.setRoles();
         for (String role : roles) {
+            this.lastMatchArg = role;
             if (match(this.roles, role)) {
                 return true;
             }
@@ -90,7 +87,7 @@ public class SimpleTokenPermission {
         if (this.foundPermissions) {
             return;
         }
-        this.permissions = PermissionManager.listPermissions(this.loginId);
+        this.permissions = PermissionManager.findPermissions();
         this.foundPermissions = true;
     }
 
@@ -98,7 +95,7 @@ public class SimpleTokenPermission {
         if (this.foundRoles) {
             return;
         }
-        this.roles = PermissionManager.listRoles(this.loginId);
+        this.roles = PermissionManager.findRoles();
         this.foundRoles = true;
     }
 
@@ -215,10 +212,6 @@ public class SimpleTokenPermission {
             }
         }
         return false;
-    }
-
-    private SimpleTokenPermission(String loginId) {
-        this.loginId = loginId;
     }
 
 }
