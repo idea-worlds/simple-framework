@@ -30,12 +30,7 @@
             <artifactId>jackson-databind</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2</artifactId>
-            <optional>true</optional>
-        </dependency>
-
+        <!-- 用于生成 jwt 格式的 token -->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>

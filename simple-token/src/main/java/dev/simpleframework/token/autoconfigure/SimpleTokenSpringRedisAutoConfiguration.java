@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import dev.simpleframework.token.session.SessionStore;
 import dev.simpleframework.token.session.impl.SpringRedisDefaultSessionStore;
-import dev.simpleframework.token.session.impl.SpringRedisFastjsonSessionStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -16,7 +15,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -28,7 +26,6 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 @ConditionalOnClass(name = "org.springframework.data.redis.connection.RedisConnectionFactory")
 public class SimpleTokenSpringRedisAutoConfiguration {
     private static boolean jacksonExist;
-    private static boolean fastjsonExist;
 
     static {
         try {
@@ -36,12 +33,6 @@ public class SimpleTokenSpringRedisAutoConfiguration {
             jacksonExist = true;
         } catch (Throwable e) {
             jacksonExist = false;
-        }
-        try {
-            Class.forName("com.alibaba.fastjson2.JSON");
-            fastjsonExist = true;
-        } catch (Throwable e) {
-            fastjsonExist = false;
         }
     }
 
@@ -75,12 +66,7 @@ public class SimpleTokenSpringRedisAutoConfiguration {
             RedisTemplate<String, Object> template = buildRedisTemplate(connectionFactory, valueSerializer);
             return new SpringRedisDefaultSessionStore(template);
         }
-        // 再次使用 fastjson 序列化
-        else if (fastjsonExist) {
-            RedisTemplate<String, String> template = new StringRedisTemplate(connectionFactory);
-            return new SpringRedisFastjsonSessionStore(template);
-        }
-        // 都无 json 依赖时使用 jdk 序列化
+        // 无 json 依赖时使用 jdk 序列化
         else {
             RedisSerializer<Object> valueSerializer = new JdkSerializationRedisSerializer();
             RedisTemplate<String, Object> template = buildRedisTemplate(connectionFactory, valueSerializer);
