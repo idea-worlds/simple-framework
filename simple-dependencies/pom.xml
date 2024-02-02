@@ -44,7 +44,7 @@
         <mybatis-spring-boot-starter.version>3.0.2</mybatis-spring-boot-starter.version>
         <pagehelper.version>6.1.0</pagehelper.version>
         <pagehelper-spring-boot-starter.version>2.1.0</pagehelper-spring-boot-starter.version>
-        <druid.version>1.2.20</druid.version>
+        <druid.version>1.2.21</druid.version>
         <jcommander.version>1.82</jcommander.version>
     </properties>
 
