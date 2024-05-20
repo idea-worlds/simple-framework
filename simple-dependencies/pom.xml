@@ -40,7 +40,7 @@
 
         <guava.version>33.0.0-jre</guava.version>
         <hutool.version>5.8.27</hutool.version>
-        <mybatis.version>3.5.15</mybatis.version>
+        <mybatis.version>3.5.16</mybatis.version>
         <mybatis-spring-boot-starter.version>3.0.3</mybatis-spring-boot-starter.version>
         <pagehelper.version>6.1.0</pagehelper.version>
         <pagehelper-spring-boot-starter.version>2.1.0</pagehelper-spring-boot-starter.version>
