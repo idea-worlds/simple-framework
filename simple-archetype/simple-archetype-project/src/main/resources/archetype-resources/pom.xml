@@ -12,8 +12,8 @@
     <properties>
         <revision>${version}</revision>
         <simple-framework.version>0.2-SNAPSHOT</simple-framework.version>
-        <spring-boot.version>3.1.0</spring-boot.version>
-        <hutool.version>5.8.19</hutool.version>
+        <spring-boot.version>3.3.0</spring-boot.version>
+        <hutool.version>5.8.27</hutool.version>
 
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -80,12 +80,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.11.0</version>
+                    <version>3.13.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>flatten-maven-plugin</artifactId>
-                    <version>1.5.0</version>
+                    <version>1.6.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>

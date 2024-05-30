@@ -37,7 +37,6 @@
     <properties>
         <simple-framework.version>0.2-SNAPSHOT</simple-framework.version>
 
-
         <guava.version>33.2.0-jre</guava.version>
         <hutool.version>5.8.27</hutool.version>
         <mybatis.version>3.5.16</mybatis.version>
@@ -45,7 +44,6 @@
         <pagehelper.version>6.1.0</pagehelper.version>
         <pagehelper-spring-boot-starter.version>2.1.0</pagehelper-spring-boot-starter.version>
         <druid.version>1.2.23</druid.version>
-        <jcommander.version>1.82</jcommander.version>
     </properties>
 
     <dependencyManagement>
@@ -97,16 +95,10 @@
                 <artifactId>pagehelper-spring-boot-starter</artifactId>
                 <version>${pagehelper-spring-boot-starter.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>druid</artifactId>
                 <version>${druid.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.beust</groupId>
-                <artifactId>jcommander</artifactId>
-                <version>${jcommander.version}</version>
             </dependency>
 
         </dependencies>

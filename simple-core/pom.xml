@@ -33,10 +33,5 @@
             <artifactId>jackson-databind</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 </project>
