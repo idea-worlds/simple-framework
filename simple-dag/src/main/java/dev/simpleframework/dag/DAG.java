@@ -10,9 +10,9 @@ import java.util.function.Supplier;
  * @author loyayz
  **/
 public class DAG<T> {
-    private Map<String, Node<T>> nodes;
+    private Map<String, NodeHelper<T>> nodes;
     private Map<String, List<String>> edges;
-    private Node<T> first;
+    private NodeHelper<T> firstNode;
     private boolean sorted;
     private Supplier<RuntimeException> validHandler;
 
@@ -24,34 +24,34 @@ public class DAG<T> {
     }
 
     /**
-     * 添加顶点
+     * 添加节点
      */
-    public DAG<T> addVertex(Vertex<T> vertex) {
-        this.nodes.put(vertex.getKey(), new Node<>(vertex));
+    public DAG<T> addNode(Node<T> node) {
+        this.nodes.put(node.getKey(), new NodeHelper<>(node));
         this.sorted = false;
         return this;
     }
 
     /**
-     * 添加顶点
+     * 添加节点
      */
-    public DAG<T> addVertex(Collection<Vertex<T>> vertex) {
-        vertex.forEach(this::addVertex);
+    public DAG<T> addNode(Collection<Node<T>> nodes) {
+        nodes.forEach(this::addNode);
         return this;
     }
 
     /**
-     * 添加边（添加完所有顶点再添加边）
+     * 添加边（添加完所有节点再添加边）
      *
-     * @param fromVertexKey 来源顶点
-     * @param toVertexKey   目标顶点
+     * @param fromNodeKey 来源节点
+     * @param toNodeKey   目标节点
      */
-    public DAG<T> addEdge(String fromVertexKey, String toVertexKey) {
-        this.edges.compute(fromVertexKey, (o, tos) -> {
+    public DAG<T> addEdge(String fromNodeKey, String toNodeKey) {
+        this.edges.compute(fromNodeKey, (o, tos) -> {
             if (tos == null) {
                 tos = new ArrayList<>();
             }
-            tos.add(toVertexKey);
+            tos.add(toNodeKey);
             return tos;
         });
         this.sorted = false;
@@ -59,13 +59,13 @@ public class DAG<T> {
     }
 
     /**
-     * 添加边（添加完所有顶点再添加边）
+     * 添加边（添加完所有节点再添加边）
      *
-     * @param fromVertexKey 来源顶点
-     * @param toVertexKey   目标顶点
+     * @param fromNodeKey 来源节点
+     * @param toNodeKey   目标节点
      */
-    public DAG<T> addEdge(String fromVertexKey, List<String> toVertexKey) {
-        toVertexKey.forEach(to -> this.addEdge(fromVertexKey, to));
+    public DAG<T> addEdge(String fromNodeKey, List<String> toNodeKey) {
+        toNodeKey.forEach(to -> this.addEdge(fromNodeKey, to));
         return this;
     }
 
@@ -81,15 +81,15 @@ public class DAG<T> {
     /**
      * 删除边
      *
-     * @param fromVertexKey 来源顶点
-     * @param toVertexKey   目标顶点
+     * @param fromNodeKey 来源节点
+     * @param toNodeKey   目标节点
      */
-    public DAG<T> removeEdge(String fromVertexKey, String toVertexKey) {
-        this.edges.compute(fromVertexKey, (o, tos) -> {
+    public DAG<T> removeEdge(String fromNodeKey, String toNodeKey) {
+        this.edges.compute(fromNodeKey, (o, tos) -> {
             if (tos == null) {
                 return null;
             }
-            tos.remove(toVertexKey);
+            tos.remove(toNodeKey);
             if (tos.isEmpty()) {
                 return null;
             }
@@ -102,11 +102,11 @@ public class DAG<T> {
     /**
      * 删除边
      *
-     * @param fromVertexKey 来源顶点
-     * @param toVertexKey   目标顶点
+     * @param fromNodeKey 来源节点
+     * @param toNodeKey   目标节点
      */
-    public DAG<T> removeEdge(String fromVertexKey, List<String> toVertexKey) {
-        toVertexKey.forEach(to -> this.removeEdge(fromVertexKey, to));
+    public DAG<T> removeEdge(String fromNodeKey, List<String> toNodeKey) {
+        toNodeKey.forEach(to -> this.removeEdge(fromNodeKey, to));
         return this;
     }
 
@@ -119,10 +119,10 @@ public class DAG<T> {
     }
 
     /**
-     * 获取起始顶点
+     * 获取起始节点
      */
-    public Vertex<T> getStartVertex() {
-        return this.first == null ? null : this.first.vertex;
+    public Node<T> getStartNode() {
+        return this.firstNode == null ? null : this.firstNode.node;
     }
 
     /**
@@ -156,23 +156,25 @@ public class DAG<T> {
     /**
      * 拓扑排序后按顺序访问
      */
-    public void visit(Consumer<Vertex<T>> action) {
+    public void visit(Consumer<Node<T>> action) {
         this.sort();
-        for (Node<T> node : this.nodes.values()) {
-            Vertex<T> currentVertex = node.vertex;
-            List<Vertex<T>> inVertex = node.inKeys.stream()
+        for (NodeHelper<T> currentNode : this.nodes.values()) {
+            List<Node<T>> inNodes = currentNode.inKeys.stream()
                     .map(this.nodes::get)
                     .filter(Objects::nonNull)
-                    .map(n -> n.vertex)
+                    .map(n -> n.node)
                     .toList();
-            List<Vertex<T>> outVertex = node.outKeys.stream()
+            List<Node<T>> outNodes = currentNode.outKeys.stream()
                     .map(this.nodes::get)
                     .filter(Objects::nonNull)
-                    .map(n -> n.vertex)
+                    .map(n -> n.node)
                     .toList();
-            currentVertex.visit(inVertex, outVertex);
+            Node.Consumer<T> visitHandler = currentNode.node.getVisitHandler();
+            if (visitHandler != null) {
+                visitHandler.accept(currentNode.node, inNodes, outNodes);
+            }
             if (action != null) {
-                action.accept(currentVertex);
+                action.accept(currentNode.node);
             }
         }
     }
@@ -187,21 +189,20 @@ public class DAG<T> {
         this.nodes.forEach((key, node) -> node.reset());
         this.nodes.forEach((key, node) -> {
             this.edges.getOrDefault(key, Collections.emptyList()).forEach(toKey -> {
-                Node<T> toNode = this.nodes.get(toKey);
+                NodeHelper<T> toNode = this.nodes.get(toKey);
                 node.addNext(toNode);
             });
         });
-        this.first = this.nodes.values().stream()
+        this.firstNode = this.nodes.values().stream()
                 .filter(node -> node.inKeys.isEmpty())
                 .findFirst()
                 .orElse(null);
-        Deque<Node<T>> stack = new ArrayDeque<>();
-        this.doSort(stack, this.first);
-        Map<String, Node<T>> sortedNodes = new LinkedHashMap<>();
+        Deque<NodeHelper<T>> stack = new ArrayDeque<>();
+        this.doSort(stack, this.firstNode);
+        Map<String, NodeHelper<T>> sortedNodes = new LinkedHashMap<>();
         while (!stack.isEmpty()) {
-            Node<T> node = stack.pop();
-            Vertex<T> vertex = node.vertex;
-            sortedNodes.put(vertex.getKey(), node);
+            NodeHelper<T> node = stack.pop();
+            sortedNodes.put(node.node.getKey(), node);
         }
         if (this.nodes.values().stream().anyMatch(node -> !node.visited)) {
             throw this.validHandler.get();
@@ -211,7 +212,7 @@ public class DAG<T> {
         this.sorted = true;
     }
 
-    private void doSort(Deque<Node<T>> stack, Node<T> currentNode) {
+    private void doSort(Deque<NodeHelper<T>> stack, NodeHelper<T> currentNode) {
         if (currentNode == null) {
             return;
         }
@@ -219,7 +220,7 @@ public class DAG<T> {
             if (currentNode.previousKeys.contains(nextKey)) {
                 throw this.validHandler.get();
             }
-            Node<T> nextNode = this.nodes.get(nextKey);
+            NodeHelper<T> nextNode = this.nodes.get(nextKey);
             nextNode.previousKeys.addAll(currentNode.previousKeys);
             nextNode.previousKeys.add(currentNode.key);
             if (!nextNode.visited) {
@@ -231,17 +232,17 @@ public class DAG<T> {
         stack.push(currentNode);
     }
 
-    static class Node<N> {
+    static class NodeHelper<N> {
         String key;
-        Vertex<N> vertex;
+        Node<N> node;
         List<String> inKeys;
         List<String> outKeys;
         Set<String> previousKeys;
         boolean visited;
 
-        Node(Vertex<N> vertex) {
-            this.key = vertex.getKey();
-            this.vertex = vertex;
+        NodeHelper(Node<N> node) {
+            this.key = node.getKey();
+            this.node = node;
             this.inKeys = new ArrayList<>();
             this.outKeys = new ArrayList<>();
             this.previousKeys = new HashSet<>();
@@ -255,7 +256,7 @@ public class DAG<T> {
             this.visited = false;
         }
 
-        void addNext(Node<N> to) {
+        void addNext(NodeHelper<N> to) {
             to.inKeys.add(this.key);
             this.outKeys.add(to.key);
         }

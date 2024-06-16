@@ -3,8 +3,6 @@ package dev.simpleframework.dag;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -14,20 +12,20 @@ public class ToposortTest {
 
     @Test
     public void test() {
-        Vertex.Consumer<String> visitHandler = (current, froms, tos) -> {
-            String toKeys = tos.stream().map(Vertex::getKey).collect(Collectors.joining(","));
+        Node.Consumer<String> visitHandler = (current, froms, tos) -> {
+            String toKeys = tos.stream().map(Node::getKey).collect(Collectors.joining(","));
             System.out.println("  " + current.getKey() + " --> " + toKeys);
         };
         DAG<String> dag = new DAG<String>()
-                .addVertex(new StringVertex("2").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("3").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("9").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("5").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("8").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("4").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("1").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("7").setVisitHandler(visitHandler))
-                .addVertex(new StringVertex("6").setVisitHandler(visitHandler))
+                .addNode(new StringNode("2").setVisitHandler(visitHandler))
+                .addNode(new StringNode("3").setVisitHandler(visitHandler))
+                .addNode(new StringNode("9").setVisitHandler(visitHandler))
+                .addNode(new StringNode("5").setVisitHandler(visitHandler))
+                .addNode(new StringNode("8").setVisitHandler(visitHandler))
+                .addNode(new StringNode("4").setVisitHandler(visitHandler))
+                .addNode(new StringNode("1").setVisitHandler(visitHandler))
+                .addNode(new StringNode("7").setVisitHandler(visitHandler))
+                .addNode(new StringNode("6").setVisitHandler(visitHandler))
                 .addEdge("1", "2")
                 .addEdge("2", "3")
                 .addEdge("3", "4")
@@ -69,9 +67,9 @@ public class ToposortTest {
         dag.visit();
     }
 
-    public static class StringVertex extends Vertex<String> {
+    public static class StringNode extends Node<String> {
 
-        public StringVertex(String key) {
+        public StringNode(String key) {
             super(key, key);
         }
 
