@@ -10,17 +10,17 @@ import java.util.List;
  * @author loyayz
  **/
 @Getter
-public class Node<T> {
+public class DAGNode<T> {
     private final String key;
     private final T value;
     private Consumer<T> visitHandler;
 
-    public Node(String key, T value) {
+    public DAGNode(String key, T value) {
         this.key = key;
         this.value = value;
     }
 
-    public Node<T> setVisitHandler(Consumer<T> handler) {
+    public DAGNode<T> setVisitHandler(Consumer<T> handler) {
         this.visitHandler = handler;
         return this;
     }
@@ -31,7 +31,7 @@ public class Node<T> {
          * @param froms   来源节点 not null
          * @param tos     目标节点 not null
          */
-        void accept(Node<C> current, List<Node<C>> froms, List<Node<C>> tos);
+        void accept(DAGNode<C> current, List<DAGNode<C>> froms, List<DAGNode<C>> tos);
     }
 
 }

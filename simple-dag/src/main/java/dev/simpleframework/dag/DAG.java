@@ -13,6 +13,7 @@ public class DAG<T> {
     private Map<String, NodeHelper<T>> nodes;
     private Map<String, List<String>> edges;
     private NodeHelper<T> firstNode;
+    private List<DAGNode<T>> endNodes;
     private boolean sorted;
     private Supplier<RuntimeException> validHandler;
 
@@ -26,7 +27,7 @@ public class DAG<T> {
     /**
      * 添加节点
      */
-    public DAG<T> addNode(Node<T> node) {
+    public DAG<T> addNode(DAGNode<T> node) {
         this.nodes.put(node.getKey(), new NodeHelper<>(node));
         this.sorted = false;
         return this;
@@ -35,7 +36,7 @@ public class DAG<T> {
     /**
      * 添加节点
      */
-    public DAG<T> addNode(Collection<Node<T>> nodes) {
+    public DAG<T> addNode(Collection<DAGNode<T>> nodes) {
         nodes.forEach(this::addNode);
         return this;
     }
@@ -121,8 +122,15 @@ public class DAG<T> {
     /**
      * 获取起始节点
      */
-    public Node<T> getStartNode() {
+    public DAGNode<T> getStartNode() {
         return this.firstNode == null ? null : this.firstNode.node;
+    }
+
+    /**
+     * 获取结束节点集
+     */
+    public List<DAGNode<T>> getEndNodes() {
+        return this.endNodes == null ? Collections.emptyList() : this.endNodes;
     }
 
     /**
@@ -150,31 +158,38 @@ public class DAG<T> {
      * 拓扑排序后按顺序访问
      */
     public void visit() {
-        this.visit(null);
+        this.visit(null, true);
     }
 
     /**
      * 拓扑排序后按顺序访问
+     *
+     * @param action       回调
+     * @param visitBuiltIn 是否先执行节点内置的回调
      */
-    public void visit(Consumer<Node<T>> action) {
+    public void visit(Consumer<DAGNode<T>> action, Boolean visitBuiltIn) {
         this.sort();
-        for (NodeHelper<T> currentNode : this.nodes.values()) {
-            List<Node<T>> inNodes = currentNode.inKeys.stream()
-                    .map(this.nodes::get)
-                    .filter(Objects::nonNull)
-                    .map(n -> n.node)
-                    .toList();
-            List<Node<T>> outNodes = currentNode.outKeys.stream()
-                    .map(this.nodes::get)
-                    .filter(Objects::nonNull)
-                    .map(n -> n.node)
-                    .toList();
-            Node.Consumer<T> visitHandler = currentNode.node.getVisitHandler();
-            if (visitHandler != null) {
-                visitHandler.accept(currentNode.node, inNodes, outNodes);
+        if (visitBuiltIn) {
+            for (NodeHelper<T> currentNode : this.nodes.values()) {
+                List<DAGNode<T>> inNodes = currentNode.inKeys.stream()
+                        .map(this.nodes::get)
+                        .filter(Objects::nonNull)
+                        .map(n -> n.node)
+                        .toList();
+                List<DAGNode<T>> outNodes = currentNode.outKeys.stream()
+                        .map(this.nodes::get)
+                        .filter(Objects::nonNull)
+                        .map(n -> n.node)
+                        .toList();
+                DAGNode.Consumer<T> visitHandler = currentNode.node.getVisitHandler();
+                if (visitHandler != null) {
+                    visitHandler.accept(currentNode.node, inNodes, outNodes);
+                }
             }
-            if (action != null) {
-                action.accept(currentNode.node);
+        }
+        if (action != null) {
+            for (NodeHelper<T> node : this.nodes.values()) {
+                action.accept(node.node);
             }
         }
     }
@@ -193,10 +208,16 @@ public class DAG<T> {
                 node.addNext(toNode);
             });
         });
-        this.firstNode = this.nodes.values().stream()
-                .filter(node -> node.inKeys.isEmpty())
-                .findFirst()
-                .orElse(null);
+        this.firstNode = null;
+        this.endNodes = new ArrayList<>();
+        for (NodeHelper<T> node : this.nodes.values()) {
+            if (this.firstNode == null && node.inKeys.isEmpty()) {
+                this.firstNode = node;
+            }
+            if (node.outKeys.isEmpty()) {
+                this.endNodes.add(node.node);
+            }
+        }
         Deque<NodeHelper<T>> stack = new ArrayDeque<>();
         this.doSort(stack, this.firstNode);
         Map<String, NodeHelper<T>> sortedNodes = new LinkedHashMap<>();
@@ -234,13 +255,13 @@ public class DAG<T> {
 
     static class NodeHelper<N> {
         String key;
-        Node<N> node;
+        DAGNode<N> node;
         List<String> inKeys;
         List<String> outKeys;
         Set<String> previousKeys;
         boolean visited;
 
-        NodeHelper(Node<N> node) {
+        NodeHelper(DAGNode<N> node) {
             this.key = node.getKey();
             this.node = node;
             this.inKeys = new ArrayList<>();

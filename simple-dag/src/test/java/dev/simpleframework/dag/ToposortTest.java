@@ -12,8 +12,8 @@ public class ToposortTest {
 
     @Test
     public void test() {
-        Node.Consumer<String> visitHandler = (current, froms, tos) -> {
-            String toKeys = tos.stream().map(Node::getKey).collect(Collectors.joining(","));
+        DAGNode.Consumer<String> visitHandler = (current, froms, tos) -> {
+            String toKeys = tos.stream().map(DAGNode::getKey).collect(Collectors.joining(","));
             System.out.println("  " + current.getKey() + " --> " + toKeys);
         };
         DAG<String> dag = new DAG<String>()
@@ -67,7 +67,7 @@ public class ToposortTest {
         dag.visit();
     }
 
-    public static class StringNode extends Node<String> {
+    public static class StringNode extends DAGNode<String> {
 
         public StringNode(String key) {
             super(key, key);

@@ -16,4 +16,12 @@
     <name>Simple DAG</name>
     <description>Simple DAG</description>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
 </project>
