@@ -37,6 +37,13 @@ public class StringsTest {
     }
 
     @Test
+    public void readable() {
+        List<String> units = List.of("1000,ms", "60,s", "60,min", "24,h", "d");
+        String str = Strings.readable(100000000L, units, " ");
+        System.out.println(str);
+    }
+
+    @Test
     public void cast() {
         Assertions.assertEquals(1, Strings.cast("1", Integer.class));
         Assertions.assertEquals(2L, Strings.cast("2", Long.class));

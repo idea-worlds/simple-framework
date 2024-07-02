@@ -82,6 +82,68 @@ public final class Strings {
     }
 
     /**
+     * 文件大小转为可读格式
+     *
+     * @param size byte
+     */
+    public static String readableFileSize(long size) {
+        List<String> units = List.of("1024,B", "1024,K", "1024,M", "1024,G", "T");
+        return readable(size, units, " ");
+    }
+
+    /**
+     * 毫秒转为可读时间格式
+     *
+     * @param ms 毫秒
+     */
+    public static String readableTime(long ms) {
+        List<String> units = List.of("1000,ms", "60,s", "60,min", "24,h", "d");
+        return readable(ms, units, " ");
+    }
+
+    /**
+     * 数字转换为可读格式
+     *
+     * <pre>  例：
+     * {@code List<String> units = List.of("1000,ms", "60,s", "60,min", "24,h", "d");
+     *   String str = Strings.readable(100000000L, units, " "); }
+     * </pre>
+     *
+     * @param num       要解析的数字
+     * @param units     下一单位进制,当前单位名
+     * @param delimiter 单位间的分隔符
+     * @return 可读格式的数字
+     */
+    public static String readable(long num, List<String> units, String delimiter) {
+        if (num == 0) {
+            return "0" + units.get(0).split(",")[1];
+        }
+
+        List<String> result = new ArrayList<>();
+        for (int i = 0, len = units.size(); i < len; i++) {
+            String unit = units.get(i);
+            long divisor;
+            String name;
+            if (i == len - 1) {
+                divisor = Integer.MAX_VALUE;
+                name = unit.contains(",") ?
+                        unit.split(",")[1] : unit;
+            } else {
+                String[] tmp = unit.split(",");
+                divisor = Long.parseLong(tmp[0]);
+                name = tmp[1];
+            }
+
+            long unitNum = num % divisor;
+            if (unitNum > 0) {
+                result.add(0, unitNum + name);
+            }
+            num = num / divisor;
+        }
+        return String.join(delimiter, result);
+    }
+
+    /**
      * 解析字符串，转为目标类实例
      * 1. String：原样
      * 2. Number 子类：调用参数为 string 的构造函数，例 new Integer(defaultValue)
