@@ -3,15 +3,13 @@ package dev.simpleframework.dag.engine;
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 
 /**
@@ -23,9 +21,8 @@ public abstract class AbstractJob implements Job {
     private EngineContext engineContext;
     private final JobContext jobContext;
     private final JobResult result;
-    @Getter(AccessLevel.PROTECTED)
     private Consumer<JobResult> resultHandler;
-    private JobEventProducer target;
+    private JobEventProducer eventProducer;
 
     public AbstractJob(String id) {
         this.jobContext = new JobContext(id);
@@ -50,21 +47,6 @@ public abstract class AbstractJob implements Job {
     @Override
     public void resultAsync(Consumer<JobResult> handler) {
         this.resultHandler = handler;
-    }
-
-    @Override
-    public void abort() {
-        if (this.context().status().isFinish()) {
-            return;
-        }
-        try {
-            this.doAbort();
-        } finally {
-            this.context().abort();
-            if (this.target != null) {
-                this.target.shutdown();
-            }
-        }
     }
 
     @Override
@@ -94,12 +76,6 @@ public abstract class AbstractJob implements Job {
      * 监听前置作业发送的数据
      */
     protected void onData(JobRecord record) {
-    }
-
-    /**
-     * 监听前置作业中止
-     */
-    protected void onAbort(String fromJobId) {
     }
 
     /**
@@ -176,8 +152,8 @@ public abstract class AbstractJob implements Job {
      */
     protected void emitData(JobRecord record) {
         this.jobContext.incrementEmit();
-        if (this.target != null) {
-            this.target.emitData(record);
+        if (this.eventProducer != null) {
+            this.eventProducer.emitData(record);
         }
     }
 
@@ -204,11 +180,11 @@ public abstract class AbstractJob implements Job {
             this.result.fill(this.jobContext);
             this.result.setError(error);
 
-            if (this.target != null) {
+            if (this.eventProducer != null) {
                 if (error == null) {
-                    this.target.emitComplete();
+                    this.eventProducer.emitComplete();
                 } else {
-                    this.target.emitError(error);
+                    this.eventProducer.emitError(error);
                 }
             }
             if (this.resultHandler != null) {
@@ -226,17 +202,40 @@ public abstract class AbstractJob implements Job {
         return null;
     }
 
+    /**
+     * 构建上下文数据对象
+     */
     protected JobRecord buildRecord(Object value) {
         return new JobRecord(this.id(), value);
+    }
+
+    /**
+     * Disruptor 事件缓冲池大小
+     */
+    protected int eventProducerBufferSize() {
+        return 8192;
+    }
+
+    /**
+     * Disruptor 事件等待策略
+     */
+    protected WaitStrategy eventProducerWaitStrategy() {
+        return new BlockingWaitStrategy();
     }
 
     void engineContext(EngineContext engineContext) {
         this.engineContext = engineContext;
     }
 
+    void listen(List<? extends AbstractJob> fromJobs) {
+        fromJobs.forEach(this::listen);
+        List<String> fromJobIds = fromJobs.stream().map(Job::id).toList();
+        this.jobContext.initBegin(fromJobIds);
+        this.result.fill(this.jobContext);
+    }
+
     void listen(AbstractJob from) {
-        from.createProducer();
-        from.subscribe(event -> {
+        from.eventProducer().subscribe(event -> {
             String fromJobId = event.getJobId();
             RunStatus status = event.getStatus();
             Throwable error = event.getError();
@@ -258,39 +257,47 @@ public abstract class AbstractJob implements Job {
         });
     }
 
-    void subscribe(List<? extends AbstractJob> fromJobs, List<? extends AbstractJob> toJobs) {
-        fromJobs.forEach(this::listen);
-        if (!toJobs.isEmpty()) {
-            this.createProducer();
+    private JobEventProducer eventProducer() {
+        if (this.eventProducer == null) {
+            Disruptor<JobEvent> disruptor = new Disruptor<>(
+                    EVENT_FACTORY,
+                    this.eventProducerBufferSize(),
+                    this.engineContext.threadFactory(),
+                    ProducerType.MULTI,
+                    this.eventProducerWaitStrategy());
+            this.eventProducer = new JobEventProducer(this.id(), disruptor);
         }
-        List<String> fromJobIds = fromJobs.stream().map(Job::id).toList();
-        this.jobContext.initBegin(fromJobIds);
-        this.result.fill(this.jobContext);
-    }
-
-    private void createProducer() {
-        if (this.target != null) {
-            return;
-        }
-        int bufferSize = 1024;
-        ThreadFactory threadFactory = this.engineContext.threadFactory();
-        ProducerType producerType = ProducerType.MULTI;
-        BlockingWaitStrategy waitStrategy = new BlockingWaitStrategy();
-        Disruptor<JobEvent> disruptor = new Disruptor<>(
-                EVENT_FACTORY, bufferSize, threadFactory, producerType, waitStrategy);
-        this.target = new JobEventProducer(this.id(), disruptor);
-    }
-
-    private void subscribe(Consumer<JobEvent> subscriber) {
-        this.target.disruptor.handleEventsWith(
-                (event, sequence, endOfBatch) -> subscriber.accept(event));
+        return this.eventProducer;
     }
 
     void start() {
-        if (this.target != null) {
-            this.target.start();
+        if (this.eventProducer != null) {
+            this.eventProducer.start();
         }
     }
+
+    void clear() {
+        if (this.eventProducer != null) {
+            this.eventProducer.shutdown();
+        }
+    }
+
+    void abort() {
+        if (this.context().status().isFinish()) {
+            return;
+        }
+        this.context().abort();
+        try {
+            this.doAbort();
+            if (this.eventProducer != null) {
+                this.eventProducer.shutdown();
+            }
+        } finally {
+            this.doFinally();
+        }
+    }
+
+    static EventFactory<JobEvent> EVENT_FACTORY = JobEvent::new;
 
     @Data
     static class JobEvent {
@@ -309,19 +316,6 @@ public abstract class AbstractJob implements Job {
             this.jobId = jobId;
             this.disruptor = disruptor;
             this.ringBuffer = disruptor.getRingBuffer();
-        }
-
-        void emitEvent(JobEvent source) {
-            long sequence = this.ringBuffer.next();
-            try {
-                JobEvent event = this.ringBuffer.get(sequence);
-                event.setJobId(source.jobId);
-                event.setStatus(source.status);
-                event.setRecord(source.record);
-                event.setError(source.error);
-            } finally {
-                this.ringBuffer.publish(sequence);
-            }
         }
 
         void emitData(JobRecord record) {
@@ -360,10 +354,9 @@ public abstract class AbstractJob implements Job {
         }
 
         void start() {
-            if (this.disruptor.hasStarted()) {
-                return;
+            if (!this.disruptor.hasStarted()) {
+                this.disruptor.start();
             }
-            this.disruptor.start();
         }
 
         void shutdown() {
@@ -372,8 +365,11 @@ public abstract class AbstractJob implements Job {
             }
         }
 
-    }
+        void subscribe(Consumer<JobEvent> subscriber) {
+            this.disruptor.handleEventsWith(
+                    (event, sequence, endOfBatch) -> subscriber.accept(event));
+        }
 
-    static EventFactory<JobEvent> EVENT_FACTORY = JobEvent::new;
+    }
 
 }

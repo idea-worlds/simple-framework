@@ -47,9 +47,11 @@ public class EngineResult implements Serializable {
 
     void addJob(JobResult job) {
         RunStatus jobStatus = job.getStatus();
-        if (this.status == RunStatus.WAIT || jobStatus == RunStatus.RUNNING) {
-            this.status = jobStatus;
-        } else if (this.status == RunStatus.COMPLETE && jobStatus == RunStatus.FAIL) {
+        if (this.status.isFinish()) {
+            if (this.status == RunStatus.COMPLETE) {
+                this.status = jobStatus;
+            }
+        } else {
             this.status = jobStatus;
         }
         // 开始时间：所有节点最早的开始时间
@@ -67,17 +69,16 @@ public class EngineResult implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("EngineResult(\n" +
+        StringBuilder str = new StringBuilder("EngineResult:" +
                 "  name: " + this.name + "\n" +
                 "  status: " + this.status + "\n" +
                 "  beginTime: " + this.beginTime + "\n" +
                 "  finishTime: " + this.finishTime + "\n" +
                 "  runTime: " + Strings.readableTime(this.runTime) + "\n" +
-                "  jobs: \n");
+                "  jobs:\n");
         for (JobResult job : jobs.values()) {
             str.append("    ").append(job.toString()).append("\n");
         }
-        str.append(")");
         return str.toString();
     }
 

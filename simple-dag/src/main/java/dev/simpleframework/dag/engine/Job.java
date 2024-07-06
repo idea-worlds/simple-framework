@@ -30,11 +30,6 @@ public interface Job {
     void resultAsync(Consumer<JobResult> handler);
 
     /**
-     * 中止执行
-     */
-    void abort();
-
-    /**
      * 获取当前运行时快照
      */
     JobSnapshot snapshot();

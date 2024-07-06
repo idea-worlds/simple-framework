@@ -5,7 +5,6 @@ import dev.simpleframework.dag.DAGNode;
 import dev.simpleframework.util.Clock;
 import dev.simpleframework.util.Threads;
 
-import java.util.Collections;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +47,7 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
      * 执行顺序：虚拟开始作业 -> 起始作业 -> 拓扑顺序作业... -> 结束作业
      */
     @Override
-    public void execAsync(Consumer<EngineResult> action, long timeout, TimeUnit unit) {
+    public void execAsync(Consumer<EngineResult> action, long timeout, TimeUnit unit, TimeoutStrategy strategy) {
         if (!this.running.compareAndSet(false, true)) {
             throw new RuntimeException("This engine is already running.");
         }
@@ -69,41 +68,20 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
         begin.engineContext(this.context);
         start.listen(begin);
 
-        // 订阅结束后，虚拟起始节点发送完成信号，按时获取执行结果
         Threads.newPool(this.context.threadFactory(), 1, 1).submit(() -> {
+            // 虚拟起始节点发送完成信号
             begin.start();
             begin.emitComplete();
-
-            DelayQueue<DelayValue> queue = new DelayQueue<>();
-            if (timeout > 0) {
-                // 有超时时间，用延迟队列到时再取结果
-                queue.offer(new DelayValue(timeout, unit, this.aborted));
-                try {
-                    queue.take();
-                } catch (Exception ignore) {
-                }
-            } else {
-                // 无超时时间，延迟50ms后判断是否已结束，已结束再取结果，未结束则每隔200ms判断是否已结束
-                Threads.sleep(50);
-                while (!this.context.finished()) {
-                    queue.offer(new DelayValue(200, TimeUnit.MILLISECONDS, this.aborted));
-                    try {
-                        queue.take();
-                    } catch (Exception ignore) {
-                    }
-                }
-            }
-            EngineResult result = new EngineResult();
-            result.setName(this.context.name());
-            this.dag.visit(job -> result.addJob(job.result()), false);
+            // 等待执行结束
+            EngineResult result = this.waitResult(timeout, unit, strategy);
             action.accept(result);
         });
     }
 
     @Override
     public void abort() {
+        this.dag.visit(AbstractJob::abort, false);
         this.aborted.set(true);
-        this.dag.visit(Job::abort, false);
     }
 
     @Override
@@ -114,10 +92,57 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
         return snapshot;
     }
 
+    private EngineResult waitResult(long timeout, TimeUnit unit, TimeoutStrategy strategy) {
+        if (strategy == null) {
+            // 默认超时后什么都不做
+            strategy = TimeoutStrategy.NOTHING;
+        }
+        DelayQueue<DelayValue> queue = new DelayQueue<>();
+        if (timeout > 0) {
+            // 有超时时间，用延迟队列到时再取结果
+            queue.offer(new DelayValue(timeout, unit, this.aborted));
+            try {
+                queue.take();
+            } catch (Exception ignore) {
+            }
+        } else {
+            // 无超时时间，每隔200ms判断是否已结束
+            Threads.sleep(200);
+            while (!this.context.finished()) {
+                queue.offer(new DelayValue(200, TimeUnit.MILLISECONDS, this.aborted));
+                try {
+                    queue.take();
+                } catch (Exception ignore) {
+                }
+            }
+        }
+        if (this.context.finished()) {
+            // 超时时间内已完成，执行作业的清理方法
+            this.dag.visit(AbstractJob::clear, false);
+        } else {
+            // 超时时间内未完成，执行策略方法
+            strategy.exec(this);
+            // 起一守护线程定时判断是否已完成，已完成后执行作业的清理方法
+            Thread thread = new Thread(() -> {
+                while (!this.context.finished()) {
+                    Threads.sleep(1000);
+                }
+                this.dag.visit(AbstractJob::clear, false);
+            });
+            thread.setName("dag-clear-" + this.context.name());
+            thread.setDaemon(true);
+            thread.start();
+        }
+        EngineResult result = new EngineResult();
+        result.setName(this.context.name());
+        this.dag.visit(job -> result.addJob(job.result()), false);
+        return result;
+    }
+
     static class JobNode<J extends AbstractJob> extends DAGNode<J> {
         JobNode(J job) {
             super(job.id(), job);
-            super.setVisitHandler((c, froms, tos) -> job.subscribe(froms, tos));
+            super.setVisitHandler((c, froms, tos) -> job.listen(froms));
         }
     }
 

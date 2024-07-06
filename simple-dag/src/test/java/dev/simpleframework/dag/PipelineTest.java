@@ -120,7 +120,7 @@ public class PipelineTest {
 
         EngineResult result = engine.exec();
         Assertions.assertTrue(result.getStatus().isFinish());
-        System.out.println(result);
+        System.out.println("\n" + result);
         System.out.println(Strings.readableTime(result.getRunTime()));
         assertReceive(result);
 
@@ -215,7 +215,7 @@ public class PipelineTest {
 
         @Override
         protected void emitResult(Throwable error) {
-            System.out.println(this.id() + " emitResult on" +
+            System.out.println(this.id() + " emitResult on " +
                     Thread.currentThread().getName());
             super.emitResult(error);
         }

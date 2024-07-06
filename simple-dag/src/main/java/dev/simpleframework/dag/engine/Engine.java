@@ -50,7 +50,7 @@ public interface Engine<T extends Job> {
      * 执行
      */
     default EngineResult exec() {
-        return this.exec(-1L, TimeUnit.MILLISECONDS);
+        return this.exec(-1L, TimeUnit.MILLISECONDS, null);
     }
 
     /**
@@ -60,12 +60,23 @@ public interface Engine<T extends Job> {
      * @param unit    超时时间单位
      */
     default EngineResult exec(long timeout, TimeUnit unit) {
+        return this.exec(timeout, unit, TimeoutStrategy.NOTHING);
+    }
+
+    /**
+     * 执行
+     *
+     * @param timeout  超时时间，-1 表示不限时
+     * @param unit     超时时间单位
+     * @param strategy 超时策略
+     */
+    default EngineResult exec(long timeout, TimeUnit unit, TimeoutStrategy strategy) {
         List<EngineResult> result = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(1);
         this.execAsync(r -> {
             result.add(r);
             latch.countDown();
-        }, timeout, unit);
+        }, timeout, unit, strategy);
         try {
             latch.await();
         } catch (Exception ignore) {
@@ -79,7 +90,7 @@ public interface Engine<T extends Job> {
      * @param action 执行结束后回调
      */
     default void execAsync(Consumer<EngineResult> action) {
-        this.execAsync(action, -1L, TimeUnit.MILLISECONDS);
+        this.execAsync(action, -1L, TimeUnit.MILLISECONDS, null);
     }
 
     /**
@@ -89,7 +100,7 @@ public interface Engine<T extends Job> {
      * @param timeout 超时时间，-1 表示不限时
      * @param unit    超时时间单位
      */
-    void execAsync(Consumer<EngineResult> action, long timeout, TimeUnit unit);
+    void execAsync(Consumer<EngineResult> action, long timeout, TimeUnit unit, TimeoutStrategy strategy);
 
     /**
      * 中止执行
@@ -100,5 +111,28 @@ public interface Engine<T extends Job> {
      * 获取当前运行时快照
      */
     EngineSnapshot snapshot();
+
+    /**
+     * 超时策略
+     */
+    enum TimeoutStrategy {
+        /**
+         * 什么都不做
+         */
+        NOTHING,
+        /**
+         * 中止执行
+         */
+        ABORT {
+            @Override
+            void exec(Engine<?> engine) {
+                engine.abort();
+            }
+        };
+
+        void exec(Engine<?> engine) {
+        }
+
+    }
 
 }
