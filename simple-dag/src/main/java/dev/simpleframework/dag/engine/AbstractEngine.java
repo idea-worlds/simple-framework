@@ -106,10 +106,9 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
             } catch (Exception ignore) {
             }
         } else {
-            // 无超时时间，每隔200ms判断是否已结束
-            Threads.sleep(200);
+            // 无超时时间，每隔100ms判断是否已结束
             while (!this.context.finished()) {
-                queue.offer(new DelayValue(200, TimeUnit.MILLISECONDS, this.aborted));
+                queue.offer(new DelayValue(100, TimeUnit.MILLISECONDS, this.aborted));
                 try {
                     queue.take();
                 } catch (Exception ignore) {

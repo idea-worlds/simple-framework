@@ -242,7 +242,7 @@ public class PipelineTest {
         @Override
         protected void doLoad(JobRecord data) {
             String thread = Thread.currentThread().getName();
-            this.dataFromJobs.add(data.getFromJob());
+            this.dataFromJobs.add(data.getFrom());
             this.threads.add(thread);
 
             long countReceive = super.context().countReceive();

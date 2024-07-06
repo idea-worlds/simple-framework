@@ -20,7 +20,7 @@ public class JobRecord {
     /**
      * 发送数据的作业
      */
-    private final String fromJob;
+    private final String from;
     /**
      * 数据时间：为提升性能，此时间取当前时间近似值
      */
@@ -36,7 +36,7 @@ public class JobRecord {
 
     public JobRecord(String source, String from, Object data) {
         this.source = source;
-        this.fromJob = from;
+        this.from = from;
         this.time = Clock.now();
         this.data = data;
     }

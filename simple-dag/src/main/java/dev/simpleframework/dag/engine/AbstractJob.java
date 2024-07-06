@@ -87,7 +87,7 @@ public abstract class AbstractJob implements Job {
     /**
      * 监听前置作业正常结束
      */
-    protected void onComplete(String fromJobId) {
+    protected void onComplete(String fromJobId, Object result) {
     }
 
     /**
@@ -117,7 +117,8 @@ public abstract class AbstractJob implements Job {
         } else {
             if (complete > 0) {
                 this.onFinishWithAnyComplete();
-            } else if (fail > 0) {
+            }
+            if (fail > 0) {
                 this.onFinishWithAnyFail();
             }
         }
@@ -172,9 +173,10 @@ public abstract class AbstractJob implements Job {
      */
     protected void emitResult(Throwable error) {
         try {
+            Object resultValue = null;
             if (error == null) {
-                Object value = this.buildResultValue();
-                this.result.setValue(value);
+                resultValue = this.buildResultValue();
+                this.result.setValue(resultValue);
             }
             this.jobContext.setFinish(error);
             this.result.fill(this.jobContext);
@@ -182,7 +184,7 @@ public abstract class AbstractJob implements Job {
 
             if (this.eventProducer != null) {
                 if (error == null) {
-                    this.eventProducer.emitComplete();
+                    this.eventProducer.emitComplete(resultValue);
                 } else {
                     this.eventProducer.emitError(error);
                 }
@@ -238,18 +240,17 @@ public abstract class AbstractJob implements Job {
         from.eventProducer().subscribe(event -> {
             String fromJobId = event.getJobId();
             RunStatus status = event.getStatus();
-            Throwable error = event.getError();
-            JobRecord record = event.getRecord();
+            Object value = event.getValue();
             if (status == RunStatus.RUNNING) {
                 this.jobContext.incrementReceive();
-                this.onData(record);
-            } else if (status == RunStatus.COMPLETE) {
-                this.onComplete(fromJobId);
+                this.onData((JobRecord) value);
+            } else if (status == RunStatus.FAIL) {
+                this.onError(fromJobId, (Throwable) value);
                 if (this.jobContext.decrementRunning(fromJobId, status)) {
                     this.onFinish();
                 }
-            } else if (status == RunStatus.FAIL) {
-                this.onError(fromJobId, error);
+            } else if (status == RunStatus.COMPLETE) {
+                this.onComplete(fromJobId, value);
                 if (this.jobContext.decrementRunning(fromJobId, status)) {
                     this.onFinish();
                 }
@@ -303,8 +304,7 @@ public abstract class AbstractJob implements Job {
     static class JobEvent {
         private String jobId;
         private RunStatus status;
-        private JobRecord record;
-        private Throwable error;
+        private Object value;
     }
 
     static class JobEventProducer {
@@ -324,7 +324,7 @@ public abstract class AbstractJob implements Job {
                 JobEvent event = this.ringBuffer.get(sequence);
                 event.setJobId(this.jobId);
                 event.setStatus(RunStatus.RUNNING);
-                event.setRecord(record);
+                event.setValue(record);
             } finally {
                 this.ringBuffer.publish(sequence);
             }
@@ -336,18 +336,19 @@ public abstract class AbstractJob implements Job {
                 JobEvent event = this.ringBuffer.get(sequence);
                 event.setJobId(this.jobId);
                 event.setStatus(RunStatus.FAIL);
-                event.setError(error);
+                event.setValue(error);
             } finally {
                 this.ringBuffer.publish(sequence);
             }
         }
 
-        void emitComplete() {
+        void emitComplete(Object value) {
             long sequence = this.ringBuffer.next();
             try {
                 JobEvent event = this.ringBuffer.get(sequence);
                 event.setJobId(this.jobId);
                 event.setStatus(RunStatus.COMPLETE);
+                event.setValue(value);
             } finally {
                 this.ringBuffer.publish(sequence);
             }
