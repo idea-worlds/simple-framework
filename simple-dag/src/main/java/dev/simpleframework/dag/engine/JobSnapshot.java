@@ -10,9 +10,11 @@ import lombok.Data;
 @Data
 public class JobSnapshot {
 
+    private String id;
     /**
-     * 是否运行
+     * 状态
      */
+    private RunStatus status;
     private Boolean running;
     /**
      * 接收的数据量
@@ -35,10 +37,6 @@ public class JobSnapshot {
      */
     private Long runTime;
     /**
-     * 是否成功结束
-     */
-    private Boolean success;
-    /**
      * 异常
      */
     private Throwable error;
@@ -51,15 +49,15 @@ public class JobSnapshot {
     }
 
     JobSnapshot(JobContext context, JobResult result) {
+        this.id = context.id();
+        this.status = context.status();
         this.countReceive = context.countReceive();
         this.countEmit = context.countEmit();
         this.beginTime = context.beginTime();
         this.finishTime = context.finishTime();
         this.runTime = result.getRunTime();
-        this.success = result.getSuccess();
         this.error = result.getError();
         this.value = result.getValue();
-        this.running = this.runTime != null && this.runTime >= 0L;
     }
 
 }

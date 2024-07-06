@@ -1,6 +1,7 @@
 package dev.simpleframework.dag.engine;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -10,10 +11,15 @@ import java.util.concurrent.atomic.AtomicLong;
  **/
 public class JobContext {
 
+    private final String id;
+    /**
+     * 状态
+     */
+    private volatile RunStatus status;
     /**
      * 前置作业
      */
-    private final Map<String, Boolean> froms;
+    private final Map<String, RunStatus> froms;
     /**
      * 正在运行的前置作业
      */
@@ -35,16 +41,26 @@ public class JobContext {
      */
     private Long finishTime;
 
-    public JobContext() {
+    public JobContext(String id) {
+        this.id = id;
+        this.status = RunStatus.WAIT;
         this.froms = new LinkedHashMap<>();
-        this.runningFroms = new ArrayList<>();
+        this.runningFroms = new CopyOnWriteArrayList<>();
         this.countReceive = new AtomicLong(0);
         this.countEmit = new AtomicLong(0);
         this.beginTime = -1L;
         this.finishTime = -1L;
     }
 
-    public Map<String, Boolean> froms() {
+    public String id() {
+        return this.id;
+    }
+
+    public RunStatus status() {
+        return this.status;
+    }
+
+    public Map<String, RunStatus> froms() {
         return Collections.unmodifiableMap(this.froms);
     }
 
@@ -64,33 +80,50 @@ public class JobContext {
         return this.finishTime;
     }
 
-    public void initFroms(Collection<String> ids) {
-        for (String id : ids) {
-            this.froms.put(id, null);
-        }
-        this.runningFroms.addAll(ids);
-    }
-
-    public synchronized boolean removeRunning(String id, boolean success) {
+    public synchronized boolean decrementRunning(String id, RunStatus status) {
         this.runningFroms.remove(id);
-        this.froms.put(id, success);
+        this.froms.put(id, status);
         return this.runningFroms.isEmpty();
     }
 
-    public long incrementReceive() {
-        return this.countReceive.incrementAndGet();
+    public void incrementReceive() {
+        this.countReceive.incrementAndGet();
     }
 
-    public long incrementEmit() {
-        return this.countEmit.incrementAndGet();
+    public void incrementEmit() {
+        this.countEmit.incrementAndGet();
     }
 
-    public void initBegin() {
+    void initBegin(Collection<String> ids) {
+        this.froms.clear();
+        this.runningFroms.clear();
+        for (String id : ids) {
+            this.froms.put(id, RunStatus.RUNNING);
+        }
+        this.runningFroms.addAll(ids);
+        this.status = RunStatus.RUNNING;
         this.beginTime = System.currentTimeMillis();
     }
 
-    public void setFinish() {
+    void setFinish(Throwable error) {
         this.finishTime = System.currentTimeMillis();
+        if (error == null) {
+            this.setStatus(RunStatus.COMPLETE);
+        } else {
+            this.setStatus(RunStatus.FAIL);
+        }
+    }
+
+    void setStatus(RunStatus status) {
+        this.status = status;
+    }
+
+    void abort() {
+        if (this.status.isFinish()) {
+            return;
+        }
+        this.finishTime = System.currentTimeMillis();
+        this.setStatus(RunStatus.ABORT);
     }
 
 }

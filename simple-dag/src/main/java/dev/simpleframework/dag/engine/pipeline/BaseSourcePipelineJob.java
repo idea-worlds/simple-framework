@@ -13,7 +13,8 @@ public abstract non-sealed class BaseSourcePipelineJob extends PipelineJob {
 
     /**
      * 抽取
-     * <pre>  执行完本方法后默认调用 {@link #emitComplete} 结束本次作业
+     *
+     * @apiNote <pre>  执行完本方法后默认调用 {@link #emitComplete} 结束本次作业
      * 因此，若是异步实现则需阻塞本方法，或重写 {@link #onFinish}
      * 注：需手动调用 {@link #emitData} 发送数据至后置作业</pre>
      */

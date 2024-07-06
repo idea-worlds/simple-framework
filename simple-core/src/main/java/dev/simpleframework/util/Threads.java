@@ -27,6 +27,23 @@ public final class Threads {
      * </pre>
      */
     public static ThreadPoolExecutor newPool(String group, int coreSize, int maxSize) {
+        return newPool(newFactory(group), coreSize, maxSize);
+    }
+
+    /**
+     * 创建线程池
+     *
+     * @param factory  线程工厂
+     * @param coreSize 核心线程数
+     * @param maxSize  最大线程数
+     * @apiNote <pre>  keepAliveTime:  10
+     * workQueue:      SynchronousQueue
+     * rejectedPolicy: CallerRunsPolicy 线程数超出最大值后会在调用线程运行，会阻塞该线程
+     * allowCoreThreadTimeOut
+     * prestartAllCoreThreads
+     * </pre>
+     */
+    public static ThreadPoolExecutor newPool(ThreadFactory factory, int coreSize, int maxSize) {
         if (coreSize < 0) {
             coreSize = 0;
         }
@@ -36,7 +53,7 @@ public final class Threads {
         ThreadPoolExecutor executor = new ThreadPoolExecutor(coreSize, maxSize,
                 10L, TimeUnit.MILLISECONDS,
                 new SynchronousQueue<>(),
-                newFactory(group),
+                factory,
                 new ThreadPoolExecutor.CallerRunsPolicy());
         executor.allowCoreThreadTimeOut(true);
         return executor;

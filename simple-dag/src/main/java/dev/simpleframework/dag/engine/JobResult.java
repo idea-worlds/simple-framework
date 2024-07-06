@@ -20,6 +20,10 @@ public class JobResult implements Serializable {
      */
     private String id;
     /**
+     * 状态
+     */
+    private RunStatus status;
+    /**
      * 接收的数据量
      */
     private Long countReceive;
@@ -40,10 +44,6 @@ public class JobResult implements Serializable {
      */
     private Long runTime;
     /**
-     * 是否成功结束
-     */
-    private Boolean success;
-    /**
      * 异常
      */
     private Throwable error;
@@ -53,20 +53,25 @@ public class JobResult implements Serializable {
     private Object value;
 
     public JobResult() {
-        this.success = false;
     }
 
     public JobResult(String id) {
         this.id = id;
-        this.success = false;
     }
 
-    public void fill(JobContext context) {
+    void fill(JobContext context) {
+        this.status = context.status();
         this.countReceive = context.countReceive();
         this.countEmit = context.countEmit();
         this.beginTime = context.beginTime();
         this.finishTime = context.finishTime();
-        this.runTime = this.finishTime - this.beginTime;
+        long endTime = this.finishTime > 0 ? this.finishTime : System.currentTimeMillis();
+        this.runTime = endTime - this.beginTime;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T value() {
+        return (T) this.value;
     }
 
 }

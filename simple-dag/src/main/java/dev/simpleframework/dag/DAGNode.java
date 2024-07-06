@@ -25,13 +25,13 @@ public class DAGNode<T> {
         return this;
     }
 
-    public interface Consumer<C> {
+    public interface Consumer<V> {
         /**
          * @param current 当前节点
          * @param froms   来源节点 not null
          * @param tos     目标节点 not null
          */
-        void accept(DAGNode<C> current, List<DAGNode<C>> froms, List<DAGNode<C>> tos);
+        void accept(V current, List<V> froms, List<V> tos);
     }
 
 }

@@ -134,6 +134,20 @@ public class DAG<T> {
     }
 
     /**
+     * 获取节点数量
+     */
+    public int getNodeNum() {
+        return this.nodes.size();
+    }
+
+    /**
+     * 获取边数量
+     */
+    public int getEdgeNum() {
+        return this.edges.values().stream().mapToInt(List::size).sum();
+    }
+
+    /**
      * 是否为有向无环图
      */
     public boolean check() {
@@ -164,32 +178,49 @@ public class DAG<T> {
     /**
      * 拓扑排序后按顺序访问
      *
-     * @param action       回调
-     * @param visitBuiltIn 是否先执行节点内置的回调
+     * @param action       要执行的方法
+     * @param visitBuiltIn 是否执行节点内置的回调
      */
-    public void visit(Consumer<DAGNode<T>> action, Boolean visitBuiltIn) {
+    public void visit(Consumer<T> action, Boolean visitBuiltIn) {
+        this.visit(action, null, visitBuiltIn);
+    }
+
+    /**
+     * 拓扑排序后按顺序访问
+     *
+     * @param beforeBuildInAction 内置回调之前要执行的方法
+     * @param afterBuildInAction  内置回调之后要执行的方法
+     * @param visitBuiltIn        是否执行节点内置的回调
+     */
+    public void visit(Consumer<T> beforeBuildInAction, Consumer<T> afterBuildInAction, Boolean visitBuiltIn) {
         this.sort();
-        if (visitBuiltIn) {
-            for (NodeHelper<T> currentNode : this.nodes.values()) {
-                List<DAGNode<T>> inNodes = currentNode.inKeys.stream()
-                        .map(this.nodes::get)
-                        .filter(Objects::nonNull)
-                        .map(n -> n.node)
-                        .toList();
-                List<DAGNode<T>> outNodes = currentNode.outKeys.stream()
-                        .map(this.nodes::get)
-                        .filter(Objects::nonNull)
-                        .map(n -> n.node)
-                        .toList();
-                DAGNode.Consumer<T> visitHandler = currentNode.node.getVisitHandler();
-                if (visitHandler != null) {
-                    visitHandler.accept(currentNode.node, inNodes, outNodes);
-                }
+        if (beforeBuildInAction != null) {
+            for (NodeHelper<T> node : this.nodes.values()) {
+                beforeBuildInAction.accept(node.node.getValue());
             }
         }
-        if (action != null) {
+        if (visitBuiltIn) {
+            for (NodeHelper<T> currentNode : this.nodes.values()) {
+                DAGNode.Consumer<T> visitHandler = currentNode.node.getVisitHandler();
+                if (visitHandler == null) {
+                    continue;
+                }
+                List<T> ins = currentNode.inKeys.stream()
+                        .map(this.nodes::get)
+                        .filter(Objects::nonNull)
+                        .map(n -> n.node.getValue())
+                        .toList();
+                List<T> outs = currentNode.outKeys.stream()
+                        .map(this.nodes::get)
+                        .filter(Objects::nonNull)
+                        .map(n -> n.node.getValue())
+                        .toList();
+                visitHandler.accept(currentNode.node.getValue(), ins, outs);
+            }
+        }
+        if (afterBuildInAction != null) {
             for (NodeHelper<T> node : this.nodes.values()) {
-                action.accept(node.node);
+                afterBuildInAction.accept(node.node.getValue());
             }
         }
     }

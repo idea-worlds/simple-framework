@@ -3,16 +3,20 @@ package dev.simpleframework.dag.engine;
 import dev.simpleframework.util.Strings;
 import lombok.Data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 运行时快照，存当前时刻的上下文信息
+ * 引擎执行结果
  *
  * @author loyayz
  **/
 @Data
-public class EngineSnapshot {
+public class EngineResult implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -1L;
 
     private String name;
     /**
@@ -28,27 +32,20 @@ public class EngineSnapshot {
      */
     private Long finishTime;
     /**
-     * 执行时间：( 结束时间 - 开始时间 ) 或 ( 结束时间 - 开始时间 )
+     * 执行时间：结束时间 - 开始时间
      */
     private Long runTime;
     /**
-     * 作业运行时快照
+     * 作业结果
      */
-    private Map<String, JobSnapshot> jobs;
+    private Map<String, JobResult> jobs;
 
-    public EngineSnapshot() {
+    public EngineResult() {
         this.status = RunStatus.WAIT;
         this.jobs = new LinkedHashMap<>();
     }
 
-    /**
-     * 获取可读格式的执行时间
-     */
-    public String readableRunTime() {
-        return Strings.readableTime(this.runTime);
-    }
-
-    void addJob(JobSnapshot job) {
+    void addJob(JobResult job) {
         RunStatus jobStatus = job.getStatus();
         if (this.status == RunStatus.WAIT || jobStatus == RunStatus.RUNNING) {
             this.status = jobStatus;
@@ -66,6 +63,22 @@ public class EngineSnapshot {
         long endTime = this.finishTime != null ? this.finishTime : System.currentTimeMillis();
         this.runTime = endTime - this.beginTime;
         this.jobs.put(job.getId(), job);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder("EngineResult(\n" +
+                "  name: " + this.name + "\n" +
+                "  status: " + this.status + "\n" +
+                "  beginTime: " + this.beginTime + "\n" +
+                "  finishTime: " + this.finishTime + "\n" +
+                "  runTime: " + Strings.readableTime(this.runTime) + "\n" +
+                "  jobs: \n");
+        for (JobResult job : jobs.values()) {
+            str.append("    ").append(job.toString()).append("\n");
+        }
+        str.append(")");
+        return str.toString();
     }
 
 }

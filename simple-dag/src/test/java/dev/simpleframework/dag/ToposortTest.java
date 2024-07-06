@@ -13,8 +13,7 @@ public class ToposortTest {
     @Test
     public void test() {
         DAGNode.Consumer<String> visitHandler = (current, froms, tos) -> {
-            String toKeys = tos.stream().map(DAGNode::getKey).collect(Collectors.joining(","));
-            System.out.println("  " + current.getKey() + " --> " + toKeys);
+            System.out.println("  " + current + " --> " + tos);
         };
         DAG<String> dag = new DAG<String>()
                 .addNode(new StringNode("2").setVisitHandler(visitHandler))

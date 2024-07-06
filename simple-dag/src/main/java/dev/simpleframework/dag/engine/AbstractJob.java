@@ -1,55 +1,45 @@
 package dev.simpleframework.dag.engine;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.EventFactory;
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import lombok.AccessLevel;
+import lombok.Data;
 import lombok.Getter;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * 作业抽象类
  *
- * @param <T> 作业间的传输对象
  * @author loyayz
  **/
-public abstract class AbstractJob<T> implements Job {
-    private final String id;
-    private final JobContext context;
+public abstract class AbstractJob implements Job {
+    private EngineContext engineContext;
+    private final JobContext jobContext;
     private final JobResult result;
     @Getter(AccessLevel.PROTECTED)
     private Consumer<JobResult> resultHandler;
-
-    @Getter(AccessLevel.PROTECTED)
-    private final Flux<T> flux;
-    @Getter(AccessLevel.PROTECTED)
-    private FluxSink<T> sink;
+    private JobEventProducer target;
 
     public AbstractJob(String id) {
-        this.id = id;
-        this.context = new JobContext();
+        this.jobContext = new JobContext(id);
         this.result = new JobResult(id);
-        this.flux = Flux.<T>create(sink -> this.sink = sink)
-                .doFirst(() -> {
-                    this.context().initBegin();
-                    this.doInit();
-                })
-                .doFinally(t -> this.doFinally());
     }
 
     @Override
     public String id() {
-        return this.id;
+        return this.jobContext.id();
     }
 
     @Override
     public JobContext context() {
-        return this.context;
+        return this.jobContext;
     }
 
     @Override
@@ -63,8 +53,23 @@ public abstract class AbstractJob<T> implements Job {
     }
 
     @Override
+    public void abort() {
+        if (this.context().status().isFinish()) {
+            return;
+        }
+        try {
+            this.doAbort();
+        } finally {
+            this.context().abort();
+            if (this.target != null) {
+                this.target.shutdown();
+            }
+        }
+    }
+
+    @Override
     public JobSnapshot snapshot() {
-        return new JobSnapshot(this.context, this.result);
+        return new JobSnapshot(this.jobContext, this.result);
     }
 
     /**
@@ -74,18 +79,13 @@ public abstract class AbstractJob<T> implements Job {
     }
 
     /**
+     * 作业中止时执行方法
+     */
+    protected void doAbort() {
+    }
+
+    /**
      * 作业结束执行方法
-     * <pre>  先执行后置作业的 doFinally 再执行本作业的 doFinally
-     * 若想在本作业结束后立即执行，可重写 {@link #emitResult}
-     * {@code @Override
-     *   protected void emitResult(Object value, Throwable error, Supplier<T> emitDataSupplier) {
-     *       try {
-     *           this.emitResult(value, error, emitDataSupplier);
-     *       } finally {
-     *           this.doFinally();
-     *       }
-     *   }}
-     * 注：作业结束后始终会执行本方法，因此如上例时，会执行两次本方法</pre>
      */
     protected void doFinally() {
     }
@@ -93,7 +93,13 @@ public abstract class AbstractJob<T> implements Job {
     /**
      * 监听前置作业发送的数据
      */
-    protected void onData(String fromJobId, T record) {
+    protected void onData(JobRecord record) {
+    }
+
+    /**
+     * 监听前置作业中止
+     */
+    protected void onAbort(String fromJobId) {
     }
 
     /**
@@ -110,39 +116,47 @@ public abstract class AbstractJob<T> implements Job {
 
     /**
      * 监听前置作业都结束
-     * <pre>  全失败：{@link #onFinishWithAllError}
-     * 全成功：{@link #onFinishWithAllComplete}
-     * 其他： {@link #onFinishWithAnyComplete}、{@link #onFinishWithAnyError}</pre>
+     *
+     * @apiNote <pre>  全部失败 {@link #onFinishWithAllFail}
+     * 全部成功 {@link #onFinishWithAllComplete}
+     * 任一失败 {@link #onFinishWithAnyComplete}
+     * 任一成功 {@link #onFinishWithAnyFail}
      */
     protected void onFinish() {
-        Map<String, Boolean> froms = this.context.froms();
-        List<String> errorFroms = new ArrayList<>();
-        froms.forEach((from, complete) -> {
-            if (!complete) {
-                errorFroms.add(from);
+        Map<String, RunStatus> froms = this.jobContext.froms();
+        int total = froms.size();
+        int complete = 0;
+        int fail = 0;
+        for (RunStatus status : froms.values()) {
+            if (status == RunStatus.COMPLETE) {
+                complete++;
+            } else if (status == RunStatus.FAIL) {
+                fail++;
             }
-        });
-        boolean allError = errorFroms.size() == froms.size();
-        if (allError) {
-            this.onFinishWithAllError();
-        } else if (errorFroms.isEmpty()) {
+        }
+        if (complete == total) {
             this.onFinishWithAllComplete();
+        } else if (fail == total) {
+            this.onFinishWithAllFail();
         } else {
-            this.onFinishWithAnyComplete();
-            this.onFinishWithAnyError();
+            if (complete > 0) {
+                this.onFinishWithAnyComplete();
+            } else if (fail > 0) {
+                this.onFinishWithAnyFail();
+            }
         }
     }
 
     /**
      * 监听前置作业全失败
      */
-    protected void onFinishWithAllError() {
+    protected void onFinishWithAllFail() {
     }
 
     /**
      * 监听前置作业都结束后有任一失败
      */
-    protected void onFinishWithAnyError() {
+    protected void onFinishWithAnyFail() {
     }
 
     /**
@@ -160,66 +174,206 @@ public abstract class AbstractJob<T> implements Job {
     /**
      * 发送数据至后置作业
      */
-    protected void emitData(T data) {
-        this.context.incrementEmit();
-        this.sink.next(data);
+    protected void emitData(JobRecord record) {
+        this.jobContext.incrementEmit();
+        if (this.target != null) {
+            this.target.emitData(record);
+        }
+    }
+
+    protected void emitComplete() {
+        this.emitResult(null);
+    }
+
+    protected void emitError(Throwable error) {
+        this.emitResult(error);
     }
 
     /**
      * 设置作业结果并发送结束信号至后置作业
      *
-     * @param value            结果值
-     * @param error            异常值，有异常时发送异常结束信号，无异常时发送正常结束信号
-     * @param emitDataSupplier 发送结束信号前，若执行此回调有数据，则先发送该数据
+     * @param error 异常值，有异常时发送异常结束信号，无异常时发送正常结束信号
      */
-    protected void emitResult(Object value, Throwable error, Supplier<T> emitDataSupplier) {
-        this.setFinishData(value, error);
-        T data = emitDataSupplier == null ? null : emitDataSupplier.get();
-        if (data != null) {
-            this.emitData(data);
-        }
-        if (error == null) {
-            this.sink.complete();
-        } else {
-            this.sink.error(error);
-        }
-        if (this.resultHandler != null) {
-            this.resultHandler.accept(this.result);
+    protected void emitResult(Throwable error) {
+        try {
+            if (error == null) {
+                Object value = this.buildResultValue();
+                this.result.setValue(value);
+            }
+            this.jobContext.setFinish(error);
+            this.result.fill(this.jobContext);
+            this.result.setError(error);
+
+            if (this.target != null) {
+                if (error == null) {
+                    this.target.emitComplete();
+                } else {
+                    this.target.emitError(error);
+                }
+            }
+            if (this.resultHandler != null) {
+                this.resultHandler.accept(this.result);
+            }
+        } finally {
+            this.doFinally();
         }
     }
 
-    private void setFinishData(Object value, Throwable error) {
-        this.context.setFinish();
-        this.result.setSuccess(error == null);
-        this.result.setValue(value);
-        this.result.setError(error);
-        this.result.fill(this.context);
+    /**
+     * 设置作业结果
+     */
+    protected Object buildResultValue() {
+        return null;
     }
 
-    public void subscribe(List<? extends Job> fromJobs) {
-        this.context.initFroms(fromJobs.stream().map(Job::id).collect(Collectors.toList()));
-        for (Job job : fromJobs) {
-            AbstractJob<T> fromJob = (AbstractJob<T>) job;
-            String fromJobId = fromJob.id();
-            fromJob.flux.subscribe(
-                    data -> {
-                        this.context.incrementReceive();
-                        this.onData(fromJobId, data);
-                    },
-                    error -> {
-                        this.onError(fromJobId, error);
-                        if (this.context.removeRunning(fromJobId, false)) {
-                            this.onFinish();
-                        }
-                    },
-                    () -> {
-                        this.onComplete(fromJobId);
-                        if (this.context.removeRunning(fromJobId, true)) {
-                            this.onFinish();
-                        }
-                    }
-            );
+    protected JobRecord buildRecord(Object value) {
+        return new JobRecord(this.id(), value);
+    }
+
+    void engineContext(EngineContext engineContext) {
+        this.engineContext = engineContext;
+    }
+
+    void listen(AbstractJob from) {
+        from.createProducer();
+        from.subscribe(event -> {
+            String fromJobId = event.getJobId();
+            RunStatus status = event.getStatus();
+            Throwable error = event.getError();
+            JobRecord record = event.getRecord();
+            if (status == RunStatus.RUNNING) {
+                this.jobContext.incrementReceive();
+                this.onData(record);
+            } else if (status == RunStatus.COMPLETE) {
+                this.onComplete(fromJobId);
+                if (this.jobContext.decrementRunning(fromJobId, status)) {
+                    this.onFinish();
+                }
+            } else if (status == RunStatus.FAIL) {
+                this.onError(fromJobId, error);
+                if (this.jobContext.decrementRunning(fromJobId, status)) {
+                    this.onFinish();
+                }
+            }
+        });
+    }
+
+    void subscribe(List<? extends AbstractJob> fromJobs, List<? extends AbstractJob> toJobs) {
+        fromJobs.forEach(this::listen);
+        if (!toJobs.isEmpty()) {
+            this.createProducer();
+        }
+        List<String> fromJobIds = fromJobs.stream().map(Job::id).toList();
+        this.jobContext.initBegin(fromJobIds);
+        this.result.fill(this.jobContext);
+    }
+
+    private void createProducer() {
+        if (this.target != null) {
+            return;
+        }
+        int bufferSize = 1024;
+        ThreadFactory threadFactory = this.engineContext.threadFactory();
+        ProducerType producerType = ProducerType.MULTI;
+        BlockingWaitStrategy waitStrategy = new BlockingWaitStrategy();
+        Disruptor<JobEvent> disruptor = new Disruptor<>(
+                EVENT_FACTORY, bufferSize, threadFactory, producerType, waitStrategy);
+        this.target = new JobEventProducer(this.id(), disruptor);
+    }
+
+    private void subscribe(Consumer<JobEvent> subscriber) {
+        this.target.disruptor.handleEventsWith(
+                (event, sequence, endOfBatch) -> subscriber.accept(event));
+    }
+
+    void start() {
+        if (this.target != null) {
+            this.target.start();
         }
     }
+
+    @Data
+    static class JobEvent {
+        private String jobId;
+        private RunStatus status;
+        private JobRecord record;
+        private Throwable error;
+    }
+
+    static class JobEventProducer {
+        final String jobId;
+        final Disruptor<JobEvent> disruptor;
+        final RingBuffer<JobEvent> ringBuffer;
+
+        JobEventProducer(String jobId, Disruptor<JobEvent> disruptor) {
+            this.jobId = jobId;
+            this.disruptor = disruptor;
+            this.ringBuffer = disruptor.getRingBuffer();
+        }
+
+        void emitEvent(JobEvent source) {
+            long sequence = this.ringBuffer.next();
+            try {
+                JobEvent event = this.ringBuffer.get(sequence);
+                event.setJobId(source.jobId);
+                event.setStatus(source.status);
+                event.setRecord(source.record);
+                event.setError(source.error);
+            } finally {
+                this.ringBuffer.publish(sequence);
+            }
+        }
+
+        void emitData(JobRecord record) {
+            long sequence = this.ringBuffer.next();
+            try {
+                JobEvent event = this.ringBuffer.get(sequence);
+                event.setJobId(this.jobId);
+                event.setStatus(RunStatus.RUNNING);
+                event.setRecord(record);
+            } finally {
+                this.ringBuffer.publish(sequence);
+            }
+        }
+
+        void emitError(Throwable error) {
+            long sequence = this.ringBuffer.next();
+            try {
+                JobEvent event = this.ringBuffer.get(sequence);
+                event.setJobId(this.jobId);
+                event.setStatus(RunStatus.FAIL);
+                event.setError(error);
+            } finally {
+                this.ringBuffer.publish(sequence);
+            }
+        }
+
+        void emitComplete() {
+            long sequence = this.ringBuffer.next();
+            try {
+                JobEvent event = this.ringBuffer.get(sequence);
+                event.setJobId(this.jobId);
+                event.setStatus(RunStatus.COMPLETE);
+            } finally {
+                this.ringBuffer.publish(sequence);
+            }
+        }
+
+        void start() {
+            if (this.disruptor.hasStarted()) {
+                return;
+            }
+            this.disruptor.start();
+        }
+
+        void shutdown() {
+            if (this.disruptor.hasStarted()) {
+                this.disruptor.shutdown();
+            }
+        }
+
+    }
+
+    static EventFactory<JobEvent> EVENT_FACTORY = JobEvent::new;
 
 }

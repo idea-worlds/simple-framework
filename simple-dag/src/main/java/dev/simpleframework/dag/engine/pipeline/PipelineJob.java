@@ -1,6 +1,7 @@
 package dev.simpleframework.dag.engine.pipeline;
 
 import dev.simpleframework.dag.engine.AbstractJob;
+import dev.simpleframework.dag.engine.JobRecord;
 
 /**
  * 管道作业
@@ -8,19 +9,11 @@ import dev.simpleframework.dag.engine.AbstractJob;
  * @author loyayz
  **/
 public abstract sealed class PipelineJob
-        extends AbstractJob<PipelineRecord>
+        extends AbstractJob
         permits BaseSourcePipelineJob, BaseSinkPipelineJob, BaseTargetPipelineJob {
 
     public PipelineJob(String id) {
         super(id);
-    }
-
-    protected void emitError(Throwable error) {
-        super.emitResult(null, error, null);
-    }
-
-    protected void emitComplete() {
-        super.emitResult(null, null, null);
     }
 
 }
