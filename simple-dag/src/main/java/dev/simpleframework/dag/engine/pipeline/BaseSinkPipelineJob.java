@@ -29,9 +29,11 @@ public abstract non-sealed class BaseSinkPipelineJob extends PipelineJob {
         }
     }
 
+    /**
+     * 前置作业全成功，说明本作业已经处理完所有接收到的数据，此时应结束本作业
+     */
     @Override
-    protected void onFinish() {
-        super.onFinish();
+    protected void onFinishWithAllComplete() {
         this.emitComplete();
     }
 

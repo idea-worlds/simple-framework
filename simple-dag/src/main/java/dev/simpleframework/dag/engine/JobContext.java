@@ -1,6 +1,7 @@
 package dev.simpleframework.dag.engine;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -27,7 +28,7 @@ public class JobContext {
     /**
      * 接收的数据量
      */
-    private final AtomicLong countReceive;
+    private final Map<String, AtomicLong> countReceives;
     /**
      * 发送的数据量
      */
@@ -46,7 +47,7 @@ public class JobContext {
         this.status = RunStatus.WAIT;
         this.froms = new LinkedHashMap<>();
         this.runningFroms = new CopyOnWriteArrayList<>();
-        this.countReceive = new AtomicLong(0);
+        this.countReceives = new ConcurrentHashMap<>();
         this.countEmit = new AtomicLong(0);
         this.beginTime = -1L;
         this.finishTime = -1L;
@@ -64,8 +65,10 @@ public class JobContext {
         return Collections.unmodifiableMap(this.froms);
     }
 
-    public long countReceive() {
-        return this.countReceive.get();
+    public Map<String, Long> countReceives() {
+        Map<String, Long> result = new LinkedHashMap<>();
+        this.countReceives.forEach((from, count) -> result.put(from, count.get()));
+        return result;
     }
 
     public long countEmit() {
@@ -80,50 +83,37 @@ public class JobContext {
         return this.finishTime;
     }
 
-    public synchronized boolean decrementRunning(String id, RunStatus status) {
-        this.runningFroms.remove(id);
-        this.froms.put(id, status);
+    public synchronized boolean decrementRunning(String from, RunStatus status) {
+        this.runningFroms.remove(from);
+        this.froms.put(from, status);
         return this.runningFroms.isEmpty();
     }
 
-    public void incrementReceive() {
-        this.countReceive.incrementAndGet();
+    public void incrementReceive(String from) {
+        this.countReceives.get(from).incrementAndGet();
     }
 
     public void incrementEmit() {
         this.countEmit.incrementAndGet();
     }
 
-    void initBegin(Collection<String> ids) {
+    void setFroms(Collection<String> froms) {
         this.froms.clear();
         this.runningFroms.clear();
-        for (String id : ids) {
+        for (String id : froms) {
             this.froms.put(id, RunStatus.RUNNING);
+            this.countReceives.put(id, new AtomicLong(0));
         }
-        this.runningFroms.addAll(ids);
-        this.status = RunStatus.RUNNING;
-        this.beginTime = System.currentTimeMillis();
-    }
-
-    void setFinish(Throwable error) {
-        this.finishTime = System.currentTimeMillis();
-        if (error == null) {
-            this.setStatus(RunStatus.COMPLETE);
-        } else {
-            this.setStatus(RunStatus.FAIL);
-        }
+        this.runningFroms.addAll(froms);
     }
 
     void setStatus(RunStatus status) {
         this.status = status;
-    }
-
-    void abort() {
-        if (this.status.isFinish()) {
-            return;
+        if (status == RunStatus.RUNNING && this.beginTime == null) {
+            this.beginTime = System.currentTimeMillis();
+        } else if (status.isFinish()) {
+            this.finishTime = System.currentTimeMillis();
         }
-        this.finishTime = System.currentTimeMillis();
-        this.setStatus(RunStatus.ABORT);
     }
 
 }

@@ -2,6 +2,8 @@ package dev.simpleframework.dag.engine;
 
 import lombok.Data;
 
+import java.util.Map;
+
 /**
  * 作业运行时快照，存当前时刻的上下文信息
  *
@@ -19,7 +21,7 @@ public class JobSnapshot {
     /**
      * 接收的数据量
      */
-    private Long countReceive;
+    private Map<String, Long> countReceives;
     /**
      * 发送的数据量
      */
@@ -51,7 +53,7 @@ public class JobSnapshot {
     JobSnapshot(JobContext context, JobResult result) {
         this.id = context.id();
         this.status = context.status();
-        this.countReceive = context.countReceive();
+        this.countReceives = context.countReceives();
         this.countEmit = context.countEmit();
         this.beginTime = context.beginTime();
         this.finishTime = context.finishTime();

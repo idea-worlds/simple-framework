@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * 作业结果
@@ -26,7 +27,7 @@ public class JobResult implements Serializable {
     /**
      * 接收的数据量
      */
-    private Long countReceive;
+    private Map<String, Long> countReceives;
     /**
      * 发送的数据量
      */
@@ -61,12 +62,22 @@ public class JobResult implements Serializable {
 
     void fill(JobContext context) {
         this.status = context.status();
-        this.countReceive = context.countReceive();
+        this.countReceives = context.countReceives();
         this.countEmit = context.countEmit();
         this.beginTime = context.beginTime();
         this.finishTime = context.finishTime();
         long endTime = this.finishTime > 0 ? this.finishTime : System.currentTimeMillis();
         this.runTime = endTime - this.beginTime;
+    }
+
+    public long countReceive(String from) {
+        return this.countReceives.getOrDefault(from, 0L);
+    }
+
+    public long totalReceive() {
+        return this.countReceives.values()
+                .stream()
+                .reduce(0L, Long::sum);
     }
 
     @SuppressWarnings("unchecked")

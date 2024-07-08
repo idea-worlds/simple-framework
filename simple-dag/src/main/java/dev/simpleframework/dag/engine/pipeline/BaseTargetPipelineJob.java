@@ -27,9 +27,11 @@ public abstract non-sealed class BaseTargetPipelineJob extends PipelineJob {
         this.emitData(data.copy(super.id()));
     }
 
+    /**
+     * 前置作业全成功，说明本作业已经处理完所有接收到的数据，此时应结束本作业
+     */
     @Override
-    protected void onFinish() {
-        super.onFinish();
+    protected void onFinishWithAllComplete() {
         this.emitComplete();
     }
 

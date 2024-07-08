@@ -20,10 +20,13 @@ public abstract non-sealed class BaseSourcePipelineJob extends PipelineJob {
      */
     protected abstract void doExtract();
 
+    /**
+     * 前置作业全成功后才开始执行本作业
+     */
     @Override
-    protected void onFinish() {
+    protected void onFinishWithAllComplete() {
         try {
-            super.onFinish();
+            super.start();
             this.doExtract();
             this.emitComplete();
         } catch (Throwable e) {

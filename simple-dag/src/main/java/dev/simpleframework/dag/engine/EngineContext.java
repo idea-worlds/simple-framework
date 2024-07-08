@@ -36,10 +36,7 @@ public class EngineContext {
      */
     public boolean finished() {
         return this.jobs.stream()
-                .noneMatch(job -> {
-                    RunStatus status = job.status();
-                    return status == RunStatus.WAIT || status == RunStatus.RUNNING;
-                });
+                .allMatch(job -> job.status().isFinish());
     }
 
     /**
@@ -57,14 +54,12 @@ public class EngineContext {
      *
      * @return 作业 id, 是否正常
      */
-    public Map<String, Boolean> getFinishedJobs() {
-        Map<String, Boolean> result = new LinkedHashMap<>();
+    public Map<String, RunStatus> getFinishedJobs() {
+        Map<String, RunStatus> result = new LinkedHashMap<>();
         for (JobContext job : this.jobs) {
             RunStatus status = job.status();
-            if (status == RunStatus.COMPLETE) {
-                result.put(job.id(), true);
-            } else if (status == RunStatus.FAIL) {
-                result.put(job.id(), false);
+            if (status.isFinish()) {
+                result.put(job.id(), status);
             }
         }
         return result;

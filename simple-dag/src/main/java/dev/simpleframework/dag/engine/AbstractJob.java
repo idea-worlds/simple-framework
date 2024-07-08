@@ -1,9 +1,6 @@
 package dev.simpleframework.dag.engine;
 
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.WaitStrategy;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import lombok.Data;
@@ -61,12 +58,6 @@ public abstract class AbstractJob implements Job {
     }
 
     /**
-     * 作业中止时执行方法
-     */
-    protected void doAbort() {
-    }
-
-    /**
      * 作业结束执行方法
      */
     protected void doFinally() {
@@ -93,21 +84,25 @@ public abstract class AbstractJob implements Job {
     /**
      * 监听前置作业都结束
      *
-     * @apiNote <pre>  全部失败 {@link #onFinishWithAllFail}
+     * @apiNote <pre>  全部失败 {@link #onFinishWithAllFail}：  默认取消本作业
      * 全部成功 {@link #onFinishWithAllComplete}
-     * 任一失败 {@link #onFinishWithAnyComplete}
-     * 任一成功 {@link #onFinishWithAnyFail}
+     * 任一成功 {@link #onFinishWithAnyComplete}
+     * 任一失败 {@link #onFinishWithAnyFail}：  默认取消本作业
+     * 任一取消 {@link #onFinishWithAnyCancel}：默认取消本作业
      */
     protected void onFinish() {
         Map<String, RunStatus> froms = this.jobContext.froms();
         int total = froms.size();
         int complete = 0;
         int fail = 0;
+        int cancel = 0;
         for (RunStatus status : froms.values()) {
             if (status == RunStatus.COMPLETE) {
                 complete++;
             } else if (status == RunStatus.FAIL) {
                 fail++;
+            } else if (status == RunStatus.CANCEL) {
+                cancel++;
             }
         }
         if (complete == total) {
@@ -121,6 +116,9 @@ public abstract class AbstractJob implements Job {
             if (fail > 0) {
                 this.onFinishWithAnyFail();
             }
+            if (cancel > 0) {
+                this.onFinishWithAnyCancel();
+            }
         }
     }
 
@@ -128,12 +126,21 @@ public abstract class AbstractJob implements Job {
      * 监听前置作业全失败
      */
     protected void onFinishWithAllFail() {
+        this.emitCancel();
     }
 
     /**
      * 监听前置作业都结束后有任一失败
      */
     protected void onFinishWithAnyFail() {
+        this.emitCancel();
+    }
+
+    /**
+     * 监听前置作业都结束后有任一取消
+     */
+    protected void onFinishWithAnyCancel() {
+        this.emitCancel();
     }
 
     /**
@@ -154,16 +161,20 @@ public abstract class AbstractJob implements Job {
     protected void emitData(JobRecord record) {
         this.jobContext.incrementEmit();
         if (this.eventProducer != null) {
-            this.eventProducer.emitData(record);
+            this.eventProducer.emit(RunStatus.RUNNING, record);
         }
     }
 
     protected void emitComplete() {
-        this.emitResult(null);
+        this.emitResult(RunStatus.COMPLETE, null);
     }
 
     protected void emitError(Throwable error) {
-        this.emitResult(error);
+        this.emitResult(RunStatus.FAIL, error);
+    }
+
+    protected void emitCancel() {
+        this.emitResult(RunStatus.CANCEL, null);
     }
 
     /**
@@ -171,23 +182,28 @@ public abstract class AbstractJob implements Job {
      *
      * @param error 异常值，有异常时发送异常结束信号，无异常时发送正常结束信号
      */
-    protected void emitResult(Throwable error) {
+    protected void emitResult(RunStatus status, Throwable error) {
+        if (this.jobContext.status().isFinish()) {
+            return;
+        }
         try {
             Object resultValue = null;
-            if (error == null) {
+            if (status == RunStatus.COMPLETE) {
                 resultValue = this.buildResultValue();
                 this.result.setValue(resultValue);
             }
-            this.jobContext.setFinish(error);
+            this.jobContext.setStatus(status);
             this.result.fill(this.jobContext);
             this.result.setError(error);
 
             if (this.eventProducer != null) {
-                if (error == null) {
-                    this.eventProducer.emitComplete(resultValue);
-                } else {
-                    this.eventProducer.emitError(error);
+                Object emitValue = null;
+                if (status == RunStatus.COMPLETE) {
+                    emitValue = resultValue;
+                } else if (status == RunStatus.FAIL) {
+                    emitValue = error;
                 }
+                this.eventProducer.emit(status, emitValue);
             }
             if (this.resultHandler != null) {
                 this.resultHandler.accept(this.result);
@@ -215,7 +231,17 @@ public abstract class AbstractJob implements Job {
      * Disruptor 事件缓冲池大小
      */
     protected int eventProducerBufferSize() {
-        return 8192;
+        int defaultMinSize = 512;
+        int defaultMaxSize = 1024 * 8;
+        int mockEventMemory = 1024;
+        double freeMemory = Runtime.getRuntime().freeMemory() * 0.8;
+        int size = (int) freeMemory / mockEventMemory;
+        if (size > defaultMaxSize) {
+            size = defaultMaxSize;
+        } else if (size < defaultMinSize) {
+            size = defaultMinSize;
+        }
+        return size;
     }
 
     /**
@@ -232,7 +258,7 @@ public abstract class AbstractJob implements Job {
     void listen(List<? extends AbstractJob> fromJobs) {
         fromJobs.forEach(this::listen);
         List<String> fromJobIds = fromJobs.stream().map(Job::id).toList();
-        this.jobContext.initBegin(fromJobIds);
+        this.jobContext.setFroms(fromJobIds);
         this.result.fill(this.jobContext);
     }
 
@@ -242,15 +268,14 @@ public abstract class AbstractJob implements Job {
             RunStatus status = event.getStatus();
             Object value = event.getValue();
             if (status == RunStatus.RUNNING) {
-                this.jobContext.incrementReceive();
+                this.jobContext.incrementReceive(fromJobId);
                 this.onData((JobRecord) value);
-            } else if (status == RunStatus.FAIL) {
-                this.onError(fromJobId, (Throwable) value);
-                if (this.jobContext.decrementRunning(fromJobId, status)) {
-                    this.onFinish();
-                }
             } else if (status == RunStatus.COMPLETE) {
                 this.onComplete(fromJobId, value);
+            } else if (status == RunStatus.FAIL) {
+                this.onError(fromJobId, (Throwable) value);
+            }
+            if (status.isFinish()) {
                 if (this.jobContext.decrementRunning(fromJobId, status)) {
                     this.onFinish();
                 }
@@ -271,10 +296,12 @@ public abstract class AbstractJob implements Job {
         return this.eventProducer;
     }
 
-    void start() {
+    protected void start() {
         if (this.eventProducer != null) {
             this.eventProducer.start();
         }
+        this.jobContext.setStatus(RunStatus.RUNNING);
+        this.result.fill(this.jobContext);
     }
 
     void clear() {
@@ -284,18 +311,7 @@ public abstract class AbstractJob implements Job {
     }
 
     void abort() {
-        if (this.context().status().isFinish()) {
-            return;
-        }
-        this.context().abort();
-        try {
-            this.doAbort();
-            if (this.eventProducer != null) {
-                this.eventProducer.shutdown();
-            }
-        } finally {
-            this.doFinally();
-        }
+        this.emitResult(RunStatus.ABORT, null);
     }
 
     static EventFactory<JobEvent> EVENT_FACTORY = JobEvent::new;
@@ -312,46 +328,21 @@ public abstract class AbstractJob implements Job {
         final Disruptor<JobEvent> disruptor;
         final RingBuffer<JobEvent> ringBuffer;
 
+        static EventTranslatorThreeArg<JobEvent, String, RunStatus, Object>
+                TRANSLATOR = (event, sequence, jobId, status, value) -> {
+            event.setJobId(jobId);
+            event.setStatus(status);
+            event.setValue(value);
+        };
+
         JobEventProducer(String jobId, Disruptor<JobEvent> disruptor) {
             this.jobId = jobId;
             this.disruptor = disruptor;
             this.ringBuffer = disruptor.getRingBuffer();
         }
 
-        void emitData(JobRecord record) {
-            long sequence = this.ringBuffer.next();
-            try {
-                JobEvent event = this.ringBuffer.get(sequence);
-                event.setJobId(this.jobId);
-                event.setStatus(RunStatus.RUNNING);
-                event.setValue(record);
-            } finally {
-                this.ringBuffer.publish(sequence);
-            }
-        }
-
-        void emitError(Throwable error) {
-            long sequence = this.ringBuffer.next();
-            try {
-                JobEvent event = this.ringBuffer.get(sequence);
-                event.setJobId(this.jobId);
-                event.setStatus(RunStatus.FAIL);
-                event.setValue(error);
-            } finally {
-                this.ringBuffer.publish(sequence);
-            }
-        }
-
-        void emitComplete(Object value) {
-            long sequence = this.ringBuffer.next();
-            try {
-                JobEvent event = this.ringBuffer.get(sequence);
-                event.setJobId(this.jobId);
-                event.setStatus(RunStatus.COMPLETE);
-                event.setValue(value);
-            } finally {
-                this.ringBuffer.publish(sequence);
-            }
+        void emit(RunStatus status, Object value) {
+            this.ringBuffer.publishEvent(TRANSLATOR, this.jobId, status, value);
         }
 
         void start() {

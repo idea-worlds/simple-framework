@@ -155,13 +155,17 @@ public class PipelineTest {
                 continue;
             }
 
-            long actualNum = jobResult.getCountReceive();
-            int expectedNum = 0;
+            long actualTotalReceive = jobResult.totalReceive();
+            long expectedTotalReceive = 0;
             for (String from : actualFroms) {
                 JobResult fromResult = jobResults.get(from);
-                expectedNum += fromResult.getCountEmit();
+                long expectedReceive = fromResult.getCountEmit();
+                long actualReceive = jobResult.countReceive(from);
+                Assertions.assertEquals(expectedReceive, actualReceive);
+
+                expectedTotalReceive += expectedReceive;
             }
-            Assertions.assertEquals(expectedNum, actualNum);
+            Assertions.assertEquals(expectedTotalReceive, actualTotalReceive);
         }
     }
 
@@ -214,13 +218,6 @@ public class PipelineTest {
         }
 
         @Override
-        protected void emitResult(Throwable error) {
-            System.out.println(this.id() + " emitResult on " +
-                    Thread.currentThread().getName());
-            super.emitResult(error);
-        }
-
-        @Override
         protected Object buildResultValue() {
             Map<String, Object> result = new HashMap<>();
             result.put("threads", threads);
@@ -245,7 +242,9 @@ public class PipelineTest {
             this.dataFromJobs.add(data.getFrom());
             this.threads.add(thread);
 
-            long countReceive = super.context().countReceive();
+            long countReceive = super.context().countReceives().values()
+                    .stream()
+                    .reduce(0L, Long::sum);
             if (countReceive % 1000000 == 0) {
                 System.out.println(this.id() + " doLoad    --> " + countReceive + " on " + threads);
             }
@@ -270,13 +269,6 @@ public class PipelineTest {
             System.out.println(this.id() + " onFinish  on " +
                     Thread.currentThread().getName());
             super.onFinish();
-        }
-
-        @Override
-        protected void emitResult(Throwable error) {
-            System.out.println(this.id() + " emitResult on" +
-                    Thread.currentThread().getName());
-            super.emitResult(error);
         }
 
         @Override
