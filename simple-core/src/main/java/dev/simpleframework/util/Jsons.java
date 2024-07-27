@@ -3,9 +3,13 @@ package dev.simpleframework.util;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.type.MapType;
 import lombok.SneakyThrows;
 
-import java.io.File;
+import java.io.*;
+import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -71,13 +75,38 @@ public final class Jsons {
     }
 
     @SneakyThrows
-    public static <T> T read(String json, Class<T> clazz) {
-        return OBJECT_MAPPER.readValue(json, clazz);
+    public static <T> T read(Object obj, Class<T> clazz) {
+        if (obj == null) {
+            return null;
+        }
+        if (obj instanceof String json) {
+            return OBJECT_MAPPER.readValue(json, clazz);
+        }
+        if (obj instanceof File src) {
+            return OBJECT_MAPPER.readValue(src, clazz);
+        }
+        if (obj instanceof Reader src) {
+            return OBJECT_MAPPER.readValue(src, clazz);
+        }
+        if (obj instanceof InputStream src) {
+            return OBJECT_MAPPER.readValue(src, clazz);
+        }
+        if (obj instanceof URL src) {
+            return OBJECT_MAPPER.readValue(src, clazz);
+        }
+        if (obj instanceof byte[] src) {
+            return OBJECT_MAPPER.readValue(src, clazz);
+        }
+        return OBJECT_MAPPER.convertValue(obj, clazz);
     }
 
-    @SneakyThrows
-    public static <T> T read(File src, Class<T> clazz) {
-        return OBJECT_MAPPER.readValue(src, clazz);
+    public static Map<String, Object> toMap(Object obj) {
+        return toMap(obj, String.class, Object.class);
+    }
+
+    public static <K, V> Map<K, V> toMap(Object obj, Class<K> keyClass, Class<V> valueClass) {
+        MapType type = OBJECT_MAPPER.getTypeFactory().constructMapType(LinkedHashMap.class, keyClass, valueClass);
+        return OBJECT_MAPPER.convertValue(obj, type);
     }
 
     @SneakyThrows
@@ -93,6 +122,16 @@ public final class Jsons {
 
     @SneakyThrows
     public static void write(Object json, File out) {
+        OBJECT_MAPPER.writeValue(out, json);
+    }
+
+    @SneakyThrows
+    public static void write(Object json, OutputStream out) {
+        OBJECT_MAPPER.writeValue(out, json);
+    }
+
+    @SneakyThrows
+    public static void write(Object json, Writer out) {
         OBJECT_MAPPER.writeValue(out, json);
     }
 
