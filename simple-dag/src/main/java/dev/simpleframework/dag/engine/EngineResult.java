@@ -55,15 +55,25 @@ public class EngineResult implements Serializable {
             this.status = jobStatus;
         }
         // 开始时间：所有节点最早的开始时间
-        if (this.beginTime == null || this.beginTime > job.getBeginTime()) {
-            this.beginTime = job.getBeginTime();
+        Long jobBeginTime = job.getBeginTime();
+        if (jobBeginTime != null && jobBeginTime > 0) {
+            if (this.beginTime == null || this.beginTime > jobBeginTime) {
+                this.beginTime = jobBeginTime;
+            }
         }
         // 结束时间：所有节点最晚的结束时间
-        if (this.finishTime == null || this.finishTime < job.getFinishTime()) {
-            this.finishTime = job.getFinishTime();
+        Long jobFinishTime = job.getFinishTime();
+        if (jobFinishTime != null && jobFinishTime > 0) {
+            if (this.finishTime == null || this.finishTime < jobFinishTime) {
+                this.finishTime = jobFinishTime;
+            }
         }
-        long endTime = this.finishTime != null ? this.finishTime : System.currentTimeMillis();
-        this.runTime = endTime - this.beginTime;
+        if (this.beginTime == null || this.beginTime <= 0) {
+            this.runTime = -1L;
+        } else {
+            long endTime = this.finishTime != null ? this.finishTime : System.currentTimeMillis();
+            this.runTime = endTime - this.beginTime;
+        }
         this.jobs.put(job.getId(), job);
     }
 

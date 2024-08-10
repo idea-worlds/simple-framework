@@ -24,7 +24,8 @@ public abstract non-sealed class BaseTargetPipelineJob extends PipelineJob {
     @Override
     protected void onData(JobRecord data) {
         this.doLoad(data);
-        this.emitData(data.copy(super.id()));
+        data = new JobRecord(data.getSource(), super.id(), data.getData());
+        this.emitData(data);
     }
 
     /**

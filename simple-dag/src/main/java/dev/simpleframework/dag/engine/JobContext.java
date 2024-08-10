@@ -109,7 +109,7 @@ public class JobContext {
 
     void setStatus(RunStatus status) {
         this.status = status;
-        if (status == RunStatus.RUNNING && this.beginTime == null) {
+        if (status == RunStatus.RUNNING && this.beginTime <= 0L) {
             this.beginTime = System.currentTimeMillis();
         } else if (status.isFinish()) {
             this.finishTime = System.currentTimeMillis();

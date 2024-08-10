@@ -36,6 +36,10 @@ public abstract class AbstractJob implements Job {
         return this.jobContext;
     }
 
+    protected EngineContext engineContext() {
+        return this.engineContext;
+    }
+
     @Override
     public JobResult result() {
         return this.result;

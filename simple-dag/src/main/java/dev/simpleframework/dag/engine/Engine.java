@@ -15,6 +15,11 @@ import java.util.function.Consumer;
 public interface Engine<T extends Job> {
 
     /**
+     * 获取引擎上下文
+     */
+    EngineContext context();
+
+    /**
      * 添加作业
      */
     Engine<T> addJob(T job);

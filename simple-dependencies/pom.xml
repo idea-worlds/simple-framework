@@ -45,6 +45,7 @@
         <pagehelper-spring-boot-starter.version>2.1.0</pagehelper-spring-boot-starter.version>
         <druid.version>1.2.23</druid.version>
         <disruptor.version>4.0.0</disruptor.version>
+        <aviator.version>5.4.3</aviator.version>
     </properties>
 
     <dependencyManagement>
@@ -106,6 +107,11 @@
                 <groupId>com.lmax</groupId>
                 <artifactId>disruptor</artifactId>
                 <version>${disruptor.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.aviator</groupId>
+                <artifactId>aviator</artifactId>
+                <version>${aviator.version}</version>
             </dependency>
 
         </dependencies>

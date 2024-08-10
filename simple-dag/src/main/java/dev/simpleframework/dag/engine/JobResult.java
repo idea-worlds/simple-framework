@@ -66,8 +66,12 @@ public class JobResult implements Serializable {
         this.countEmit = context.countEmit();
         this.beginTime = context.beginTime();
         this.finishTime = context.finishTime();
-        long endTime = this.finishTime > 0 ? this.finishTime : System.currentTimeMillis();
-        this.runTime = endTime - this.beginTime;
+        if (this.beginTime == null || this.beginTime <= 0) {
+            this.runTime = -1L;
+        } else {
+            long endTime = this.finishTime > 0 ? this.finishTime : System.currentTimeMillis();
+            this.runTime = endTime - this.beginTime;
+        }
     }
 
     public long countReceive(String from) {

@@ -31,6 +31,11 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
     protected abstract J createVirtualBeginJob();
 
     @Override
+    public EngineContext context() {
+        return this.context;
+    }
+
+    @Override
     public Engine<J> addJob(J job) {
         DAGNode<J> node = new JobNode<>(job);
         this.dag.addNode(node);
@@ -53,7 +58,6 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
         }
         this.aborted.set(false);
         this.dag.sort();
-        this.context.initThreads();
 
         // 按拓扑顺序调用所有作业的初始化方法，并按依赖订阅
         this.dag.visit(job -> {
@@ -107,7 +111,7 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
             }
         } else {
             // 无超时时间，每隔100ms判断是否已结束
-            while (!this.context.finished()) {
+            while (!this.context.isFinished()) {
                 queue.offer(new DelayValue(100, TimeUnit.MILLISECONDS, this.aborted));
                 try {
                     queue.take();
@@ -115,7 +119,7 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
                 }
             }
         }
-        if (this.context.finished()) {
+        if (this.context.isFinished()) {
             // 超时时间内已完成，执行作业的清理方法
             this.dag.visit(AbstractJob::clear, false);
         } else {
@@ -123,7 +127,7 @@ public abstract class AbstractEngine<J extends AbstractJob> implements Engine<J>
             strategy.exec(this);
             // 起一守护线程定时判断是否已完成，已完成后执行作业的清理方法
             Thread thread = new Thread(() -> {
-                while (!this.context.finished()) {
+                while (!this.context.isFinished()) {
                     Threads.sleep(1000);
                 }
                 this.dag.visit(AbstractJob::clear, false);

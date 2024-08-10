@@ -41,8 +41,4 @@ public class JobRecord {
         this.data = data;
     }
 
-    public JobRecord copy(String from) {
-        return new JobRecord(this.source, from, this.data);
-    }
-
 }
