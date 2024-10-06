@@ -6,7 +6,7 @@ package dev.simpleframework.token.user;
  * @author loyayz (loyayz@foxmail.com)
  */
 @FunctionalInterface
-public interface UserAccountPasswordValidator {
+public interface TokenUserAccountPasswordValidator {
 
     /**
      * 校验账号密码是否匹配
@@ -18,6 +18,6 @@ public interface UserAccountPasswordValidator {
      */
     boolean validate(String accountType, String paramPassword, String storedPassword);
 
-    UserAccountPasswordValidator DEFAULT = (type, param, store) -> param != null && param.equals(store);
+    TokenUserAccountPasswordValidator DEFAULT = (type, param, store) -> param != null && param.equals(store);
 
 }

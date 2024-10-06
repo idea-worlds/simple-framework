@@ -4,8 +4,8 @@ import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.SimpleTokenException;
-import dev.simpleframework.token.user.UserInfo;
-import dev.simpleframework.token.user.UserManager;
+import dev.simpleframework.token.user.TokenUserInfo;
+import dev.simpleframework.token.user.TokenUserManager;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -47,7 +47,7 @@ public class SimpleTokenSessionLogin {
     }
 
     public void exec() {
-        UserInfo user = UserManager.findInfoById(this.id);
+        TokenUserInfo user = TokenUserManager.findInfoById(this.id);
         // 过期时间
         long expiredTime = this.timeout.toMillis() + this.now;
         // 查找当前用户是否已登录，未登录时构建一个新的用户会话值

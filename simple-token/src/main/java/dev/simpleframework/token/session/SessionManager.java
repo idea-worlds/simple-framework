@@ -5,7 +5,7 @@ import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.exception.ImplementationNotFoundException;
 import dev.simpleframework.token.session.impl.DefaultSessionGenerator;
 import dev.simpleframework.token.session.impl.DefaultSessionStore;
-import dev.simpleframework.token.user.UserInfo;
+import dev.simpleframework.token.user.TokenUserInfo;
 
 import java.util.Collection;
 
@@ -55,7 +55,7 @@ public final class SessionManager {
      * @param expiredTime 过期时间
      * @return 会话值
      */
-    public static SessionInfo createSession(UserInfo user, long expiredTime) {
+    public static SessionInfo createSession(TokenUserInfo user, long expiredTime) {
         validGenerator();
         SessionInfo session = GENERATOR.generate(user, expiredTime);
         session.setLoginId(user.getId());

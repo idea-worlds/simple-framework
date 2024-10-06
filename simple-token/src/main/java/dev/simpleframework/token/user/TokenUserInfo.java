@@ -6,19 +6,19 @@ import lombok.Data;
  * @author loyayz (loyayz@foxmail.com)
  */
 @Data
-public class UserInfo {
+public class TokenUserInfo {
 
     private String id;
     private boolean enable = true;
 
-    public UserInfo() {
+    public TokenUserInfo() {
     }
 
-    public UserInfo(String id) {
+    public TokenUserInfo(String id) {
         this.id = id;
     }
 
-    public UserInfo(String id, boolean enable) {
+    public TokenUserInfo(String id, boolean enable) {
         this.id = id;
         this.enable = enable;
     }

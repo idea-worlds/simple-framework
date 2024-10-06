@@ -5,7 +5,7 @@ package dev.simpleframework.token.user;
  *
  * @author loyayz (loyayz@foxmail.com)
  */
-public interface UserQuery {
+public interface TokenUserQuery {
 
     /**
      * 获取用户信息
@@ -13,7 +13,7 @@ public interface UserQuery {
      * @param loginId 登录 id
      * @return 用户信息
      */
-    UserInfo getInfoById(String loginId);
+    TokenUserInfo getInfoById(String loginId);
 
     /**
      * 根据账号名获取账号信息
@@ -22,16 +22,16 @@ public interface UserQuery {
      * @param accountName 账号名
      * @return 账号信息
      */
-    UserAccount getAccountByName(String accountType, String accountName);
+    TokenUserAccount getAccountByName(String accountType, String accountName);
 
-    UserQuery DEFAULT = new UserQuery() {
+    TokenUserQuery DEFAULT = new TokenUserQuery() {
         @Override
-        public UserInfo getInfoById(String loginId) {
+        public TokenUserInfo getInfoById(String loginId) {
             return null;
         }
 
         @Override
-        public UserAccount getAccountByName(String accountType, String accountName) {
+        public TokenUserAccount getAccountByName(String accountType, String accountName) {
             return null;
         }
     };

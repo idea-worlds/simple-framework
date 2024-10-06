@@ -8,7 +8,7 @@ import lombok.Data;
  * @author loyayz (loyayz@foxmail.com)
  */
 @Data
-public class UserAccount {
+public class TokenUserAccount {
 
     /**
      * 用户 id

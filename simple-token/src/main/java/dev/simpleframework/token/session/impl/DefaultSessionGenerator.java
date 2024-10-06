@@ -4,7 +4,7 @@ import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionInfo;
-import dev.simpleframework.token.user.UserInfo;
+import dev.simpleframework.token.user.TokenUserInfo;
 
 import java.util.Collections;
 import java.util.Map;
@@ -18,14 +18,14 @@ import java.util.UUID;
 public class DefaultSessionGenerator implements SessionGenerator {
 
     @Override
-    public SessionInfo generate(UserInfo user, long expiredTime) {
+    public SessionInfo generate(TokenUserInfo user, long expiredTime) {
         SessionInfo session = new SessionInfo(user.getId(), expiredTime);
         session.setAttrs(this.generateAttrs(user, expiredTime));
         session.setToken(this.generateToken(session));
         return session;
     }
 
-    protected Map<String, Object> generateAttrs(UserInfo user, long expiredTime) {
+    protected Map<String, Object> generateAttrs(TokenUserInfo user, long expiredTime) {
         return Collections.emptyMap();
     }
 

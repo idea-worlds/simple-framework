@@ -12,9 +12,9 @@ import dev.simpleframework.token.permission.PermissionQuery;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SessionStore;
-import dev.simpleframework.token.user.UserAccountPasswordValidator;
-import dev.simpleframework.token.user.UserManager;
-import dev.simpleframework.token.user.UserQuery;
+import dev.simpleframework.token.user.TokenUserAccountPasswordValidator;
+import dev.simpleframework.token.user.TokenUserManager;
+import dev.simpleframework.token.user.TokenUserQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Configuration;
@@ -46,13 +46,13 @@ public class SimpleTokenSpringRegisterAutoConfiguration {
     }
 
     @Autowired(required = false)
-    public void setUserQuery(UserQuery query) {
-        UserManager.registerQuery(query);
+    public void setUserQuery(TokenUserQuery query) {
+        TokenUserManager.registerQuery(query);
     }
 
     @Autowired(required = false)
-    public void setUserAccountPasswordValidator(UserAccountPasswordValidator validator) {
-        UserManager.registerPasswordValidator(validator);
+    public void setUserAccountPasswordValidator(TokenUserAccountPasswordValidator validator) {
+        TokenUserManager.registerPasswordValidator(validator);
     }
 
     @Autowired(required = false)

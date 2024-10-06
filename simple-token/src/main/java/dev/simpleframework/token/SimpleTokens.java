@@ -8,8 +8,8 @@ import dev.simpleframework.token.exception.InvalidTokenException;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.permission.SimpleTokenPermission;
 import dev.simpleframework.token.session.*;
-import dev.simpleframework.token.user.UserAccount;
-import dev.simpleframework.token.user.UserManager;
+import dev.simpleframework.token.user.TokenUserAccount;
+import dev.simpleframework.token.user.TokenUserManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -266,8 +266,8 @@ public final class SimpleTokens {
      * @return token
      */
     public static String loginByAccount(String accountType, String accountName, String password, LoginSetting config) {
-        UserAccount account = UserManager.findAccountByName(accountType, accountName);
-        UserManager.validatePassword(accountType, password, account.getPassword());
+        TokenUserAccount account = TokenUserManager.findAccountByName(accountType, accountName);
+        TokenUserManager.validatePassword(accountType, password, account.getPassword());
         account.setPassword(null);
         return login(account.getUserId(), config);
     }

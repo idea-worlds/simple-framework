@@ -4,8 +4,6 @@ import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.exception.InvalidTokenException;
 import lombok.Data;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * 配置类
  *
@@ -13,7 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Data
 public class SimpleTokenConfig {
-    private volatile static AtomicLong TOKEN_RENEW_LIMIT_TIME = new AtomicLong(0);
 
     /**
      * token 名称，用于 session key、cookie name、header name
@@ -23,10 +20,6 @@ public class SimpleTokenConfig {
      * token 前缀
      */
     private String tokenPrefix = "";
-    /**
-     * token 是否自动续签
-     */
-    private Boolean tokenAutoRenew = Boolean.TRUE;
     /**
      * cookie 配置
      */
@@ -70,14 +63,6 @@ public class SimpleTokenConfig {
     public long tokenExpiredTime() {
         return System.currentTimeMillis()
                 + this.login.getTokenTimeout().toMillis();
-    }
-
-    public long tokenRenewLimitTime() {
-        if (TOKEN_RENEW_LIMIT_TIME.get() == 0) {
-            long time = this.login.getTokenTimeout().toMillis() / 4;
-            TOKEN_RENEW_LIMIT_TIME.set(time);
-        }
-        return TOKEN_RENEW_LIMIT_TIME.get();
     }
 
 }

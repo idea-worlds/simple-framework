@@ -7,12 +7,12 @@ import dev.simpleframework.token.exception.*;
  *
  * @author loyayz (loyayz@foxmail.com)
  */
-public final class UserManager {
+public final class TokenUserManager {
 
-    private static UserQuery QUERY = UserQuery.DEFAULT;
-    private static UserAccountPasswordValidator VALIDATOR = UserAccountPasswordValidator.DEFAULT;
+    private static TokenUserQuery QUERY = TokenUserQuery.DEFAULT;
+    private static TokenUserAccountPasswordValidator VALIDATOR = TokenUserAccountPasswordValidator.DEFAULT;
 
-    private UserManager() {
+    private TokenUserManager() {
     }
 
     /**
@@ -20,7 +20,7 @@ public final class UserManager {
      *
      * @param query 查询器
      */
-    public synchronized static void registerQuery(UserQuery query) {
+    public synchronized static void registerQuery(TokenUserQuery query) {
         QUERY = query;
     }
 
@@ -29,7 +29,7 @@ public final class UserManager {
      *
      * @param validator 账号密码校验器
      */
-    public synchronized static void registerPasswordValidator(UserAccountPasswordValidator validator) {
+    public synchronized static void registerPasswordValidator(TokenUserAccountPasswordValidator validator) {
         VALIDATOR = validator;
     }
 
@@ -39,9 +39,9 @@ public final class UserManager {
      * @param loginId 登录 id
      * @return 用户信息
      */
-    public static UserInfo findInfoById(String loginId) {
+    public static TokenUserInfo findInfoById(String loginId) {
         validQuery();
-        UserInfo info = loginId == null ? null : QUERY.getInfoById(loginId);
+        TokenUserInfo info = loginId == null ? null : QUERY.getInfoById(loginId);
         if (info == null) {
             throw new LoginUserNotFoundException("User [" + loginId + "] can not be found");
         }
@@ -58,9 +58,9 @@ public final class UserManager {
      * @param accountName 账号名
      * @return 账号信息
      */
-    public static UserAccount findAccountByName(String accountType, String accountName) {
+    public static TokenUserAccount findAccountByName(String accountType, String accountName) {
         validQuery();
-        UserAccount account = QUERY.getAccountByName(accountType, accountName);
+        TokenUserAccount account = QUERY.getAccountByName(accountType, accountName);
         if (account == null) {
             throw new LoginAccountNotFoundException("Login account can not be found");
         }
@@ -86,7 +86,7 @@ public final class UserManager {
 
     private static void validQuery() {
         if (QUERY == null) {
-            throw new ImplementationNotFoundException(UserQuery.class, UserManager.class);
+            throw new ImplementationNotFoundException(TokenUserQuery.class, TokenUserManager.class);
         }
     }
 

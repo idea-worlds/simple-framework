@@ -2,8 +2,8 @@ package dev.simpleframework.token.session;
 
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.constant.TokenStyle;
-import dev.simpleframework.token.user.UserInfo;
-import dev.simpleframework.token.user.UserManager;
+import dev.simpleframework.token.user.TokenUserInfo;
+import dev.simpleframework.token.user.TokenUserManager;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -48,7 +48,7 @@ public class SimpleTokenSessionRefresh {
         if (this.expiredTime <= 0) {
             this.expiredTime = SimpleTokens.getGlobalConfig().tokenExpiredTime();
         }
-        UserInfo user = UserManager.findInfoById(this.loginId);
+        TokenUserInfo user = TokenUserManager.findInfoById(this.loginId);
         SessionInfo newSession = SessionManager.createSession(user, this.expiredTime);
         if (this.session != null) {
             this.updateSession(this.session, newSession);

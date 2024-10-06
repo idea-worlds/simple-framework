@@ -125,14 +125,6 @@ public final class PathManager {
                         permissionExecutors.add(permissionExecutor);
                     }
                     execAction(permissionExecutors);
-
-                    // 自动续签
-                    if (globalConfig.getTokenAutoRenew()) {
-                        long leaveTime = SimpleTokens.getSession().getExpiredTime() - System.currentTimeMillis();
-                        if (leaveTime <= globalConfig.tokenRenewLimitTime()) {
-                            SimpleTokens.refreshSession();
-                        }
-                    }
                 });
         return Collections.singletonList(configExecutor);
     }

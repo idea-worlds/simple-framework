@@ -178,7 +178,7 @@ public class SessionPerson implements Serializable {
         Set<String> result = new HashSet<>();
         // 先淘汰同客户端的数据
         List<Client> clients = this.clients.get(currentClient);
-        SimpleTokenLoginConfig.ClientConfig clientConfig = config.findClientConfig(currentClient);
+        SimpleTokenLoginConfig.TokenClientConfig clientConfig = config.findClientConfig(currentClient);
         List<String> expiredTokens = findExpiredTokensByStrategy(clients, currentToken, clientConfig.getMaxStrategy(), clientConfig.getMaxNum());
         result.addAll(expiredTokens);
         this.removeTokens(expiredTokens);
