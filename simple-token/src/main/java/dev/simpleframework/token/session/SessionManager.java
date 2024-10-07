@@ -1,7 +1,5 @@
 package dev.simpleframework.token.session;
 
-import dev.simpleframework.token.SimpleTokens;
-import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.exception.ImplementationNotFoundException;
 import dev.simpleframework.token.session.impl.DefaultSessionGenerator;
 import dev.simpleframework.token.session.impl.DefaultSessionStore;
@@ -69,9 +67,6 @@ public final class SessionManager {
      * @param session 会话值
      */
     public static void storeSession(SessionInfo session) {
-        if (SimpleTokens.getGlobalConfig().tokenStyleCheck(TokenStyle.JWT)) {
-            return;
-        }
         if (session == null) {
             return;
         }
@@ -133,9 +128,6 @@ public final class SessionManager {
      * @param person  会话值
      */
     public static void storePerson(String loginId, SessionPerson person) {
-        if (SimpleTokens.getGlobalConfig().tokenStyleCheck(TokenStyle.JWT)) {
-            return;
-        }
         if (person == null) {
             return;
         }

@@ -26,10 +26,6 @@ public class SimpleTokenLoginConfig {
      */
     private TokenStyle tokenStyle = TokenStyle.UUID32;
     /**
-     * token jwt 的密钥
-     */
-    private String tokenJwtSecretKey;
-    /**
      * token 超时时间，默认 30 天
      */
     private Duration tokenTimeout = Duration.ofDays(30);

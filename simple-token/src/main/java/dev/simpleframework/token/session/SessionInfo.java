@@ -1,5 +1,6 @@
 package dev.simpleframework.token.session;
 
+import dev.simpleframework.token.user.TokenUserInfo;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -31,31 +32,23 @@ public class SessionInfo implements Serializable {
      * token
      */
     private String token;
-    /**
-     * 属性集
-     */
-    private Map<String, Object> attrs;
 
     public SessionInfo() {
         this.createTime = System.currentTimeMillis();
-        this.attrs = new HashMap<>();
     }
 
     public SessionInfo(String loginId, long expiredTime) {
         this.loginId = loginId;
         this.createTime = System.currentTimeMillis();
         this.expiredTime = expiredTime;
-        this.attrs = new HashMap<>();
     }
 
-    public SessionInfo addAttr(String key, Object value) {
-        this.attrs.put(key, value);
-        return this;
+    public void changeAttrs(SessionInfo info) {
+        // 子类需实现自定义属性
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T attr(String key) {
-        return (T) this.attrs.get(key);
+    public void changeAttrs(TokenUserInfo user, long expiredTime) {
+        // 子类需实现自定义属性
     }
 
 }

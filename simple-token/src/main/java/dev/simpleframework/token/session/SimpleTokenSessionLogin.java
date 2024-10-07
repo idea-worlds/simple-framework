@@ -73,7 +73,7 @@ public class SimpleTokenSessionLogin {
             this.session = newSession;
         } else {
             // 共享 token 时替换新的属性值
-            this.session.setAttrs(newSession.getAttrs());
+            this.session.changeAttrs(newSession);
             this.session.setExpiredTime(expiredTime);
         }
         // 非共享 token 时添加客户端会话信息，并根据配置的策略获取过期的 token 用于登录后踢出

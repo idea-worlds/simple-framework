@@ -1,7 +1,6 @@
 package dev.simpleframework.token.session;
 
 import dev.simpleframework.token.SimpleTokens;
-import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.user.TokenUserInfo;
 import dev.simpleframework.token.user.TokenUserManager;
 
@@ -13,7 +12,6 @@ public class SimpleTokenSessionRefresh {
     private final String loginId;
     private final SessionInfo session;
     private long expiredTime = 0L;
-    private final boolean jwt = SimpleTokens.getGlobalConfig().tokenStyleCheck(TokenStyle.JWT);
 
     public SimpleTokenSessionRefresh(String loginId) {
         this.loginId = loginId;
@@ -39,7 +37,7 @@ public class SimpleTokenSessionRefresh {
 
     public void exec() {
         SessionPerson person = SessionManager.findPerson(this.loginId);
-        if (person == null && !this.jwt) {
+        if (person == null) {
             return;
         }
         if (this.expiredTime <= 0 && person != null) {
@@ -52,7 +50,7 @@ public class SimpleTokenSessionRefresh {
         SessionInfo newSession = SessionManager.createSession(user, this.expiredTime);
         if (this.session != null) {
             this.updateSession(this.session, newSession);
-        } else if (person != null) {
+        } else {
             for (String token : person.findAllTokens()) {
                 SessionInfo session = SessionManager.findSession(token);
                 if (session == null) {
@@ -66,11 +64,8 @@ public class SimpleTokenSessionRefresh {
     }
 
     private void updateSession(SessionInfo session, SessionInfo newSession) {
-        if (this.jwt) {
-            session.setToken(newSession.getToken());
-        }
         session.setExpiredTime(newSession.getExpiredTime());
-        session.setAttrs(newSession.getAttrs());
+        session.changeAttrs(newSession);
         SessionManager.storeSession(session);
     }
 

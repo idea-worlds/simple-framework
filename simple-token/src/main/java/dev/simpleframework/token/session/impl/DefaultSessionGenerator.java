@@ -2,12 +2,14 @@ package dev.simpleframework.token.session.impl;
 
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
+import dev.simpleframework.token.constant.TokenStyle;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.user.TokenUserInfo;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -20,22 +22,18 @@ public class DefaultSessionGenerator implements SessionGenerator {
     @Override
     public SessionInfo generate(TokenUserInfo user, long expiredTime) {
         SessionInfo session = new SessionInfo(user.getId(), expiredTime);
-        session.setAttrs(this.generateAttrs(user, expiredTime));
+        session.changeAttrs(user, expiredTime);
         session.setToken(this.generateToken(session));
         return session;
-    }
-
-    protected Map<String, Object> generateAttrs(TokenUserInfo user, long expiredTime) {
-        return Collections.emptyMap();
     }
 
     protected String generateToken(SessionInfo session) {
         SimpleTokenLoginConfig config = SimpleTokens.getGlobalConfig().getLogin();
         String token;
-        switch (config.getTokenStyle()) {
-            case UUID32 -> token = UUID.randomUUID().toString().replace("-", "");
-            case JWT -> token = DefaultJwtToken.of(config.getTokenJwtSecretKey(), session).getToken();
-            default -> token = UUID.randomUUID().toString();
+        if (Objects.requireNonNull(config.getTokenStyle()) == TokenStyle.UUID32) {
+            token = UUID.randomUUID().toString().replace("-", "");
+        } else {
+            token = UUID.randomUUID().toString();
         }
         return token;
     }
