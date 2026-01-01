@@ -50,8 +50,6 @@
         <module>simple-crud</module>
         <module>simple-token</module>
         <module>simple-dag</module>
-<!--        <module>simple-archetype/simple-archetype-module</module>-->
-<!--        <module>simple-archetype/simple-archetype-project</module>-->
     </modules>
 
     <dependencies>
@@ -89,11 +87,6 @@
     <build>
         <pluginManagement>
             <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-archetype-plugin</artifactId>
-                    <version>3.2.1</version>
-                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
