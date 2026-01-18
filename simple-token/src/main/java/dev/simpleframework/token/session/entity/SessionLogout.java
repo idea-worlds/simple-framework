@@ -1,25 +1,28 @@
-package dev.simpleframework.token.session;
+package dev.simpleframework.token.session.entity;
 
 import dev.simpleframework.token.context.ContextManager;
+import dev.simpleframework.token.session.SessionInfo;
+import dev.simpleframework.token.session.SessionManager;
+import dev.simpleframework.token.session.SessionPerson;
 
 import java.util.List;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SimpleTokenSessionLogout {
+public class SessionLogout {
 
     private String loginId;
     private String client;
 
-    public SimpleTokenSessionLogout() {
+    public SessionLogout() {
     }
 
-    public SimpleTokenSessionLogout(String loginId) {
+    public SessionLogout(String loginId) {
         this.loginId = loginId;
     }
 
-    public SimpleTokenSessionLogout(String loginId, String client) {
+    public SessionLogout(String loginId, String client) {
         this.loginId = loginId;
         this.client = client;
     }
@@ -51,7 +54,7 @@ public class SimpleTokenSessionLogout {
         SessionPerson person = SessionManager.findPerson(loginId);
         if (person != null) {
             person.removeToken(token);
-            SessionManager.storePerson(loginId, person);
+            SessionManager.storePerson(person);
         }
     }
 
@@ -73,7 +76,7 @@ public class SimpleTokenSessionLogout {
             SessionManager.removeSessionByToken(tokens);
             // 删除用户所有会话中对应的 token
             person.removeTokens(tokens);
-            SessionManager.storePerson(this.loginId, person);
+            SessionManager.storePerson(person);
         }
     }
 

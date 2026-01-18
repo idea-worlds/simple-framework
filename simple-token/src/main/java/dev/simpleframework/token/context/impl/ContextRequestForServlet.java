@@ -12,7 +12,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  * @author loyayz (loyayz@foxmail.com)
  */
 @RequiredArgsConstructor
-public class SpringServletContextRequest extends AbstractContextRequest implements ContextRequest {
+public class ContextRequestForServlet extends AbstractContextRequest implements ContextRequest {
     private final HttpServletRequest request;
 
     @Override

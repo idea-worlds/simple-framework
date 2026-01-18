@@ -1,11 +1,15 @@
-package dev.simpleframework.token.session;
+package dev.simpleframework.token.session.entity;
 
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.context.ContextManager;
 import dev.simpleframework.token.exception.SimpleTokenException;
-import dev.simpleframework.token.user.TokenUserInfo;
-import dev.simpleframework.token.user.TokenUserManager;
+import dev.simpleframework.token.session.LoginSetting;
+import dev.simpleframework.token.session.SessionInfo;
+import dev.simpleframework.token.session.SessionManager;
+import dev.simpleframework.token.session.SessionPerson;
+import dev.simpleframework.token.user.UserInfo;
+import dev.simpleframework.token.user.UserManager;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -16,8 +20,9 @@ import java.util.List;
  * @author loyayz (loyayz@foxmail.com)
  */
 @Getter
-public class SimpleTokenSessionLogin {
+public class SessionLogin {
 
+    private final String accountType;
     private final String id;
     private final String client;
     private Duration timeout;
@@ -33,10 +38,11 @@ public class SimpleTokenSessionLogin {
      */
     private List<String> expiredTokens = Collections.emptyList();
 
-    public SimpleTokenSessionLogin(String id, LoginSetting setting) {
+    public SessionLogin(String accountType, String id, LoginSetting setting) {
         if (id == null || id.isBlank()) {
             throw new SimpleTokenException("Login id can not be null");
         }
+        this.accountType = accountType;
         this.id = id;
         this.client = setting.getClient();
         this.timeout = setting.getTimeout();
@@ -47,7 +53,7 @@ public class SimpleTokenSessionLogin {
     }
 
     public void exec() {
-        TokenUserInfo user = TokenUserManager.findInfoById(this.id);
+        UserInfo user = UserManager.findInfoById(this.id);
         // 过期时间
         long expiredTime = this.timeout.toMillis() + this.now;
         // 查找当前用户是否已登录，未登录时构建一个新的用户会话值
@@ -63,7 +69,7 @@ public class SimpleTokenSessionLogin {
         }
 
         // 创建一个新的 session
-        SessionInfo newSession = SessionManager.createSession(user, expiredTime);
+        SessionInfo newSession = SessionManager.createSession(user, this.now, expiredTime);
         if (this.session == null) {
             if (shareToken != null) {
                 // 有共享 token 又查无对应的会话值，说明是垃圾数据，应清除
@@ -73,9 +79,10 @@ public class SimpleTokenSessionLogin {
             this.session = newSession;
         } else {
             // 共享 token 时替换新的属性值
-            this.session.changeAttrs(newSession);
             this.session.setExpiredTime(expiredTime);
+            this.session.setAttrs(newSession.getAttrs());
         }
+        this.session.setLoginType(this.accountType);
         // 非共享 token 时添加客户端会话信息，并根据配置的策略获取过期的 token 用于登录后踢出
         if (shareToken == null) {
             String token = this.session.getToken();
@@ -85,7 +92,7 @@ public class SimpleTokenSessionLogin {
         // 存储会话
         SessionManager.storeSession(this.session);
         // 存储用户的所有会话
-        SessionManager.storePerson(this.id, this.person);
+        SessionManager.storePerson(this.person);
         // 存储 token 至上下文
         ContextManager.storeToken(this.getToken(), expiredTime);
     }

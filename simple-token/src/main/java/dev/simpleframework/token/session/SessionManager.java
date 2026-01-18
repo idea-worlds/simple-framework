@@ -3,7 +3,7 @@ package dev.simpleframework.token.session;
 import dev.simpleframework.token.exception.ImplementationNotFoundException;
 import dev.simpleframework.token.session.impl.DefaultSessionGenerator;
 import dev.simpleframework.token.session.impl.DefaultSessionStore;
-import dev.simpleframework.token.user.TokenUserInfo;
+import dev.simpleframework.token.user.UserInfo;
 
 import java.util.Collection;
 
@@ -50,13 +50,15 @@ public final class SessionManager {
      * 构建一个新的会话值
      *
      * @param user        用户信息
+     * @param createTime  创建时间
      * @param expiredTime 过期时间
      * @return 会话值
      */
-    public static SessionInfo createSession(TokenUserInfo user, long expiredTime) {
+    public static SessionInfo createSession(UserInfo user, long createTime, long expiredTime) {
         validGenerator();
-        SessionInfo session = GENERATOR.generate(user, expiredTime);
+        SessionInfo session = GENERATOR.generate(user, createTime, expiredTime);
         session.setLoginId(user.getId());
+        session.setCreateTime(createTime);
         session.setExpiredTime(expiredTime);
         return session;
     }
@@ -124,15 +126,14 @@ public final class SessionManager {
     /**
      * 存储用户的所有会话值
      *
-     * @param loginId 登录 id
      * @param person  会话值
      */
-    public static void storePerson(String loginId, SessionPerson person) {
+    public static void storePerson(SessionPerson person) {
         if (person == null) {
             return;
         }
         validStore();
-        STORE.setPerson(loginId, person);
+        STORE.setPerson(person);
     }
 
     /**

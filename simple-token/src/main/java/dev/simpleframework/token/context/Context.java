@@ -8,7 +8,7 @@ import dev.simpleframework.token.config.SimpleTokenConfig;
  *
  * @author loyayz (loyayz@foxmail.com)
  */
-public interface SimpleTokenContext {
+public interface Context {
 
     /**
      * 获取当前上下文请求对象
@@ -33,7 +33,7 @@ public interface SimpleTokenContext {
      */
     default void setToken(String token, long expiredTime) {
         SimpleTokenConfig config = SimpleTokens.getGlobalConfig();
-        token = config.splicingToken(token);
+        token = config.splicingTokenForStore(token);
         String tokenName = config.getTokenName();
         this.store().set(tokenName, token);
 

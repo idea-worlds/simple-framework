@@ -6,16 +6,22 @@ import dev.simpleframework.token.exception.InvalidPermissionException;
 import dev.simpleframework.token.exception.InvalidRoleException;
 import dev.simpleframework.token.exception.InvalidTokenException;
 import dev.simpleframework.token.exception.SimpleTokenException;
-import dev.simpleframework.token.permission.SimpleTokenPermission;
-import dev.simpleframework.token.session.*;
-import dev.simpleframework.token.user.TokenUserAccount;
-import dev.simpleframework.token.user.TokenUserManager;
+import dev.simpleframework.token.permission.PermissionInfo;
+import dev.simpleframework.token.session.LoginSetting;
+import dev.simpleframework.token.session.SessionInfo;
+import dev.simpleframework.token.session.SessionManager;
+import dev.simpleframework.token.session.SessionPerson;
+import dev.simpleframework.token.session.entity.SessionKick;
+import dev.simpleframework.token.session.entity.SessionLogin;
+import dev.simpleframework.token.session.entity.SessionLogout;
+import dev.simpleframework.token.session.entity.SessionRefresh;
+import dev.simpleframework.token.user.UserAccount;
+import dev.simpleframework.token.user.UserManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * simple-token 权限认证工具类
@@ -25,8 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Slf4j
 public final class SimpleTokens {
     private static final ThreadLocal<SessionInfo> THREAD_LOCAL_SESSION = new InheritableThreadLocal<>();
-    private static final ThreadLocal<SimpleTokenPermission> THREAD_LOCAL_PERMISSION = new InheritableThreadLocal<>();
-    private static final List<String> REFRESH_TOKENS = new CopyOnWriteArrayList<>();
+    private static final ThreadLocal<PermissionInfo> THREAD_LOCAL_PERMISSION = new InheritableThreadLocal<>();
 
     private static SimpleTokenConfig CONFIG = null;
 
@@ -52,45 +57,28 @@ public final class SimpleTokens {
      * 获取当前会话值，未登录时抛异常
      */
     public static SessionInfo getSession() {
-        SessionInfo session = THREAD_LOCAL_SESSION.get();
-        if (session == null) {
-            String token = getToken();
-            session = SessionManager.findSession(token);
-            if (session == null) {
-                throw new InvalidTokenException("not login");
-            }
-            THREAD_LOCAL_SESSION.set(session);
+        SessionInfo local = THREAD_LOCAL_SESSION.get();
+        if (local != null) {
+            return local;
         }
+        String token = getToken();
+        SessionInfo session = SessionManager.findSession(token);
+        if (session == null) {
+            throw new InvalidTokenException("not login");
+        }
+        THREAD_LOCAL_SESSION.set(session);
         return session;
     }
 
     /**
      * 重置当前会话值
      */
-    public static void refreshSession() {
+    public static SessionInfo refreshSession() {
         SessionInfo session = getSession();
-        String token = session.getToken();
-        if (REFRESH_TOKENS.contains(token)) {
-            return;
-        }
-        REFRESH_TOKENS.add(token);
-        try {
-            long expiredTime = getGlobalConfig().tokenExpiredTime();
-            new SimpleTokenSessionRefresh(session, expiredTime).exec();
-            // 存储 token 至上下文
-            ContextManager.storeToken(session.getToken(), session.getExpiredTime());
-        } finally {
-            REFRESH_TOKENS.remove(token);
-        }
-    }
-
-    /**
-     * 重置用户的会话值
-     *
-     * @param loginId 用户 id
-     */
-    public static void refreshSession(String loginId) {
-        new SimpleTokenSessionRefresh(loginId).exec();
+        new SessionRefresh(session).exec();
+        // 存储 token 至上下文
+        ContextManager.storeToken(session.getToken(), session.getExpiredTime());
+        return session;
     }
 
     /**
@@ -144,90 +132,96 @@ public final class SimpleTokens {
      * 会话登录
      * 请在登录前自行校验账号密码
      *
-     * @param id 用户 id
-     * @return token
+     * @param accountType 账号类型
+     * @param id          用户 id
+     * @return session
      */
-    public static String login(Long id) {
+    public static SessionInfo login(String accountType, Long id) {
         LoginSetting config = new LoginSetting();
-        return login(id, config);
+        return login(accountType, id, config);
     }
 
     /**
      * 会话登录
      * 请在登录前自行校验账号密码
      *
-     * @param id 用户 id
-     * @return token
+     * @param accountType 账号类型
+     * @param id          用户 id
+     * @return session
      */
-    public static String login(String id) {
+    public static SessionInfo login(String accountType, String id) {
         LoginSetting config = new LoginSetting();
-        return login(id, config);
+        return login(accountType, id, config);
     }
 
     /**
      * 会话登录，并指定登录的有效期
      * 请在登录前自行校验账号密码
      *
-     * @param id      用户 id
-     * @param timeout 本次登录的有效期
-     * @return token
+     * @param accountType 账号类型
+     * @param id          用户 id
+     * @param timeout     本次登录的有效期
+     * @return session
      */
-    public static String login(Long id, Duration timeout) {
+    public static SessionInfo login(String accountType, Long id, Duration timeout) {
         LoginSetting config = new LoginSetting();
         config.setTimeout(timeout);
-        return login(id, config);
+        return login(accountType, id, config);
     }
 
     /**
      * 会话登录，并指定登录的有效期
      * 请在登录前自行校验账号密码
      *
-     * @param id      用户 id
-     * @param timeout 本次登录的有效期
-     * @return token
+     * @param accountType 账号类型
+     * @param id          用户 id
+     * @param timeout     本次登录的有效期
+     * @return session
      */
-    public static String login(String id, Duration timeout) {
+    public static SessionInfo login(String accountType, String id, Duration timeout) {
         LoginSetting config = new LoginSetting();
         config.setTimeout(timeout);
-        return login(id, config);
+        return login(accountType, id, config);
     }
 
     /**
      * 会话登录，并指定所有登录参数
      * 请在登录前自行校验账号密码
      *
-     * @param id     用户 id
-     * @param config 登录的参数
-     * @return token
+     * @param accountType 账号类型
+     * @param id          用户 id
+     * @param config      登录的参数
+     * @return session
      */
-    public static String login(Long id, LoginSetting config) {
+    public static SessionInfo login(String accountType, Long id, LoginSetting config) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        return login(id.toString(), config);
+        return login(accountType, id.toString(), config);
     }
 
     /**
      * 会话登录，并指定所有登录参数
      * 请在登录前自行校验账号密码
      *
-     * @param id     用户 id
-     * @param config 登录的参数
-     * @return token
+     * @param accountType 账号类型
+     * @param id          用户 id
+     * @param config      登录的参数
+     * @return session
      */
-    public static String login(String id, LoginSetting config) {
+    public static SessionInfo login(String accountType, String id, LoginSetting config) {
         // 构建一个登录领域对象执行登录逻辑
-        SimpleTokenSessionLogin login = new SimpleTokenSessionLogin(id, config);
+        SessionLogin login = new SessionLogin(accountType, id, config);
         login.exec();
 
         // 踢出本次登录后该用户过期的 token
         try {
             List<String> expiredTokens = login.getExpiredTokens();
-            new SimpleTokenSessionKickout().execByToken(expiredTokens);
+            new SessionKick().execByToken(expiredTokens);
         } catch (Exception e) {
             log.warn("kick out tokens error after login", e);
         }
-        return login.getSession().getToken();
+        return login.getSession();
     }
 
     /**
@@ -236,9 +230,9 @@ public final class SimpleTokens {
      *
      * @param accountName 账号名
      * @param password    账号密码
-     * @return token
+     * @return session
      */
-    public static String loginByAccount(String accountName, String password) {
+    public static SessionInfo loginByAccount(String accountName, String password) {
         return loginByAccount("default", accountName, password, new LoginSetting());
     }
 
@@ -251,7 +245,7 @@ public final class SimpleTokens {
      * @param password    账号密码
      * @return token
      */
-    public static String loginByAccount(String accountType, String accountName, String password) {
+    public static SessionInfo loginByAccount(String accountType, String accountName, String password) {
         return loginByAccount(accountType, accountName, password, new LoginSetting());
     }
 
@@ -263,13 +257,13 @@ public final class SimpleTokens {
      * @param accountName 账号名
      * @param password    账号密码
      * @param config      登录的参数
-     * @return token
+     * @return session
      */
-    public static String loginByAccount(String accountType, String accountName, String password, LoginSetting config) {
-        TokenUserAccount account = TokenUserManager.findAccountByName(accountType, accountName);
-        TokenUserManager.validatePassword(accountType, password, account.getPassword());
+    public static SessionInfo loginByAccount(String accountType, String accountName, String password, LoginSetting config) {
+        UserAccount account = UserManager.findAccountByName(accountType, accountName);
+        UserManager.validatePassword(accountType, password, account.getPassword());
         account.setPassword(null);
-        return login(account.getUserId(), config);
+        return login(accountType, account.getUserId(), config);
     }
 
     /**
@@ -277,7 +271,7 @@ public final class SimpleTokens {
      */
     public static void logout() {
         // 构建一个登出领域对象执行登出逻辑
-        new SimpleTokenSessionLogout().exec();
+        new SessionLogout().exec();
     }
 
     /**
@@ -299,7 +293,7 @@ public final class SimpleTokens {
      */
     public static void logout(String id) {
         // 构建一个登出领域对象执行登出逻辑
-        new SimpleTokenSessionLogout(id).exec();
+        new SessionLogout(id).exec();
     }
 
     /**
@@ -323,7 +317,7 @@ public final class SimpleTokens {
      */
     public static void logout(String id, String client) {
         // 构建一个登出领域对象执行登出逻辑
-        new SimpleTokenSessionLogout(id, client).exec();
+        new SessionLogout(id, client).exec();
     }
 
     /**
@@ -331,11 +325,11 @@ public final class SimpleTokens {
      *
      * @param id 用户 id
      */
-    public static void kickout(Long id) {
+    public static void kick(Long id) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        kickout(id.toString());
+        kick(id.toString());
     }
 
     /**
@@ -343,8 +337,8 @@ public final class SimpleTokens {
      *
      * @param id 用户 id
      */
-    public static void kickout(String id) {
-        new SimpleTokenSessionKickout(id).exec();
+    public static void kick(String id) {
+        new SessionKick(id).exec();
     }
 
     /**
@@ -353,11 +347,11 @@ public final class SimpleTokens {
      * @param id     用户 id
      * @param client 客户端
      */
-    public static void kickout(Long id, String client) {
+    public static void kick(Long id, String client) {
         if (id == null) {
             throw new SimpleTokenException("Login id can not be null");
         }
-        kickout(id.toString(), client);
+        kick(id.toString(), client);
     }
 
     /**
@@ -366,8 +360,8 @@ public final class SimpleTokens {
      * @param id     用户 id
      * @param client 客户端
      */
-    public static void kickout(String id, String client) {
-        new SimpleTokenSessionKickout(id, client).exec();
+    public static void kick(String id, String client) {
+        new SessionKick(id, client).exec();
     }
 
     /**
@@ -375,8 +369,8 @@ public final class SimpleTokens {
      *
      * @param token token
      */
-    public static void kickoutByToken(String token) {
-        new SimpleTokenSessionKickout().execByToken(Collections.singletonList(token));
+    public static void kickByToken(String token) {
+        new SessionKick().execByToken(Collections.singletonList(token));
     }
 
     /**
@@ -406,7 +400,7 @@ public final class SimpleTokens {
         if (permissions == null) {
             return;
         }
-        SimpleTokenPermission perm = findPermission();
+        PermissionInfo perm = findPermission();
         if (!perm.hasPermission(permissions)) {
             throw new InvalidPermissionException(perm.getLastMatchArg(), false);
         }
@@ -433,7 +427,7 @@ public final class SimpleTokens {
         if (permissions == null) {
             return;
         }
-        SimpleTokenPermission perm = findPermission();
+        PermissionInfo perm = findPermission();
         if (!perm.anyPermission(permissions)) {
             throw new InvalidPermissionException(perm.getLastMatchArg(), false);
         }
@@ -460,7 +454,7 @@ public final class SimpleTokens {
         if (permissions == null) {
             return;
         }
-        SimpleTokenPermission perm = findPermission();
+        PermissionInfo perm = findPermission();
         if (perm.anyPermission(permissions)) {
             throw new InvalidPermissionException(perm.getLastMatchArg(), true);
         }
@@ -505,7 +499,7 @@ public final class SimpleTokens {
         if (roles == null) {
             return;
         }
-        SimpleTokenPermission perm = findPermission();
+        PermissionInfo perm = findPermission();
         if (!perm.hasRole(roles)) {
             throw new InvalidRoleException(perm.getLastMatchArg(), false);
         }
@@ -532,7 +526,7 @@ public final class SimpleTokens {
         if (roles == null) {
             return;
         }
-        SimpleTokenPermission perm = findPermission();
+        PermissionInfo perm = findPermission();
         if (!perm.anyRole(roles)) {
             throw new InvalidRoleException(perm.getLastMatchArg(), false);
         }
@@ -559,7 +553,7 @@ public final class SimpleTokens {
         if (roles == null) {
             return;
         }
-        SimpleTokenPermission perm = findPermission();
+        PermissionInfo perm = findPermission();
         if (perm.anyRole(roles)) {
             throw new InvalidRoleException(perm.getLastMatchArg(), true);
         }
@@ -574,7 +568,7 @@ public final class SimpleTokens {
         if (roles == null || roles.isEmpty()) {
             return;
         }
-        checkAnyRole(roles.toArray(new String[0]));
+        checkNotRole(roles.toArray(new String[0]));
     }
 
     public static void clearThreadCache() {
@@ -582,10 +576,10 @@ public final class SimpleTokens {
         THREAD_LOCAL_PERMISSION.remove();
     }
 
-    public static SimpleTokenPermission findPermission() {
-        SimpleTokenPermission permission = THREAD_LOCAL_PERMISSION.get();
+    public static PermissionInfo findPermission() {
+        PermissionInfo permission = THREAD_LOCAL_PERMISSION.get();
         if (permission == null) {
-            permission = new SimpleTokenPermission();
+            permission = new PermissionInfo();
             THREAD_LOCAL_PERMISSION.set(permission);
         }
         return permission;

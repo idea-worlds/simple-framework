@@ -3,7 +3,7 @@ package dev.simpleframework.token.context.impl;
 import dev.simpleframework.token.context.ContextRequest;
 import dev.simpleframework.token.context.ContextResponse;
 import dev.simpleframework.token.context.ContextStore;
-import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
+import dev.simpleframework.token.context.FrameworkContext;
 import dev.simpleframework.token.exception.InvalidContextException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,7 +15,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  *
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SpringServletContext extends AbstractContext implements SimpleTokenFrameworkContext {
+public class FrameworkContextForServlet extends AbstractContext implements FrameworkContext {
 
     /**
      * 写入上下文对象，使用完毕必须清除 {@link #clearContext}
@@ -30,9 +30,9 @@ public class SpringServletContext extends AbstractContext implements SimpleToken
             response = attrs.getResponse();
         }
 
-        ContextRequest contextRequest = new SpringServletContextRequest(request);
-        ContextResponse contextResponse = new SpringServletContextResponse(response);
-        ContextStore contextStore = new SpringServletContextStore(request);
+        ContextRequest contextRequest = new ContextRequestForServlet(request);
+        ContextResponse contextResponse = new ContextResponseForServlet(response);
+        ContextStore contextStore = new ContextStoreForServlet(request);
         AbstractContext.setContextData(contextRequest, contextResponse, contextStore);
     }
 

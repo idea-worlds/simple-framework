@@ -5,6 +5,7 @@ import dev.simpleframework.token.constant.LoginMaxStrategy;
 import dev.simpleframework.token.exception.LoginRejectException;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,10 +17,11 @@ import java.util.stream.Collectors;
  */
 @Data
 public class SessionPerson implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String loginId;
-    private Map<String, List<Client>> clients;
+    private Map<String, List<TokenClient>> clients;
 
     public SessionPerson() {
         this.clients = new HashMap<>();
@@ -34,11 +36,11 @@ public class SessionPerson implements Serializable {
      * 添加客户端信息
      */
     public void addClient(String client, String token, Long createTime, Long expiredTime) {
-        List<Client> clients = this.clients.get(client);
+        List<TokenClient> clients = this.clients.get(client);
         if (clients == null) {
             clients = new ArrayList<>();
         }
-        Client c = new Client();
+        TokenClient c = new TokenClient();
         c.setToken(token);
         c.setCreateTime(createTime);
         c.setExpiredTime(expiredTime);
@@ -55,12 +57,12 @@ public class SessionPerson implements Serializable {
         this.clients.forEach((k, v) -> {
             List<String> expiredTokens = v.stream()
                     .filter(client -> client.getExpiredTime() <= now)
-                    .map(Client::getToken)
+                    .map(TokenClient::getToken)
                     .toList();
             expired.put(k, expiredTokens);
         });
         expired.forEach((client, tokens) -> {
-            List<Client> clients = this.clients.get(client)
+            List<TokenClient> clients = this.clients.get(client)
                     .stream()
                     .filter(a -> !tokens.contains(a.getToken()))
                     .collect(Collectors.toList());
@@ -77,7 +79,7 @@ public class SessionPerson implements Serializable {
         if (token == null) {
             return;
         }
-        for (Map.Entry<String, List<Client>> entry : this.clients.entrySet()) {
+        for (Map.Entry<String, List<TokenClient>> entry : this.clients.entrySet()) {
             entry.getValue().removeIf(client -> token.equals(client.getToken()));
         }
         List<String> emptyKeys = new ArrayList<>();
@@ -93,7 +95,7 @@ public class SessionPerson implements Serializable {
      * 清除 token 对应的数据
      */
     public void removeTokens(Collection<String> tokens) {
-        for (Map.Entry<String, List<Client>> entry : this.clients.entrySet()) {
+        for (Map.Entry<String, List<TokenClient>> entry : this.clients.entrySet()) {
             entry.getValue().removeIf(client -> tokens.contains(client.getToken()));
         }
         List<String> emptyKeys = new ArrayList<>();
@@ -113,7 +115,7 @@ public class SessionPerson implements Serializable {
     public List<String> findAllTokens() {
         return this.clients.values().stream()
                 .flatMap(Collection::stream)
-                .map(Client::getToken)
+                .map(TokenClient::getToken)
                 .distinct()
                 .toList();
     }
@@ -124,12 +126,12 @@ public class SessionPerson implements Serializable {
      * @return token 集
      */
     public List<String> findAllTokens(String client) {
-        List<Client> clients = this.clients.get(client);
+        List<TokenClient> clients = this.clients.get(client);
         if (clients == null) {
             return Collections.emptyList();
         }
         return clients.stream()
-                .map(Client::getToken)
+                .map(TokenClient::getToken)
                 .distinct()
                 .toList();
     }
@@ -139,8 +141,8 @@ public class SessionPerson implements Serializable {
      */
     public Long findLastExpiredTime() {
         long expiredTime = 0L;
-        for (List<Client> clientList : this.clients.values()) {
-            for (Client client : clientList) {
+        for (List<TokenClient> clientList : this.clients.values()) {
+            for (TokenClient client : clientList) {
                 if (client.getExpiredTime() >= expiredTime) {
                     expiredTime = client.getExpiredTime();
                 }
@@ -155,8 +157,8 @@ public class SessionPerson implements Serializable {
     public String findLastExpiredToken() {
         String expiredToken = null;
         long expiredTime = 0L;
-        for (List<Client> clientList : this.clients.values()) {
-            for (Client client : clientList) {
+        for (List<TokenClient> clientList : this.clients.values()) {
+            for (TokenClient client : clientList) {
                 if (client.getExpiredTime() >= expiredTime) {
                     expiredTime = client.getExpiredTime();
                     expiredToken = client.getToken();
@@ -177,7 +179,7 @@ public class SessionPerson implements Serializable {
     public List<String> removeExpiredByConfig(SimpleTokenLoginConfig config, String currentClient, String currentToken) {
         Set<String> result = new HashSet<>();
         // 先淘汰同客户端的数据
-        List<Client> clients = this.clients.get(currentClient);
+        List<TokenClient> clients = this.clients.get(currentClient);
         SimpleTokenLoginConfig.TokenClientConfig clientConfig = config.findClientConfig(currentClient);
         List<String> expiredTokens = findExpiredTokensByStrategy(clients, currentToken, clientConfig.getMaxStrategy(), clientConfig.getMaxNum());
         result.addAll(expiredTokens);
@@ -185,7 +187,7 @@ public class SessionPerson implements Serializable {
 
         // 再淘汰所有客户端的数据
         clients = new ArrayList<>();
-        for (List<Client> clientList : this.clients.values()) {
+        for (List<TokenClient> clientList : this.clients.values()) {
             clients.addAll(clientList);
         }
         expiredTokens = findExpiredTokensByStrategy(clients, currentToken, config.getMaxStrategy(), config.getMaxNum());
@@ -194,7 +196,7 @@ public class SessionPerson implements Serializable {
         return result.stream().toList();
     }
 
-    private static List<String> findExpiredTokensByStrategy(List<Client> clients, String currentToken, LoginMaxStrategy strategy, int max) {
+    private static List<String> findExpiredTokensByStrategy(List<TokenClient> clients, String currentToken, LoginMaxStrategy strategy, int max) {
         if (clients == null || clients.isEmpty()) {
             return Collections.emptyList();
         }
@@ -224,8 +226,8 @@ public class SessionPerson implements Serializable {
         List<String> result = Collections.emptyList();
         if (strategy == LoginMaxStrategy.KICK_OUT_FIRST_CREATE) {
             result = clients.stream()
-                    .sorted(Comparator.comparing(Client::getCreateTime))
-                    .map(Client::getToken)
+                    .sorted(Comparator.comparing(TokenClient::getCreateTime))
+                    .map(TokenClient::getToken)
                     .filter(token -> !currentToken.equals(token))
                     .toList();
             if (outNum < result.size()) {
@@ -233,8 +235,8 @@ public class SessionPerson implements Serializable {
             }
         } else if (strategy == LoginMaxStrategy.KICK_OUT_FIRST_EXPIRE) {
             result = clients.stream()
-                    .sorted(Comparator.comparing(Client::getExpiredTime))
-                    .map(Client::getToken)
+                    .sorted(Comparator.comparing(TokenClient::getExpiredTime))
+                    .map(TokenClient::getToken)
                     .filter(token -> !currentToken.equals(token))
                     .toList();
             if (outNum < result.size()) {
@@ -242,7 +244,7 @@ public class SessionPerson implements Serializable {
             }
         } else if (strategy == LoginMaxStrategy.KICK_OUT_ALL) {
             result = clients.stream()
-                    .map(Client::getToken)
+                    .map(TokenClient::getToken)
                     .filter(token -> !currentToken.equals(token))
                     .toList();
         } else if (strategy == LoginMaxStrategy.REJECT) {
@@ -251,8 +253,21 @@ public class SessionPerson implements Serializable {
         return result;
     }
 
+    public void updateTokenExpiredTime(String token, long expiredTime) {
+        for (List<TokenClient> clientList : this.clients.values()) {
+            for (TokenClient client : clientList) {
+                if (client.getToken().equals(token)) {
+                    client.setExpiredTime(expiredTime);
+                }
+            }
+        }
+    }
+
     @Data
-    public static class Client {
+    public static class TokenClient implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         private String token;
         private Long createTime;
         private Long expiredTime;

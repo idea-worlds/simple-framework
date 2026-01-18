@@ -1,8 +1,8 @@
 package dev.simpleframework.token.autoconfigure;
 
 import dev.simpleframework.token.SimpleTokens;
-import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
-import dev.simpleframework.token.context.impl.SpringServletContext;
+import dev.simpleframework.token.context.FrameworkContext;
+import dev.simpleframework.token.context.impl.FrameworkContextForServlet;
 import dev.simpleframework.token.filter.SimpleTokenFilter;
 import dev.simpleframework.token.filter.impl.SimpleTokenSpringServletFilter;
 import dev.simpleframework.token.path.PathManager;
@@ -41,10 +41,10 @@ public class SimpleTokenSpringWebmvcAutoConfiguration implements InitializingBea
     private String servletPath;
 
     @Bean
-    @ConditionalOnMissingBean(SimpleTokenFrameworkContext.class)
+    @ConditionalOnMissingBean(FrameworkContext.class)
     @ConditionalOnClass(name = "jakarta.servlet.http.HttpServletRequest")
-    public SimpleTokenFrameworkContext simpleTokenFrameworkContext() {
-        return new SpringServletContext();
+    public FrameworkContext simpleTokenFrameworkContext() {
+        return new FrameworkContextForServlet();
     }
 
     @Bean
@@ -75,10 +75,10 @@ public class SimpleTokenSpringWebmvcAutoConfiguration implements InitializingBea
         @Override
         public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
             try {
-                SpringServletContext.setContext((HttpServletRequest) request, (HttpServletResponse) response);
+                FrameworkContextForServlet.setContext((HttpServletRequest) request, (HttpServletResponse) response);
                 chain.doFilter(request, response);
             } finally {
-                SpringServletContext.clearContext();
+                FrameworkContextForServlet.clearContext();
                 SimpleTokens.clearThreadCache();
             }
         }

@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SimpleTokenPermission {
+public class PermissionInfo {
 
     private List<String> permissions;
     private List<String> roles;

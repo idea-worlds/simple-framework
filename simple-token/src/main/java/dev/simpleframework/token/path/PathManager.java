@@ -1,7 +1,6 @@
 package dev.simpleframework.token.path;
 
 import dev.simpleframework.token.SimpleTokens;
-import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.config.SimpleTokenPathConfig;
 import dev.simpleframework.token.constant.HttpMethod;
 import dev.simpleframework.token.context.ContextManager;
@@ -103,8 +102,7 @@ public final class PathManager {
     }
 
     private static List<PathActionExecutor> buildConfigActionExecutors() {
-        SimpleTokenConfig globalConfig = SimpleTokens.getGlobalConfig();
-        SimpleTokenPathConfig pathConfig = globalConfig.getPath();
+        SimpleTokenPathConfig pathConfig = SimpleTokens.getGlobalConfig().getPath();
         PathActionExecutor configExecutor = PathActionExecutor.of()
                 // 不匹配不需要鉴权的路径才执行回调
                 .notMatchInfo(pathConfig.getAllPermitPaths())

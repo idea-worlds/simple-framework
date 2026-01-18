@@ -7,12 +7,12 @@ import dev.simpleframework.token.exception.*;
  *
  * @author loyayz (loyayz@foxmail.com)
  */
-public final class TokenUserManager {
+public final class UserManager {
 
-    private static TokenUserQuery QUERY = TokenUserQuery.DEFAULT;
-    private static TokenUserAccountPasswordValidator VALIDATOR = TokenUserAccountPasswordValidator.DEFAULT;
+    private static UserQuery QUERY = UserQuery.DEFAULT;
+    private static UserAccountPasswordValidator VALIDATOR = UserAccountPasswordValidator.DEFAULT;
 
-    private TokenUserManager() {
+    private UserManager() {
     }
 
     /**
@@ -20,7 +20,7 @@ public final class TokenUserManager {
      *
      * @param query 查询器
      */
-    public synchronized static void registerQuery(TokenUserQuery query) {
+    public synchronized static void registerQuery(UserQuery query) {
         QUERY = query;
     }
 
@@ -29,7 +29,7 @@ public final class TokenUserManager {
      *
      * @param validator 账号密码校验器
      */
-    public synchronized static void registerPasswordValidator(TokenUserAccountPasswordValidator validator) {
+    public synchronized static void registerPasswordValidator(UserAccountPasswordValidator validator) {
         VALIDATOR = validator;
     }
 
@@ -39,14 +39,14 @@ public final class TokenUserManager {
      * @param loginId 登录 id
      * @return 用户信息
      */
-    public static TokenUserInfo findInfoById(String loginId) {
+    public static UserInfo findInfoById(String loginId) {
         validQuery();
-        TokenUserInfo info = loginId == null ? null : QUERY.getInfoById(loginId);
+        UserInfo info = loginId == null ? null : QUERY.getInfoById(loginId);
         if (info == null) {
             throw new LoginUserNotFoundException("User [" + loginId + "] can not be found");
         }
         if (!info.isEnable()) {
-            throw new LoginUserDisabledException("User " + loginId + " disabled");
+            throw new LoginUserDisabledException("User [" + loginId + "] disabled");
         }
         return info;
     }
@@ -58,11 +58,11 @@ public final class TokenUserManager {
      * @param accountName 账号名
      * @return 账号信息
      */
-    public static TokenUserAccount findAccountByName(String accountType, String accountName) {
+    public static UserAccount findAccountByName(String accountType, String accountName) {
         validQuery();
-        TokenUserAccount account = QUERY.getAccountByName(accountType, accountName);
+        UserAccount account = QUERY.getAccountByName(accountType, accountName);
         if (account == null) {
-            throw new LoginAccountNotFoundException("Login account can not be found");
+            throw new LoginAccountNotFoundException("Login account [" + accountType + " - " + accountName + "] can not be found");
         }
         return account;
     }
@@ -86,7 +86,7 @@ public final class TokenUserManager {
 
     private static void validQuery() {
         if (QUERY == null) {
-            throw new ImplementationNotFoundException(TokenUserQuery.class, TokenUserManager.class);
+            throw new ImplementationNotFoundException(UserQuery.class, UserManager.class);
         }
     }
 

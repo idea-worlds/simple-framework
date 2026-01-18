@@ -3,8 +3,8 @@ package dev.simpleframework.token.autoconfigure;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenConfig;
 import dev.simpleframework.token.context.ContextManager;
-import dev.simpleframework.token.context.SimpleTokenFrameworkContext;
-import dev.simpleframework.token.context.SimpleTokenRpcContext;
+import dev.simpleframework.token.context.FrameworkContext;
+import dev.simpleframework.token.context.RpcContext;
 import dev.simpleframework.token.path.PathActionInit;
 import dev.simpleframework.token.path.PathManager;
 import dev.simpleframework.token.permission.PermissionManager;
@@ -12,9 +12,9 @@ import dev.simpleframework.token.permission.PermissionQuery;
 import dev.simpleframework.token.session.SessionGenerator;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SessionStore;
-import dev.simpleframework.token.user.TokenUserAccountPasswordValidator;
-import dev.simpleframework.token.user.TokenUserManager;
-import dev.simpleframework.token.user.TokenUserQuery;
+import dev.simpleframework.token.user.UserAccountPasswordValidator;
+import dev.simpleframework.token.user.UserManager;
+import dev.simpleframework.token.user.UserQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.context.annotation.Configuration;
@@ -36,23 +36,23 @@ public class SimpleTokenSpringRegisterAutoConfiguration {
     }
 
     @Autowired(required = false)
-    public void setFrameworkContext(SimpleTokenFrameworkContext context) {
+    public void setFrameworkContext(FrameworkContext context) {
         ContextManager.registerFrameworkContext(context);
     }
 
     @Autowired(required = false)
-    public void setRpcContext(List<SimpleTokenRpcContext> contexts) {
+    public void setRpcContext(List<RpcContext> contexts) {
         ContextManager.registerRpcContext(contexts);
     }
 
     @Autowired(required = false)
-    public void setUserQuery(TokenUserQuery query) {
-        TokenUserManager.registerQuery(query);
+    public void setUserQuery(UserQuery query) {
+        UserManager.registerQuery(query);
     }
 
     @Autowired(required = false)
-    public void setUserAccountPasswordValidator(TokenUserAccountPasswordValidator validator) {
-        TokenUserManager.registerPasswordValidator(validator);
+    public void setUserAccountPasswordValidator(UserAccountPasswordValidator validator) {
+        UserManager.registerPasswordValidator(validator);
     }
 
     @Autowired(required = false)

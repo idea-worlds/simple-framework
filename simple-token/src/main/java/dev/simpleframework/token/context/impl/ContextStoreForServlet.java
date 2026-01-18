@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
  * @author loyayz (loyayz@foxmail.com)
  */
 @RequiredArgsConstructor
-public class SpringServletContextStore implements ContextStore {
+public class ContextStoreForServlet implements ContextStore {
     private final HttpServletRequest store;
 
     @Override
@@ -17,7 +17,7 @@ public class SpringServletContextStore implements ContextStore {
     }
 
     @Override
-    @SuppressWarnings(("unchecked"))
+    @SuppressWarnings("unchecked")
     public <T> T get(String key) {
         return (T) this.store.getAttribute(key);
     }

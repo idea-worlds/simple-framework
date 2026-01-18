@@ -1,7 +1,6 @@
 package dev.simpleframework.token.config;
 
 import dev.simpleframework.token.constant.LoginMaxStrategy;
-import dev.simpleframework.token.constant.TokenStyle;
 import lombok.Data;
 
 import java.time.Duration;
@@ -21,10 +20,6 @@ public class SimpleTokenLoginConfig {
      * 同账号是否共享 token
      */
     private Boolean shareToken = Boolean.FALSE;
-    /**
-     * token 风格
-     */
-    private TokenStyle tokenStyle = TokenStyle.UUID32;
     /**
      * token 超时时间，默认 30 天
      */

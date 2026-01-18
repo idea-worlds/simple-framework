@@ -32,10 +32,9 @@ public interface SessionStore {
     /**
      * 存储用户所有会话值
      *
-     * @param loginId 登录 id
      * @param person  会话值
      */
-    void setPerson(String loginId, SessionPerson person);
+    void setPerson(SessionPerson person);
 
     /**
      * 获取用户所有会话值

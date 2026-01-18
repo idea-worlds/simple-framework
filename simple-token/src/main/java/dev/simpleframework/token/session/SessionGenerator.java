@@ -1,6 +1,6 @@
 package dev.simpleframework.token.session;
 
-import dev.simpleframework.token.user.TokenUserInfo;
+import dev.simpleframework.token.user.UserInfo;
 
 /**
  * 会话值生成器
@@ -13,9 +13,10 @@ public interface SessionGenerator {
      * 生成一个新的会话值
      *
      * @param user        用户信息
+     * @param createTime  创建时间
      * @param expiredTime 过期时间
      * @return 会话值
      */
-    SessionInfo generate(TokenUserInfo user, long expiredTime);
+    SessionInfo generate(UserInfo user, long createTime, long expiredTime);
 
 }

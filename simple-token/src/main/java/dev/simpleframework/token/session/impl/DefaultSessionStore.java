@@ -1,5 +1,8 @@
 package dev.simpleframework.token.session.impl;
 
+import dev.simpleframework.token.session.SessionInfo;
+import dev.simpleframework.token.session.SessionPerson;
+
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,15 +14,27 @@ public class DefaultSessionStore extends AbstractSessionStore {
     private static final Map<String, Object> CACHE = new ConcurrentHashMap<>();
 
     @Override
-    protected void set(String key, Object value, Duration timeout) {
+    protected void setInfoData(String key, SessionInfo value, Duration timeout) {
         System.out.println("这只是个示例，不建议在生产环境使用 " + this.getClass());
         CACHE.put(key, value);
     }
 
     @Override
-    protected <T> T get(String key, Class<T> clazz) {
+    protected void setPersonData(String key, SessionPerson value, Duration timeout) {
         System.out.println("这只是个示例，不建议在生产环境使用 " + this.getClass());
-        return (T) CACHE.get(key);
+        CACHE.put(key, value);
+    }
+
+    @Override
+    protected SessionInfo getInfoData(String key) {
+        System.out.println("这只是个示例，不建议在生产环境使用 " + this.getClass());
+        return (SessionInfo) CACHE.get(key);
+    }
+
+    @Override
+    protected SessionPerson getPersonData(String key) {
+        System.out.println("这只是个示例，不建议在生产环境使用 " + this.getClass());
+        return (SessionPerson) CACHE.get(key);
     }
 
     @Override

@@ -1,23 +1,26 @@
-package dev.simpleframework.token.session;
+package dev.simpleframework.token.session.entity;
+
+import dev.simpleframework.token.session.SessionManager;
+import dev.simpleframework.token.session.SessionPerson;
 
 import java.util.List;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SimpleTokenSessionKickout {
+public class SessionKick {
     private String loginId;
     private String client;
     private SessionPerson person;
 
-    public SimpleTokenSessionKickout() {
+    public SessionKick() {
     }
 
-    public SimpleTokenSessionKickout(String loginId) {
+    public SessionKick(String loginId) {
         this.loginId = loginId;
     }
 
-    public SimpleTokenSessionKickout(String loginId, String client) {
+    public SessionKick(String loginId, String client) {
         this.loginId = loginId;
         this.client = client;
     }
@@ -39,7 +42,7 @@ public class SimpleTokenSessionKickout {
             SessionManager.removeSessionByToken(tokens);
             // 删除用户所有会话中对应的 token
             this.person.removeTokens(tokens);
-            SessionManager.storePerson(this.loginId, this.person);
+            SessionManager.storePerson(this.person);
         }
     }
 
@@ -50,7 +53,7 @@ public class SimpleTokenSessionKickout {
         // 删除用户所有会话中对应的 token
         if (this.person != null) {
             this.person.removeTokens(tokens);
-            SessionManager.storePerson(this.loginId, this.person);
+            SessionManager.storePerson(this.person);
         }
     }
 

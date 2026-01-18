@@ -1,11 +1,13 @@
 package dev.simpleframework.token.session;
 
-import dev.simpleframework.token.user.TokenUserInfo;
+import dev.simpleframework.token.user.UserInfo;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 会话值对象，数据在登录时生成，在过期或登出时注销
@@ -14,8 +16,13 @@ import java.util.Map;
  */
 @Data
 public class SessionInfo implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 登录的账号类型
+     */
+    private String loginType;
     /**
      * 登录 id
      */
@@ -32,23 +39,37 @@ public class SessionInfo implements Serializable {
      * token
      */
     private String token;
+    /**
+     * 自定义属性
+     */
+    private Map<String, Object> attrs;
 
     public SessionInfo() {
         this.createTime = System.currentTimeMillis();
+        this.attrs = new HashMap<>();
     }
 
-    public SessionInfo(String loginId, long expiredTime) {
+    public SessionInfo(String loginId, long createTime, long expiredTime) {
         this.loginId = loginId;
-        this.createTime = System.currentTimeMillis();
+        this.createTime = createTime;
         this.expiredTime = expiredTime;
+        this.attrs = new HashMap<>();
     }
 
-    public void changeAttrs(SessionInfo info) {
-        // 子类需实现自定义属性
+    /**
+     * 获取会话的原生存时间
+     */
+    public long ttlByCreate(TimeUnit unit) {
+        long millis = expiredTime - createTime;
+        return unit.convert(millis, TimeUnit.MILLISECONDS);
     }
 
-    public void changeAttrs(TokenUserInfo user, long expiredTime) {
-        // 子类需实现自定义属性
+    /**
+     * 获取会话的剩余生存时间
+     */
+    public long ttlByNow(TimeUnit unit) {
+        long millis = expiredTime - System.currentTimeMillis();
+        return unit.convert(millis, TimeUnit.MILLISECONDS);
     }
 
 }

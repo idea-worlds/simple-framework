@@ -3,26 +3,26 @@ package dev.simpleframework.token.context.impl;
 import dev.simpleframework.token.context.ContextRequest;
 import dev.simpleframework.token.context.ContextResponse;
 import dev.simpleframework.token.context.ContextStore;
-import dev.simpleframework.token.context.SimpleTokenContext;
+import dev.simpleframework.token.context.Context;
 import dev.simpleframework.token.exception.InvalidContextException;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
-public abstract class AbstractContext implements SimpleTokenContext {
-    private static final ThreadLocal<Context> threadLocal = new InheritableThreadLocal<>();
+public abstract class AbstractContext implements Context {
+    private static final ThreadLocal<ContextData> threadLocal = new InheritableThreadLocal<>();
 
     protected static void setContextData(ContextRequest request, ContextResponse response, ContextStore store) {
-        Context context = new Context(request, response, store);
+        ContextData context = new ContextData(request, response, store);
         threadLocal.set(context);
     }
 
-    protected static Context getContextData() {
+    protected static ContextData getContextData() {
         return getContextData(true);
     }
 
-    protected static Context getContextData(boolean throwException) {
-        Context context = threadLocal.get();
+    protected static ContextData getContextData(boolean throwException) {
+        ContextData context = threadLocal.get();
         if (context == null && throwException) {
             throw new InvalidContextException("Can not found a valid context");
         }
@@ -60,7 +60,7 @@ public abstract class AbstractContext implements SimpleTokenContext {
         return store;
     }
 
-    public record Context(ContextRequest request, ContextResponse response, ContextStore store) {
+    public record ContextData(ContextRequest request, ContextResponse response, ContextStore store) {
     }
 
 }

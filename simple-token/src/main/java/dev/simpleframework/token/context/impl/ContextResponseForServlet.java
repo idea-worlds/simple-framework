@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
  * @author loyayz (loyayz@foxmail.com)
  */
 @RequiredArgsConstructor
-public class SpringServletContextResponse implements ContextResponse {
+public class ContextResponseForServlet implements ContextResponse {
     private final HttpServletResponse response;
 
     @Override

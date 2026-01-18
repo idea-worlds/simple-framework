@@ -13,17 +13,17 @@ import java.util.List;
  */
 public final class ContextManager {
 
-    public static SimpleTokenFrameworkContext FRAMEWORK_CONTEXT = null;
-    public static List<SimpleTokenRpcContext> RPC_CONTEXTS = null;
+    public static FrameworkContext FRAMEWORK_CONTEXT = null;
+    public static List<RpcContext> RPC_CONTEXTS = null;
 
-    public static void registerFrameworkContext(SimpleTokenFrameworkContext context) {
+    public static void registerFrameworkContext(FrameworkContext context) {
         if (context == null) {
             return;
         }
         FRAMEWORK_CONTEXT = context;
     }
 
-    public static void registerRpcContext(List<SimpleTokenRpcContext> contexts) {
+    public static void registerRpcContext(List<RpcContext> contexts) {
         if (contexts == null) {
             return;
         }
@@ -33,7 +33,7 @@ public final class ContextManager {
         RPC_CONTEXTS.addAll(contexts);
     }
 
-    public static void registerRpcContext(SimpleTokenRpcContext context) {
+    public static void registerRpcContext(RpcContext context) {
         if (context == null) {
             return;
         }
@@ -48,9 +48,9 @@ public final class ContextManager {
      *
      * @return 上下文存储器
      */
-    public static SimpleTokenContext findContext() {
+    public static Context findContext() {
         if (FRAMEWORK_CONTEXT == null && RPC_CONTEXTS == null) {
-            throw new ImplementationNotFoundException(SimpleTokenContext.class, ContextManager.class);
+            throw new ImplementationNotFoundException(Context.class, ContextManager.class);
         }
         // 先查是否有框架上下文且可用
         if (FRAMEWORK_CONTEXT != null && FRAMEWORK_CONTEXT.enable()) {
@@ -58,7 +58,7 @@ public final class ContextManager {
         }
         // 再查是否有 rpc 上下文且可用
         if (RPC_CONTEXTS != null) {
-            for (SimpleTokenRpcContext context : RPC_CONTEXTS) {
+            for (RpcContext context : RPC_CONTEXTS) {
                 if (context.enable()) {
                     return context;
                 }
