@@ -174,14 +174,11 @@ public final class Strings {
         if (Class.class == clazz) {
             return (T) Class.forName(str);
         }
-        if (Jsons.present()) {
-            try {
-                return Jsons.read(str, clazz);
-            } catch (Exception e) {
-                throw new ClassCastException("Can not cast [" + str + "] to " + clazz);
-            }
+        try {
+            return Jsons.read(str, clazz);
+        } catch (Exception e) {
+            throw new ClassCastException("Can not cast [" + str + "] to " + clazz);
         }
-        throw new ClassCastException("Can not cast [" + str + "] to " + clazz);
     }
 
     /**

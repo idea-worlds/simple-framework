@@ -52,10 +52,6 @@ public final class Jsons {
         }
     }
 
-    public static boolean present() {
-        return !jacksonExist;
-    }
-
     public static void config(Consumer<ObjectMapper> action) {
         action.accept(OBJECT_MAPPER);
     }
