@@ -6,7 +6,6 @@ import dev.simpleframework.crud.util.ModelRegistrar;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
@@ -18,7 +17,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -69,10 +67,7 @@ public class ModelScannerRegistrar implements ImportBeanDefinitionRegistrar {
         if (result.isEmpty()) {
             result.add(defaultPackage);
         }
-        result = result.stream().filter(StringUtils::hasText).distinct().collect(Collectors.toList());
-        return StringUtils.tokenizeToStringArray(
-                StringUtils.collectionToCommaDelimitedString(result),
-                ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+        return result.stream().filter(StringUtils::hasText).distinct().toArray(String[]::new);
     }
 
     static class ClassPathModelScanner extends ClassPathScanningCandidateComponentProvider {

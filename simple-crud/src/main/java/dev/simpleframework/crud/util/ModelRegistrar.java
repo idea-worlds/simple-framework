@@ -43,9 +43,11 @@ public class ModelRegistrar {
      * 执行注册方法
      */
     private void exec() {
+        // 并行构建 ClassModelInfo（纯计算，安全），串行执行注册写入（MyBatis Configuration 非线程安全）
         this.classes.parallelStream()
-                .filter(ModelRegistrar::canbeModel)
+                .filter(ModelRegistrar::canBeModel)
                 .map(clazz -> new ClassModelInfo<>(clazz, this.dsType, this.dsName))
+                .collect(Collectors.toList())
                 .forEach(info -> {
                     Map<Class<?>, List<ModelMethod>> annotations = Classes.findAnnotations(info.modelClass(), ModelMethod.class);
                     if (!annotations.isEmpty()) {
@@ -80,7 +82,7 @@ public class ModelRegistrar {
     /**
      * 是否可作为模型类
      */
-    private static boolean canbeModel(Class<?> clazz) {
+    private static boolean canBeModel(Class<?> clazz) {
         int classModifiers = clazz.getModifiers();
         if (Modifier.isFinal(classModifiers)
                 || Modifier.isAbstract(classModifiers)

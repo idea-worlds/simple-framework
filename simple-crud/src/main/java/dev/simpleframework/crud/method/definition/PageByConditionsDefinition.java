@@ -17,9 +17,7 @@ public class PageByConditionsDefinition implements ModelMethodDefinition {
     public void register(ModelInfo<?> info) {
         String methodId = methodId(info);
         DatasourceType datasourceType = info.datasourceType();
-        if (datasourceType == DatasourceType.Mybatis) {
-            // nothing
-        } else {
+        if (datasourceType != DatasourceType.Mybatis) {
             throw new ModelRegisterException(info.modelClass(), info.datasourceType());
         }
     }

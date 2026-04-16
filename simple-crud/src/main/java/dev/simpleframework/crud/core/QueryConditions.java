@@ -104,9 +104,12 @@ public class QueryConditions {
     }
 
     /**
-     * 添加条件
+     * 将另一个条件组作为子条件（括号分组）追加到当前条件中。
+     * <p>
+     * 合并前会调用 {@link #flushFieldKey} 重新统一字段计数器，确保同名字段在参数 Map
+     * 中的 key 不冲突（第 2 个 name 条件的 key 变为 {@code name1}，以此类推）。
      *
-     * @param conditions 另一条件对象
+     * @param conditions 子条件，不能为当前对象自身
      * @return this
      */
     public synchronized QueryConditions add(QueryConditions conditions) {
@@ -119,11 +122,15 @@ public class QueryConditions {
     }
 
     /**
-     * 添加条件
+     * 添加一个字段条件。
+     * <p>
+     * 同名字段去重规则：第一个 {@code name} 的 key 仍为 {@code name}，
+     * 后续同名条件的 key 依次为 {@code name1}、{@code name2}……
+     * 这些 key 最终作为 MyBatis 参数 Map（{@code data.xxx}）中的唯一键。
      *
-     * @param fieldName     字段名
-     * @param conditionType 条件类型，默认”相等“
-     * @param values        条件值
+     * @param fieldName     字段名（模型类中的 Java 字段名）
+     * @param conditionType 条件类型，null 时默认为 {@link ConditionType#equal}
+     * @param values        条件值，null/空数组时该条件在 SQL 中会被跳过（动态条件）
      * @return this
      */
     public synchronized QueryConditions add(String fieldName, ConditionType conditionType, Object... values) {
@@ -136,6 +143,7 @@ public class QueryConditions {
         Object value = transToValue(conditionType, values);
         QueryConditionField field = QueryConditionField.of(fieldName, conditionType, value);
         if (size > 0) {
+            // 同名字段后缀数字，避免参数 Map key 冲突
             field.setKey(fieldName + size);
         }
 
@@ -143,6 +151,13 @@ public class QueryConditions {
         return this;
     }
 
+    /**
+     * 将子条件合并进父条件的字段计数器，并修正所有字段的 key。
+     * <p>
+     * 当子条件被 {@link #add(QueryConditions)} 合并时调用此方法，
+     * 递归地将子条件及其所有嵌套子条件中重复的字段名都加上数字后缀，
+     * 使整棵条件树的参数 key 全局唯一。
+     */
     private void flushFieldKey(Map<String, Integer> fieldSize) {
         this.fieldSize = fieldSize;
         for (QueryConditionField field : this.fields) {
@@ -158,6 +173,17 @@ public class QueryConditions {
         }
     }
 
+    /**
+     * 将可变参数规范化为条件所需的值对象。
+     * <p>
+     * 规范化规则：
+     * <ul>
+     *   <li>集合类型条件（in/not_in/array_xx/json_exist_key_xx）：展平所有参数为单个 List；</li>
+     *   <li>多值传入 {@code json_exist_key} 时自动升级为 {@code json_exist_key_all}；</li>
+     *   <li>单值非集合条件：直接返回 {@code values[0]}；</li>
+     *   <li>多值非集合条件：返回 {@code Arrays.asList(values)}。</li>
+     * </ul>
+     */
     @SuppressWarnings("unchecked")
     private static Object transToValue(ConditionType type, Object... values) {
         if (values == null) {
@@ -193,6 +219,14 @@ public class QueryConditions {
 
     private static final Map<Class<?>, List<Field>> CONDITION_CACHES = new ConcurrentHashMap<>();
 
+    /**
+     * 解析对象中所有带 {@link Condition}（含 {@link Conditions} 容器）注解的字段，
+     * 构建对应的 {@link QueryConditionField} 列表。
+     * <p>
+     * 字段反射结果按类缓存（{@link #CONDITION_CACHES}），同一类只扫描一次。
+     * 每个字段可声明多个 {@code @Condition}，均会独立生成条件项。
+     * 字段值为 null 时，若注解指定了 {@code defaultValueIfNull}，则自动转换为目标类型填充。
+     */
     @SneakyThrows
     private static List<QueryConditionField> annotationConditionFields(Object annotation) {
         if (annotation == null) {

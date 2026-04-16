@@ -39,7 +39,7 @@ public class ConditionTest {
                 Assertions.assertEquals(2, conditions.getFieldSize().get(name));
                 Assertions.assertNull(value);
             } else if ("age".equals(name)) {
-                Assertions.assertEquals(ConditionType.great_equal, type);
+                Assertions.assertEquals(ConditionType.greater_equal, type);
                 Assertions.assertNull(value);
             } else if ("user_age".equals(name)) {
                 Assertions.assertEquals(ConditionType.equal, type);
@@ -64,7 +64,7 @@ public class ConditionTest {
         private String userName;
         @Condition(field = "name", type = ConditionType.not_equal)
         private String personName;
-        @Condition(type = ConditionType.great_equal)
+        @Condition(type = ConditionType.greater_equal)
         @Conditions({@Condition(field = "user_age", defaultValueIfNull = "1"), @Condition(field = "person_age"),})
         private Integer age;
         @Condition(type = ConditionType.not_equal, defaultValueIfNull = "1000000")

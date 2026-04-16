@@ -2,9 +2,9 @@ package dev.simpleframework.crud.method;
 
 import dev.simpleframework.crud.core.Page;
 import dev.simpleframework.crud.core.QueryConfig;
-import dev.simpleframework.crud.exception.SimpleCrudException;
 import dev.simpleframework.crud.method.definition.ListByConditionsDefinition;
 import dev.simpleframework.crud.method.definition.PageByConditionsDefinition;
+import dev.simpleframework.crud.util.Constants;
 
 import java.util.List;
 
@@ -21,10 +21,10 @@ public interface FindOneByConditions<T> {
      */
     default <R extends T> R findOneByConditions(QueryConfig configs) {
         List<R> list;
-        try {
+        if (Constants.pageHelperPresent) {
             Page<R> page = PageByConditionsDefinition.exec(this, 1, 1, false, configs);
             list = page.getItems();
-        } catch (SimpleCrudException e) {
+        } else {
             list = ListByConditionsDefinition.exec(this, configs);
         }
         return list == null || list.isEmpty() ? null : list.get(0);

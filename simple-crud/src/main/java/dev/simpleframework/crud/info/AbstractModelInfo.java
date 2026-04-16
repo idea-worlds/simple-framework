@@ -7,9 +7,11 @@ import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.exception.ModelRegisterException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -40,6 +42,11 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
      * 字段列表
      */
     private final Map<String, ModelField<T>> fields;
+    // 字段列表缓存，addField/setId 时置 null 失效
+    private List<ModelField<T>> cachedAllFields;
+    private List<ModelField<T>> cachedInsertFields;
+    private List<ModelField<T>> cachedUpdateFields;
+    private List<ModelField<T>> cachedSelectFields;
 
     protected AbstractModelInfo(Class<T> modelClass, String modelName, DatasourceType dsType, String dsName) {
         this.modelClass = modelClass;
@@ -76,7 +83,40 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
 
     @Override
     public List<ModelField<T>> getAllFields() {
-        return new ArrayList<>(this.fields.values());
+        if (this.cachedAllFields == null) {
+            this.cachedAllFields = Collections.unmodifiableList(new ArrayList<>(this.fields.values()));
+        }
+        return this.cachedAllFields;
+    }
+
+    @Override
+    public List<ModelField<T>> getInsertFields() {
+        if (this.cachedInsertFields == null) {
+            this.cachedInsertFields = this.getAllFields().stream()
+                    .filter(ModelField::insertable)
+                    .collect(Collectors.toUnmodifiableList());
+        }
+        return this.cachedInsertFields;
+    }
+
+    @Override
+    public List<ModelField<T>> getUpdateFields() {
+        if (this.cachedUpdateFields == null) {
+            this.cachedUpdateFields = this.getAllFields().stream()
+                    .filter(ModelField::updatable)
+                    .collect(Collectors.toUnmodifiableList());
+        }
+        return this.cachedUpdateFields;
+    }
+
+    @Override
+    public List<ModelField<T>> getSelectFields() {
+        if (this.cachedSelectFields == null) {
+            this.cachedSelectFields = this.getAllFields().stream()
+                    .filter(ModelField::selectable)
+                    .collect(Collectors.toUnmodifiableList());
+        }
+        return this.cachedSelectFields;
     }
 
     @Override
@@ -87,6 +127,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
     public void setId(String fieldName, Id.Type type) {
         if (fieldName == null) {
             this.id = null;
+            invalidateFieldCache();
             return;
         }
         if (this.id != null) {
@@ -98,6 +139,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
         }
         ((AbstractModelField<T>) field).changeToId(type);
         this.id = field;
+        invalidateFieldCache();
     }
 
     protected Map<String, ModelField<T>> fields() {
@@ -112,6 +154,14 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
 
     protected void addField(ModelField<T> field) {
         this.fields.put(field.fieldName(), field);
+        invalidateFieldCache();
+    }
+
+    protected void invalidateFieldCache() {
+        this.cachedAllFields = null;
+        this.cachedInsertFields = null;
+        this.cachedUpdateFields = null;
+        this.cachedSelectFields = null;
     }
 
 }

@@ -31,9 +31,11 @@ public final class ModelCache {
         if (modelOrClass instanceof DynamicModel) {
             return (ModelInfo<T>) ((DynamicModel) modelOrClass).info();
         }
-        Class<?> targetClass = Classes.getTargetClassIfProxy(modelOrClass.getClass());
-        if (targetClass == Class.class) {
-            targetClass = Classes.getTargetClassIfProxy((Class) modelOrClass);
+        Class<?> targetClass;
+        if (modelOrClass instanceof Class) {
+            targetClass = Classes.getTargetClassIfProxy((Class<?>) modelOrClass);
+        } else {
+            targetClass = Classes.getTargetClassIfProxy(modelOrClass.getClass());
         }
         ModelInfo result = INFOS.get(targetClass);
         if (result == null) {

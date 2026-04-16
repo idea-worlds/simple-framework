@@ -39,7 +39,7 @@ public class ListByIdsDefinition implements ModelMethodDefinition {
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisListByIdsMethod.exec(info, methodId, ids, combinedFields);
         }
-        return null;
+        throw new ModelRegisterException(info.modelClass(), info.datasourceType());
     }
 
     private static String methodId(ModelInfo<?> info) {

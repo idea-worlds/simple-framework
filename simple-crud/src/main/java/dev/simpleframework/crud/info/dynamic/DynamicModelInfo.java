@@ -13,6 +13,8 @@ import java.util.Map;
  */
 public class DynamicModelInfo extends AbstractModelInfo<Map<String, Object>> {
 
+    private final String methodNamespace;
+
     public DynamicModelInfo(String modelName, DatasourceType datasourceType) {
         this(modelName, datasourceType, "");
     }
@@ -23,15 +25,12 @@ public class DynamicModelInfo extends AbstractModelInfo<Map<String, Object>> {
                 (Class<Map<String, Object>>) (Object) Map.class,
                 modelName, datasourceType, datasourceName
         );
+        this.methodNamespace = modelName + "_" + Math.abs(this.hashCode());
     }
 
     @Override
     public String methodNamespace() {
-        int code = this.hashCode();
-        if (code < 0) {
-            code = code * -1;
-        }
-        return super.name() + "_" + code;
+        return this.methodNamespace;
     }
 
     @Override
@@ -75,14 +74,17 @@ public class DynamicModelInfo extends AbstractModelInfo<Map<String, Object>> {
         }
         if (this.isIdField(fieldName)) {
             super.setId(null, null);
+        } else {
+            super.fields().remove(fieldName);
+            super.invalidateFieldCache();
         }
-        super.fields().remove(fieldName);
         return this;
     }
 
     public DynamicModelInfo removeAllFields() {
         super.setId(null, null);
         super.fields().clear();
+        super.invalidateFieldCache();
         return this;
     }
 

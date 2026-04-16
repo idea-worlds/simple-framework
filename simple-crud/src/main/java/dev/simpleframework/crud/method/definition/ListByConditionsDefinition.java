@@ -32,7 +32,7 @@ public class ListByConditionsDefinition implements ModelMethodDefinition {
         if (datasourceType == DatasourceType.Mybatis) {
             return MybatisListByConditionsMethod.exec(info, methodId, queryConfig);
         }
-        return null;
+        throw new ModelRegisterException(info.modelClass(), info.datasourceType());
     }
 
     private static String methodId(ModelInfo<?> info) {

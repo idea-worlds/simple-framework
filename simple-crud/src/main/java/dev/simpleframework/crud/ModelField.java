@@ -68,7 +68,7 @@ public interface ModelField<T> {
     /**
      * 字段是否可修改
      *
-     * @return 字段是否可新增
+     * @return 字段是否可修改
      */
     boolean updatable();
 

@@ -32,7 +32,7 @@ public enum ConditionType {
     /**
      * 大于等于
      */
-    great_equal,
+    greater_equal,
     /**
      * 小于
      */

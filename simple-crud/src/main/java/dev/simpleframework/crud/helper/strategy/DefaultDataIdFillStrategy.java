@@ -3,9 +3,9 @@ package dev.simpleframework.crud.helper.strategy;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.util.Snowflake;
+import dev.simpleframework.util.Strings;
 
 import java.lang.annotation.Annotation;
-import java.util.UUID;
 
 @SuppressWarnings("unchecked")
 public class DefaultDataIdFillStrategy implements DataFillStrategy {
@@ -19,10 +19,10 @@ public class DefaultDataIdFillStrategy implements DataFillStrategy {
                     result = Snowflake.DEFAULT.nextId();
                     break;
                 case UUID32:
-                    result = UUID.randomUUID().toString().replace("-", "");
+                    result = Strings.uuid32();
                     break;
                 case UUID36:
-                    result = UUID.randomUUID().toString();
+                    result = Strings.uuid();
                     break;
                 case AUTO_INCREMENT:
                     break;

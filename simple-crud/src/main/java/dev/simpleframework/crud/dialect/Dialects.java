@@ -56,6 +56,13 @@ public final class Dialects {
         return null;
     }
 
+    /**
+     * 根据 DataSource 的 JDBC URL 匹配对应的 SQL 方言。
+     * <p>
+     * 匹配规则：从 URL 中提取数据库标识（如 {@code :mysql:}、{@code :postgresql:}），
+     * 按 {@link #registerConditionDialect} 注册顺序依次匹配，首个命中的方言生效。
+     * 未注册任何方言，或 URL 无法提取，或无匹配时，均回退到 {@link SqlConditionDialect#DEFAULT}（通用 ANSI SQL）。
+     */
     public static ConditionDialect condition(DataSource datasource) {
         if (JDBC_CONDITIONS.isEmpty()) {
             return SqlConditionDialect.DEFAULT;

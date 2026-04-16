@@ -49,11 +49,8 @@ public class ClassModelField<T> extends AbstractModelField<T> {
         Object strategyParam = null;
         for (Annotation annotation : this.field.getAnnotations()) {
             DataFillStrategy _strategy = ModelCache.fillStrategy(annotation.annotationType());
-            if (strategy == null ||
-                    (_strategy != null && strategy.order() >= _strategy.order())) {
+            if (_strategy != null && (strategy == null || strategy.order() >= _strategy.order())) {
                 strategy = _strategy;
-            }
-            if (strategy != null) {
                 strategyParam = strategy.toParam(annotation);
             }
         }
