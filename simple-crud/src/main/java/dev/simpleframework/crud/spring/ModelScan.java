@@ -1,6 +1,7 @@
 package dev.simpleframework.crud.spring;
 
 import dev.simpleframework.crud.BaseModel;
+import dev.simpleframework.crud.ModelOperator;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.helper.DatasourceProvider;
 import org.springframework.context.annotation.Import;
@@ -45,6 +46,18 @@ public @interface ModelScan {
      * 模型类的父类
      */
     Class<?> superClass() default BaseModel.class;
+
+    /**
+     * 操作类，决定为扫描到的实体类注册哪些 CRUD SQL。
+     * <p>
+     * 框架读取 operatorClass 接口层级上的 {@code @ModelMethod} 注解来注册 SQL。
+     * 默认值 {@link ModelOperator} 表示不注册任何 SQL（只建立模型信息，不可操作）。
+     * 使用 {@link dev.simpleframework.crud.Models} 可注册全套 CRUD SQL。
+     * <p>
+     * 仅对无 {@code @ModelMethod} 注解的普通实体类生效；继承 {@link BaseModel} 的类
+     * 仍按其自身声明的 {@code @ModelMethod} 注解注册。
+     */
+    Class<? extends ModelOperator> operatorClass() default ModelOperator.class;
 
     /**
      * 模型类型

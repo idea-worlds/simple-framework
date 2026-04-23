@@ -1,5 +1,6 @@
 package dev.simpleframework.crud.spring;
 
+import dev.simpleframework.crud.core.ModelFieldConfig;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.helper.DatasourceProvider;
 import dev.simpleframework.crud.helper.provider.DefaultSpringMybatisProvider;
@@ -26,6 +27,7 @@ public class SimpleCrudAutoConfiguration implements InitializingBean {
         this.setDatasourceProvider();
         this.setDataFillStrategy();
         ModelRegistrar.register();
+        this.applyModelFieldConfigs();
     }
 
     private void setDatasourceProvider() {
@@ -38,6 +40,10 @@ public class SimpleCrudAutoConfiguration implements InitializingBean {
         ModelCache.registerFillStrategy(new DefaultDataIdFillStrategy());
         ModelCache.registerFillStrategy(new DefaultDataOperateDateFillStrategy());
         SimpleSpringUtils.getBeans(DataFillStrategy.class).forEach(ModelCache::registerFillStrategy);
+    }
+
+    private void applyModelFieldConfigs() {
+        SimpleSpringUtils.getBeans(ModelFieldConfig.class).forEach(ModelFieldConfig::apply);
     }
 
 }

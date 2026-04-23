@@ -1,7 +1,7 @@
 package dev.simpleframework.crud.info.clazz;
 
 import dev.simpleframework.crud.annotation.Column;
-import dev.simpleframework.crud.helper.DataFillStrategy;
+import dev.simpleframework.crud.core.FieldConfig;
 import dev.simpleframework.crud.info.AbstractModelField;
 import dev.simpleframework.crud.util.ModelCache;
 import dev.simpleframework.util.Classes;
@@ -10,6 +10,8 @@ import lombok.SneakyThrows;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -23,38 +25,14 @@ public class ClassModelField<T> extends AbstractModelField<T> {
         this.field = field;
         field.setAccessible(true);
         String fieldName = field.getName();
-
-        boolean insertable = true;
-        boolean updatable = true;
-        boolean selectable = true;
-        String columnName = null;
-        Column crudColumn = this.field.getAnnotation(Column.class);
-        if (crudColumn != null) {
-            columnName = crudColumn.name();
-            insertable = crudColumn.insertable();
-            updatable = crudColumn.updatable();
-            selectable = crudColumn.selectable();
+        FieldConfig config = this.buildConfig();
+        if (config.getColumnName() == null) {
+            config.name(Strings.camelToUnderline(fieldName).toUpperCase());
         }
-        if (Strings.isBlank(columnName)) {
-            columnName = Strings.camelToUnderline(fieldName).toUpperCase();
-        }
+        super.config(config);
         Class<?> fieldType = field.getType();
         Class<?> fieldComponentType = Classes.getGenericClass(field);
-        super.setColumn(columnName, fieldName, fieldType, fieldComponentType);
-        super.setInsertable(insertable);
-        super.setUpdatable(updatable);
-        super.setSelectable(selectable);
-
-        DataFillStrategy strategy = null;
-        Object strategyParam = null;
-        for (Annotation annotation : this.field.getAnnotations()) {
-            DataFillStrategy _strategy = ModelCache.fillStrategy(annotation.annotationType());
-            if (_strategy != null && (strategy == null || strategy.order() >= _strategy.order())) {
-                strategy = _strategy;
-                strategyParam = strategy.toParam(annotation);
-            }
-        }
-        super.setFillStrategy(strategy, strategyParam);
+        super.setColumn(config.getColumnName(), fieldName, fieldType, fieldComponentType);
     }
 
     @SuppressWarnings("unchecked")
@@ -72,6 +50,30 @@ public class ClassModelField<T> extends AbstractModelField<T> {
 
     Field getField() {
         return this.field;
+    }
+
+    private FieldConfig buildConfig() {
+        boolean insertable = true;
+        boolean updatable = true;
+        boolean selectable = true;
+        String columnName = null;
+        Column column = this.field.getAnnotation(Column.class);
+        if (column != null) {
+            columnName = column.name();
+            insertable = column.insertable();
+            updatable = column.updatable();
+            selectable = column.selectable();
+        }
+        Annotation fillAnnotation = Arrays.stream(this.field.getAnnotations())
+                .filter(a -> ModelCache.fillStrategy(a.annotationType()) != null)
+                .min(Comparator.comparingInt(a -> ModelCache.fillStrategy(a.annotationType()).order()))
+                .orElse(null);
+        return new FieldConfig()
+                .name(columnName)
+                .insertable(insertable)
+                .updatable(updatable)
+                .selectable(selectable)
+                .autoFill(fillAnnotation);
     }
 
 }

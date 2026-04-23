@@ -2,9 +2,12 @@ package dev.simpleframework.crud.info;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.annotation.Id;
+import dev.simpleframework.crud.core.FieldConfig;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.helper.DataFillStrategy.FillType;
 import dev.simpleframework.crud.util.ModelCache;
+
+import java.lang.annotation.Annotation;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -94,18 +97,6 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
         return this.selectable;
     }
 
-    protected void setInsertable(boolean insertable) {
-        this.insertable = insertable;
-    }
-
-    protected void setUpdatable(boolean updatable) {
-        this.updatable = updatable;
-    }
-
-    protected void setSelectable(boolean selectable) {
-        this.selectable = selectable;
-    }
-
     protected void setColumn(String column, String fieldName, Class<?> fieldType, Class<?> fieldComponentType) {
         this.column = column;
         this.fieldName = fieldName;
@@ -113,17 +104,30 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
         this.fieldComponentType = fieldComponentType == null ? fieldType.getComponentType() : fieldComponentType;
     }
 
-    protected void setFillStrategy(DataFillStrategy strategy, Object strategyParam) {
-        this.fillStrategy = strategy;
-        this.fillStrategyParam = strategyParam;
-    }
-
-    protected DataFillStrategy fillStrategy() {
-        return fillStrategy;
-    }
-
-    protected Object fillStrategyParam() {
-        return fillStrategyParam;
+    /**
+     * 将 {@link FieldConfig} 中的非 null 配置项应用到此字段。
+     * <p>
+     * 仅覆盖 config 中显式设置的项，未设置（null）的项保持不变。
+     */
+    protected void config(FieldConfig config) {
+        if (config.getColumnName() != null) {
+            this.column = config.getColumnName();
+        }
+        if (config.getInsertable() != null) {
+            this.insertable = config.getInsertable();
+        }
+        if (config.getUpdatable() != null) {
+            this.updatable = config.getUpdatable();
+        }
+        if (config.getSelectable() != null) {
+            this.selectable = config.getSelectable();
+        }
+        Annotation autoFill = config.getAutoFill();
+        if (autoFill != null) {
+            DataFillStrategy strategy = ModelCache.fillStrategy(autoFill.annotationType());
+            this.fillStrategy = strategy;
+            this.fillStrategyParam = strategy != null ? strategy.toParam(autoFill) : null;
+        }
     }
 
     /**

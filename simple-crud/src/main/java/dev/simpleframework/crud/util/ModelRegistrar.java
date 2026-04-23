@@ -1,5 +1,6 @@
 package dev.simpleframework.crud.util;
 
+import dev.simpleframework.crud.ModelOperator;
 import dev.simpleframework.crud.annotation.ModelMethod;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.info.clazz.ClassModelInfo;
@@ -21,10 +22,12 @@ public class ModelRegistrar {
 
     private final DatasourceType dsType;
     private final String dsName;
+    private final Class<? extends ModelOperator> operatorClass;
     private final Set<Class<?>> classes = new HashSet<>();
 
-    public static ModelRegistrar newRegistrar(DatasourceType dsType, String dsName) {
-        ModelRegistrar registrar = new ModelRegistrar(dsType, dsName);
+    public static ModelRegistrar newRegistrar(DatasourceType dsType, String dsName,
+                                              Class<? extends ModelOperator> operatorClass) {
+        ModelRegistrar registrar = new ModelRegistrar(dsType, dsName, operatorClass);
         WAIT_FOR_REGISTER.add(registrar);
         return registrar;
     }
@@ -51,16 +54,26 @@ public class ModelRegistrar {
                 .forEach(info -> {
                     Map<Class<?>, List<ModelMethod>> annotations = Classes.findAnnotations(info.modelClass(), ModelMethod.class);
                     if (!annotations.isEmpty()) {
+                        // BaseModel 子类：按类上声明的 @ModelMethod 注册对应的 SQL
                         annotations.forEach((methodClass, methods) -> {
                             methods.forEach(method -> Classes.newInstance(method.value()).register(info));
                         });
-                        ModelCache.registerInfo(info);
+                    } else {
+                        // 非 BaseModel 子类：读 operatorClass 的 @ModelMethod 注解注册 SQL
+                        // operatorClass 为 ModelOperator.class（默认）时不注册任何 SQL
+                        if (this.operatorClass != ModelOperator.class) {
+                            Classes.findAnnotations(this.operatorClass, ModelMethod.class)
+                                    .forEach((methodClass, methods) -> {
+                                        methods.forEach(method -> Classes.newInstance(method.value()).register(info));
+                                    });
+                        }
                     }
+                    ModelCache.registerInfo(info);
                 });
     }
 
     /**
-     * 聚合同数据源的注册器
+     * 聚合同数据源同操作类的注册器
      */
     private static List<ModelRegistrar> combine(List<ModelRegistrar> registrars) {
         List<ModelRegistrar> result = new ArrayList<>();
@@ -70,9 +83,13 @@ public class ModelRegistrar {
                     dsTypeRegistrars.stream()
                             .collect(Collectors.groupingBy(r -> r.dsName))
                             .forEach((dsName, dsNameRegistrars) -> {
-                                ModelRegistrar resultItem = new ModelRegistrar(dsType, dsName);
-                                dsNameRegistrars.forEach(r -> resultItem.classes.addAll(r.classes));
-                                result.add(resultItem);
+                                dsNameRegistrars.stream()
+                                        .collect(Collectors.groupingBy(r -> r.operatorClass))
+                                        .forEach((operatorClass, opRegistrars) -> {
+                                            ModelRegistrar resultItem = new ModelRegistrar(dsType, dsName, operatorClass);
+                                            opRegistrars.forEach(r -> resultItem.classes.addAll(r.classes));
+                                            result.add(resultItem);
+                                        });
                             });
                 });
         registrars.clear();
@@ -93,9 +110,10 @@ public class ModelRegistrar {
         return true;
     }
 
-    private ModelRegistrar(DatasourceType dsType, String dsName) {
+    private ModelRegistrar(DatasourceType dsType, String dsName, Class<? extends ModelOperator> operatorClass) {
         this.dsType = dsType;
         this.dsName = dsName == null ? "" : dsName;
+        this.operatorClass = operatorClass;
     }
 
 }

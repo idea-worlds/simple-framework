@@ -1,5 +1,6 @@
 package dev.simpleframework.crud.spring;
 
+import dev.simpleframework.crud.ModelOperator;
 import dev.simpleframework.crud.annotation.Table;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.util.ModelRegistrar;
@@ -39,12 +40,14 @@ public class ModelScannerRegistrar implements ImportBeanDefinitionRegistrar {
     }
 
     @SneakyThrows
+    @SuppressWarnings("unchecked")
     private void register(AnnotationAttributes attrs, String defaultPackage) {
         Class<?> superClass = attrs.getClass("superClass");
         DatasourceType dsType = attrs.getEnum("datasourceType");
         String dsName = attrs.getString("datasourceName");
+        Class<? extends ModelOperator> operatorClass = (Class<? extends ModelOperator>) attrs.getClass("operatorClass");
 
-        ModelRegistrar modelRegistrar = ModelRegistrar.newRegistrar(dsType, dsName);
+        ModelRegistrar modelRegistrar = ModelRegistrar.newRegistrar(dsType, dsName, operatorClass);
         ClassPathModelScanner modelScanner = new ClassPathModelScanner(superClass);
         ClassLoader classLoader = ModelScannerRegistrar.class.getClassLoader();
         for (String p : basePackages(attrs, defaultPackage)) {

@@ -4,14 +4,11 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.core.DatasourceType;
+import dev.simpleframework.crud.core.FieldConfig;
 import dev.simpleframework.crud.exception.ModelRegisterException;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -84,7 +81,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
     @Override
     public List<ModelField<T>> getAllFields() {
         if (this.cachedAllFields == null) {
-            this.cachedAllFields = Collections.unmodifiableList(new ArrayList<>(this.fields.values()));
+            this.cachedAllFields = List.copyOf(this.fields.values());
         }
         return this.cachedAllFields;
     }
@@ -94,7 +91,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
         if (this.cachedInsertFields == null) {
             this.cachedInsertFields = this.getAllFields().stream()
                     .filter(ModelField::insertable)
-                    .collect(Collectors.toUnmodifiableList());
+                    .toList();
         }
         return this.cachedInsertFields;
     }
@@ -104,7 +101,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
         if (this.cachedUpdateFields == null) {
             this.cachedUpdateFields = this.getAllFields().stream()
                     .filter(ModelField::updatable)
-                    .collect(Collectors.toUnmodifiableList());
+                    .toList();
         }
         return this.cachedUpdateFields;
     }
@@ -114,7 +111,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
         if (this.cachedSelectFields == null) {
             this.cachedSelectFields = this.getAllFields().stream()
                     .filter(ModelField::selectable)
-                    .collect(Collectors.toUnmodifiableList());
+                    .toList();
         }
         return this.cachedSelectFields;
     }
@@ -130,12 +127,12 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
             invalidateFieldCache();
             return;
         }
-        if (this.id != null) {
-            throw new ModelRegisterException(this.name(), "Only support one id field");
-        }
         ModelField<T> field = this.fields.get(fieldName);
         if (field == null) {
             throw new ModelRegisterException(this.name(), "No field named [" + fieldName + "]");
+        }
+        if (this.id != null && this.id != field) {
+            throw new ModelRegisterException(this.name(), "Only support one id field");
         }
         ((AbstractModelField<T>) field).changeToId(type);
         this.id = field;
@@ -154,6 +151,26 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
 
     protected void addField(ModelField<T> field) {
         this.fields.put(field.fieldName(), field);
+        invalidateFieldCache();
+    }
+
+    /**
+     * 覆盖指定字段的配置（供 Operator 场景按需修改字段策略）。
+     * <p>
+     * 修改后会自动使字段列表缓存失效，下次调用 getXxxFields() 时重新计算。
+     *
+     * @param fieldName 字段名（Java 类中的字段名，非列名）
+     * @param config    字段覆盖配置
+     */
+    public void changeFieldConfig(String fieldName, FieldConfig config) {
+        ModelField<T> raw = this.fields.get(fieldName);
+        if (!(raw instanceof AbstractModelField<T> field)) {
+            return;
+        }
+        field.config(config);
+        if (config.getIdType() != null) {
+            setId(fieldName, config.getIdType());
+        }
         invalidateFieldCache();
     }
 

@@ -1,7 +1,7 @@
 package dev.simpleframework.crud.info.dynamic;
 
+import dev.simpleframework.crud.core.FieldConfig;
 import dev.simpleframework.crud.exception.ModelExecuteException;
-import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.info.AbstractModelField;
 
 import java.util.Map;
@@ -22,9 +22,12 @@ public class DynamicModelField extends AbstractModelField<Map<String, Object>> {
     public DynamicModelField(String fieldName, String column, Class<?> fieldType, Class<?> fieldComponentType) {
         super();
         super.setColumn(column, fieldName, fieldType, fieldComponentType);
-        super.setInsertable(true);
-        super.setUpdatable(true);
-        super.setSelectable(true);
+        FieldConfig config = new FieldConfig()
+                .name(column)
+                .insertable(true)
+                .updatable(true)
+                .selectable(true);
+        super.config(config);
     }
 
     @SuppressWarnings("unchecked")
@@ -40,23 +43,8 @@ public class DynamicModelField extends AbstractModelField<Map<String, Object>> {
     }
 
     @Override
-    public void setInsertable(boolean insertable) {
-        super.setInsertable(insertable);
-    }
-
-    @Override
-    public void setUpdatable(boolean updatable) {
-        super.setUpdatable(updatable);
-    }
-
-    @Override
-    public void setSelectable(boolean selectable) {
-        super.setSelectable(selectable);
-    }
-
-    @Override
-    public void setFillStrategy(DataFillStrategy strategy, Object strategyParam) {
-        super.setFillStrategy(strategy, strategyParam);
+    public void config(FieldConfig config) {
+        super.config(config);
     }
 
     private void validValue(Object value) {
