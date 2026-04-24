@@ -1,11 +1,5 @@
 package dev.simpleframework.token.autoconfigure;
 
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import dev.simpleframework.token.session.SessionStore;
 import dev.simpleframework.token.session.impl.SpringRedisDefaultSessionStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -15,9 +9,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import tools.jackson.core.json.JsonReadFeature;
+import tools.jackson.databind.DefaultTyping;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -29,7 +32,7 @@ public class SimpleTokenSpringRedisAutoConfiguration {
 
     static {
         try {
-            Class.forName("com.fasterxml.jackson.databind.ObjectMapper");
+            Class.forName("tools.jackson.databind.ObjectMapper");
             jacksonExist = true;
         } catch (Throwable e) {
             jacksonExist = false;
@@ -42,13 +45,16 @@ public class SimpleTokenSpringRedisAutoConfiguration {
     public SessionStore simpleTokenSessionStore(RedisConnectionFactory connectionFactory) {
         // 优先使用 jackson 序列化
         if (jacksonExist) {
+            PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                    .allowIfBaseType(Object.class)
+                    .build();
             ObjectMapper objectMapper = JsonMapper.builder()
                     .enable(
                             // 允许注释
                             JsonReadFeature.ALLOW_JAVA_COMMENTS,
                             JsonReadFeature.ALLOW_YAML_COMMENTS,
                             // 允许属性名没加双引号
-                            JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES,
+                            JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES,
                             // 允许属性名和值用单引号
                             JsonReadFeature.ALLOW_SINGLE_QUOTES,
                             // 允许非引号控制字符（比如 \n）
@@ -61,8 +67,10 @@ public class SimpleTokenSpringRedisAutoConfiguration {
                     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                     // 允许空对象
                     .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                    // 启用默认类型信息以支持多态反序列化
+                    .activateDefaultTyping(ptv, DefaultTyping.NON_FINAL)
                     .build();
-            RedisSerializer<Object> valueSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+            RedisSerializer<Object> valueSerializer = new JacksonJsonRedisSerializer<>(objectMapper, Object.class);
             RedisTemplate<String, Object> template = buildRedisTemplate(connectionFactory, valueSerializer);
             return new SpringRedisDefaultSessionStore(template);
         }

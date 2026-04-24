@@ -50,7 +50,7 @@ public final class Classes {
                 throw new IllegalArgumentException("Failed to instantiate [" + clazz.getName() + "]:" +
                         " Unresolvable class definition", e);
             }
-            if ((!Modifier.isPublic(ctor.getModifiers()) || !Modifier.isPublic(ctor.getDeclaringClass().getModifiers())) && !ctor.isAccessible()) {
+            if ((!Modifier.isPublic(ctor.getModifiers()) || !Modifier.isPublic(ctor.getDeclaringClass().getModifiers())) && !ctor.canAccess(null)) {
                 ctor.setAccessible(true);
             }
             CONSTRUCTORS.put(clazz, new WeakReference<>(ctor));

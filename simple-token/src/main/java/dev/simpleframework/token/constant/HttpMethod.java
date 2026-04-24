@@ -1,7 +1,5 @@
 package dev.simpleframework.token.constant;
 
-import org.springframework.lang.Nullable;
-
 import java.util.List;
 
 /**
@@ -52,7 +50,7 @@ public final class HttpMethod {
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
