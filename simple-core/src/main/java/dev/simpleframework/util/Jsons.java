@@ -1,134 +1,151 @@
 package dev.simpleframework.util;
 
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.type.MapType;
-import lombok.SneakyThrows;
-
 import java.io.*;
-import java.net.URL;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * JSON 工具类
+ * JSON 工具类，运行时自动检测可用的 Jackson 版本：
+ * 优先使用 Jackson 3.x（tools.jackson），降级到 Jackson 2.x（com.fasterxml.jackson）
  *
  * @author loyayz (loyayz@foxmail.com)
  */
 public final class Jsons {
 
-    private static boolean jacksonExist = false;
-    private static ObjectMapper OBJECT_MAPPER;
+    private static final JsonsDelegate DELEGATE;
 
     static {
+        JsonsDelegate delegate = null;
+        // 优先检测 Jackson 3.x（tools.jackson）
         try {
-            Class.forName("com.fasterxml.jackson.databind.ObjectMapper");
-
-            OBJECT_MAPPER = JsonMapper.builder()
-                    .enable(
-                            // 允许注释
-                            JsonReadFeature.ALLOW_JAVA_COMMENTS,
-                            JsonReadFeature.ALLOW_YAML_COMMENTS,
-                            // 允许属性名没加双引号
-                            JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES,
-                            // 允许属性名和值用单引号
-                            JsonReadFeature.ALLOW_SINGLE_QUOTES,
-                            // 允许非引号控制字符（比如 \n）
-                            JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-                    // 使用 BigDecimal 序列化浮点数
-                    .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
-                    // 忽略枚举大小写
-                    .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-                    // 允许未知属性
-                    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                    // 允许空对象
-                    .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                    .build();
-            jacksonExist = true;
-        } catch (Throwable e) {
-            jacksonExist = false;
+            Class.forName("tools.jackson.databind.ObjectMapper");
+            delegate = new Jackson3JsonsDelegate();
+        } catch (Throwable ignored) {
         }
-    }
-
-    public static void config(Consumer<ObjectMapper> action) {
-        action.accept(OBJECT_MAPPER);
-    }
-
-    public static ObjectMapper objectMapper() {
-        return OBJECT_MAPPER;
-    }
-
-    public static ObjectMapper objectMapper(boolean newInstance) {
-        if (newInstance) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setConfig(OBJECT_MAPPER.getSerializationConfig());
-            objectMapper.setConfig(OBJECT_MAPPER.getDeserializationConfig());
-            return objectMapper;
+        // 降级到 Jackson 2.x（com.fasterxml.jackson）
+        if (delegate == null) {
+            try {
+                Class.forName("com.fasterxml.jackson.databind.ObjectMapper");
+                delegate = new Jackson2JsonsDelegate();
+            } catch (Throwable ignored) {
+            }
         }
-        return OBJECT_MAPPER;
+        DELEGATE = delegate;
     }
 
-    @SneakyThrows
+    /**
+     * 配置内部 ObjectMapper。
+     * 调用方按自身 Jackson 版本声明 Consumer 类型，例如：
+     * {@code Jsons.<tools.jackson.databind.ObjectMapper>config(m -> m.enable(...))}
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T> void config(Consumer<T> action) {
+        DELEGATE.config((Consumer) action);
+    }
+
+    /**
+     * 返回内部 ObjectMapper 实例。
+     * 调用方按自身 Jackson 版本接收，例如：
+     * {@code tools.jackson.databind.ObjectMapper mapper = Jsons.objectMapper()}
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T objectMapper() {
+        return (T) DELEGATE.objectMapper();
+    }
+
+    /**
+     * 返回 ObjectMapper 实例。
+     *
+     * @param newInstance true 时返回与内部实例配置相同的新实例
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T objectMapper(boolean newInstance) {
+        return (T) DELEGATE.objectMapper(newInstance);
+    }
+
+    /**
+     * 将对象反序列化为指定类型。
+     * obj 支持：{@link String}、{@link File}、{@link Reader}、{@link InputStream}、
+     * {@link java.net.URL}、{@code byte[]}，以及任意可转换对象（convertValue）。
+     * obj 为 null 时返回 null。
+     */
     public static <T> T read(Object obj, Class<T> clazz) {
-        if (obj == null) {
-            return null;
-        }
-        if (obj instanceof String json) {
-            return OBJECT_MAPPER.readValue(json, clazz);
-        }
-        if (obj instanceof File src) {
-            return OBJECT_MAPPER.readValue(src, clazz);
-        }
-        if (obj instanceof Reader src) {
-            return OBJECT_MAPPER.readValue(src, clazz);
-        }
-        if (obj instanceof InputStream src) {
-            return OBJECT_MAPPER.readValue(src, clazz);
-        }
-        if (obj instanceof URL src) {
-            return OBJECT_MAPPER.readValue(src, clazz);
-        }
-        if (obj instanceof byte[] src) {
-            return OBJECT_MAPPER.readValue(src, clazz);
-        }
-        return OBJECT_MAPPER.convertValue(obj, clazz);
+        return DELEGATE.read(obj, clazz);
     }
 
+    /**
+     * 将对象转换为 {@code Map<String, Object>}。
+     */
     public static Map<String, Object> toMap(Object obj) {
-        return toMap(obj, String.class, Object.class);
+        return DELEGATE.toMap(obj);
     }
 
+    /**
+     * 将对象转换为指定键值类型的 Map。
+     */
     public static <K, V> Map<K, V> toMap(Object obj, Class<K> keyClass, Class<V> valueClass) {
-        MapType type = OBJECT_MAPPER.getTypeFactory().constructMapType(LinkedHashMap.class, keyClass, valueClass);
-        return OBJECT_MAPPER.convertValue(obj, type);
+        return DELEGATE.toMap(obj, keyClass, valueClass);
     }
 
-    @SneakyThrows
+    /**
+     * 将 JSON 字符串反序列化为带泛型参数的类型。
+     * 例如反序列化 {@code List<User>}：
+     * {@code Jsons.readWithGeneric(json, List.class, User.class)}
+     */
     public static <T> T readWithGeneric(String json, Class<T> clazz, Class<?>... components) {
-        JavaType type = OBJECT_MAPPER.getTypeFactory().constructParametricType(clazz, components);
-        return OBJECT_MAPPER.readValue(json, type);
+        return DELEGATE.readWithGeneric(json, clazz, components);
     }
 
-    @SneakyThrows
+    /**
+     * 将对象序列化为 JSON 字符串。
+     */
     public static String write(Object json) {
-        return OBJECT_MAPPER.writeValueAsString(json);
+        return DELEGATE.write(json);
     }
 
-    @SneakyThrows
+    /**
+     * 将对象序列化为 JSON 并写入文件。
+     */
     public static void write(Object json, File out) {
-        OBJECT_MAPPER.writeValue(out, json);
+        DELEGATE.write(json, out);
     }
 
-    @SneakyThrows
+    /**
+     * 将对象序列化为 JSON 并写入输出流。
+     */
     public static void write(Object json, OutputStream out) {
-        OBJECT_MAPPER.writeValue(out, json);
+        DELEGATE.write(json, out);
     }
 
-    @SneakyThrows
+    /**
+     * 将对象序列化为 JSON 并写入 Writer。
+     */
     public static void write(Object json, Writer out) {
-        OBJECT_MAPPER.writeValue(out, json);
+        DELEGATE.write(json, out);
+    }
+
+    interface JsonsDelegate {
+        Object objectMapper();
+
+        Object objectMapper(boolean newInstance);
+
+        void config(Consumer<Object> action);
+
+        <T> T read(Object obj, Class<T> clazz);
+
+        Map<String, Object> toMap(Object obj);
+
+        <K, V> Map<K, V> toMap(Object obj, Class<K> keyClass, Class<V> valueClass);
+
+        <T> T readWithGeneric(String json, Class<T> clazz, Class<?>... components);
+
+        String write(Object json);
+
+        void write(Object json, File out);
+
+        void write(Object json, OutputStream out);
+
+        void write(Object json, Writer out);
     }
 
 }
