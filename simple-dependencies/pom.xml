@@ -39,7 +39,7 @@
 
         <jackson2.version>2.18.3</jackson2.version>
         <guava.version>33.3.0-jre</guava.version>
-        <mybatis.version>3.5.16</mybatis.version>
+        <mybatis.version>3.5.19</mybatis.version>
         <mybatis-spring-boot-starter.version>4.0.1</mybatis-spring-boot-starter.version>
         <pagehelper.version>6.1.1</pagehelper.version>
         <pagehelper-spring-boot-starter.version>4.0.0</pagehelper-spring-boot-starter.version>
