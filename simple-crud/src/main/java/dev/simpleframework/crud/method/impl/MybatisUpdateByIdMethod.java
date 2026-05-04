@@ -2,7 +2,7 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
-import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
+import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlCommandType;
@@ -26,7 +26,7 @@ public final class MybatisUpdateByIdMethod {
                             .collect(Collectors.joining("\n"));
                     ModelField<?> id = info.id();
                     String idParam = "#{" + id.fieldName() + "}";
-                    String condition = SqlConditionDialect.DEFAULT.equal(info.id(), idParam, true);
+                    String condition = PgConditionDialect.DEFAULT.equal(info.id(), idParam, true);
                     return String.format("<script>UPDATE %s \n<set>\n%s\n</set>\n WHERE %s</script>",
                             info.name(), script, condition);
                 });

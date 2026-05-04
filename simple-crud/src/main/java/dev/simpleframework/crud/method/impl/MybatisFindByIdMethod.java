@@ -2,7 +2,7 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryFields;
-import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
+import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import org.apache.ibatis.mapping.SqlCommandType;
 
@@ -21,7 +21,7 @@ public final class MybatisFindByIdMethod {
                     Map<String, Object> params = (Map<String, Object>) param;
                     QueryFields fields = (QueryFields) params.get("config");
                     String column = MybatisScripts.columnScript(fields.find(info.getSelectFields()));
-                    String condition = SqlConditionDialect.DEFAULT.equal(info.id(), "#{id}", true);
+                    String condition = PgConditionDialect.DEFAULT.equal(info.id(), "#{id}", true);
                     return String.format("<script>SELECT %s FROM %s WHERE %s</script>",
                             column, info.name(), condition);
                 });

@@ -1,7 +1,9 @@
 package dev.simpleframework.crud.dialect;
 
 import dev.simpleframework.crud.dialect.condition.ConditionDialect;
-import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
+import dev.simpleframework.crud.dialect.condition.H2ConditionDialect;
+import dev.simpleframework.crud.dialect.condition.MySqlConditionDialect;
+import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.dialect.url.*;
 import dev.simpleframework.util.Strings;
 
@@ -35,6 +37,11 @@ public final class Dialects {
             DS_URLS.add(new SqlTomcatDatasourceUrlExtractor());
         } catch (Exception ignore) {
         }
+
+        // 预注册数据库方言（通过 JDBC URL 子协议自动匹配）
+        registerConditionDialect("postgresql", PgConditionDialect.DEFAULT);
+        registerConditionDialect("mysql", MySqlConditionDialect.DEFAULT);
+        registerConditionDialect("h2", H2ConditionDialect.DEFAULT);
     }
 
     /**
@@ -61,15 +68,15 @@ public final class Dialects {
      * <p>
      * 匹配规则：从 URL 中提取数据库标识（如 {@code :mysql:}、{@code :postgresql:}），
      * 按 {@link #registerConditionDialect} 注册顺序依次匹配，首个命中的方言生效。
-     * 未注册任何方言，或 URL 无法提取，或无匹配时，均回退到 {@link SqlConditionDialect#DEFAULT}（通用 ANSI SQL）。
+     * 无匹配时回退到 {@link PgConditionDialect#DEFAULT}。
      */
     public static ConditionDialect condition(DataSource datasource) {
         if (JDBC_CONDITIONS.isEmpty()) {
-            return SqlConditionDialect.DEFAULT;
+            return PgConditionDialect.DEFAULT;
         }
         String url = extractUrl(datasource);
         if (Strings.isBlank(url)) {
-            return SqlConditionDialect.DEFAULT;
+            return PgConditionDialect.DEFAULT;
         }
         url = url.toLowerCase();
         for (Map.Entry<String, ConditionDialect> entry : JDBC_CONDITIONS.entrySet()) {
@@ -77,7 +84,7 @@ public final class Dialects {
                 return entry.getValue();
             }
         }
-        return SqlConditionDialect.DEFAULT;
+        return PgConditionDialect.DEFAULT;
     }
 
 }

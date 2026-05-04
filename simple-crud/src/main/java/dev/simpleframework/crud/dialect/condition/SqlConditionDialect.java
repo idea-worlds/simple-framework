@@ -3,10 +3,12 @@ package dev.simpleframework.crud.dialect.condition;
 import dev.simpleframework.crud.ModelField;
 
 /**
+ * SQL 条件方言抽象基类，提供标准 SQL 方法实现。
+ * 数组和 JSON 条件由数据库特定子类实现。
+ *
  * @author loyayz (loyayz@foxmail.com)
  */
-public class SqlConditionDialect implements ConditionDialect {
-    public static final SqlConditionDialect DEFAULT = new SqlConditionDialect();
+public abstract class SqlConditionDialect implements ConditionDialect {
 
     @Override
     public String equal(ModelField<?> field, String value, boolean xml) {
@@ -90,78 +92,7 @@ public class SqlConditionDialect implements ConditionDialect {
         return column + " IS NOT NULL";
     }
 
-    @Override
-    public String arrayContains(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("@>", xml);
-
-        String result = column + operator + value;
-        if (String.class.isAssignableFrom(field.fieldComponentType())) {
-            result = result.trim() + "::text[]";
-        }
-        return result;
-    }
-
-    @Override
-    public String arrayContainedBy(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("<@", xml);
-
-        String result = column + operator + value;
-        if (String.class.isAssignableFrom(field.fieldComponentType())) {
-            result = result.trim() + "::text[]";
-        }
-        return result;
-    }
-
-    @Override
-    public String arrayOverlap(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("&&", xml);
-
-        String result = column + operator + value;
-        if (String.class.isAssignableFrom(field.fieldComponentType())) {
-            result = result.trim() + "::text[]";
-        }
-        return result;
-    }
-
-    @Override
-    public String jsonContains(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("@>", xml);
-        return column + operator + value;
-    }
-
-    @Override
-    public String jsonContainedBy(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("<@", xml);
-        return column + operator + value;
-    }
-
-    @Override
-    public String jsonExistKey(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("??", xml);
-        return column + operator + value;
-    }
-
-    @Override
-    public String jsonExistKeyAny(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("??|", xml);
-        return column + operator + value;
-    }
-
-    @Override
-    public String jsonExistKeyAll(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        String operator = parseOperator("??&", xml);
-        return column + operator + value;
-    }
-
-    protected String parseOperator(String operator, boolean xml) {
+    protected static String parseOperator(String operator, boolean xml) {
         return xml ?
                 " <![CDATA[ " + operator + " ]]> "
                 :

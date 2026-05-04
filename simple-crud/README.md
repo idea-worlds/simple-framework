@@ -585,7 +585,7 @@ MyBatis 实现层    MybatisScripts（动态 SQL 生成）
                   MybatisHelper（MappedStatement 注册 / SqlSession 管理 / 分页）
     ↓
 方言层            Dialects（JDBC URL → ConditionDialect 路由）
-                  SqlConditionDialect（ANSI SQL 默认实现）
+                  PgConditionDialect（PostgreSQL，默认）/ MySqlConditionDialect（MySQL 5.7+）/ H2ConditionDialect（H2）
     ↓
 缓存层            ModelCache（ModelInfo / DatasourceProvider / DataFillStrategy）
 ```

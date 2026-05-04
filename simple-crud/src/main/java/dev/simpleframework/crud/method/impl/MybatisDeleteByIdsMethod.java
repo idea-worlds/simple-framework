@@ -1,7 +1,7 @@
 package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelInfo;
-import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
+import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import org.apache.ibatis.mapping.SqlCommandType;
 
@@ -18,7 +18,7 @@ public final class MybatisDeleteByIdsMethod {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.DELETE, Integer.class,
                 (configuration, param) -> {
                     String idParam = MybatisScripts.foreach("ids", "_id");
-                    String condition = SqlConditionDialect.DEFAULT.in(info.id(), idParam, true);
+                    String condition = PgConditionDialect.DEFAULT.in(info.id(), idParam, true);
                     return String.format("<script>DELETE FROM %s WHERE %s</script>",
                             info.name(), condition);
                 });

@@ -2,7 +2,7 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryFields;
-import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
+import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import org.apache.ibatis.mapping.SqlCommandType;
 
@@ -24,7 +24,7 @@ public final class MybatisListByIdsMethod {
                     QueryFields fields = (QueryFields) params.get("config");
                     String column = MybatisScripts.columnScript(fields.find(info.getSelectFields()));
                     String idParam = MybatisScripts.foreach("ids", "_id");
-                    String condition = SqlConditionDialect.DEFAULT.in(info.id(), idParam, true);
+                    String condition = PgConditionDialect.DEFAULT.in(info.id(), idParam, true);
                     return String.format("<script>SELECT %s FROM %s WHERE \n %s</script>",
                             column, info.name(), condition);
                 });
