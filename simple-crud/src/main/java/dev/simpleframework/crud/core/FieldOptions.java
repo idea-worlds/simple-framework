@@ -7,16 +7,15 @@ import org.springframework.core.annotation.AnnotationUtils;
 import java.lang.annotation.Annotation;
 
 /**
- * 字段策略覆盖配置，用于在 Operator 上以 builder 风格覆盖 POJO 字段的注解行为。
- * <p>
- * 通过 {@link dev.simpleframework.crud.core.ModelFieldConfig#field} 方法传入，
+ * 单个字段的策略选项，用于覆盖 POJO 字段的注解行为。
+ * 通过 {@link FieldCustomizer#field} 方法传入链式调用设置选项，
  * 在系统启动阶段统一应用于全局模型信息，不影响 POJO 原始定义。
  *
  * @author loyayz (loyayz@foxmail.com)
- * @see dev.simpleframework.crud.core.ModelFieldConfig
+ * @see FieldCustomizer
  */
 @Getter
-public class FieldConfig {
+public class FieldOptions {
 
     private String columnName;
     private Boolean insertable;
@@ -28,7 +27,7 @@ public class FieldConfig {
     /**
      * 覆盖列名，等价于 {@code @Column(name = "...")}
      */
-    public FieldConfig name(String columnName) {
+    public FieldOptions name(String columnName) {
         this.columnName = columnName;
         return this;
     }
@@ -36,7 +35,7 @@ public class FieldConfig {
     /**
      * 设置主键策略，等价于 {@code @Id(type = ...)}
      */
-    public FieldConfig id(Id.Type type) {
+    public FieldOptions id(Id.Type type) {
         this.idType = type;
         return this;
     }
@@ -44,7 +43,7 @@ public class FieldConfig {
     /**
      * 设置字段是否参与 INSERT，等价于 {@code @Column(insertable = ...)}
      */
-    public FieldConfig insertable(boolean insertable) {
+    public FieldOptions insertable(boolean insertable) {
         this.insertable = insertable;
         return this;
     }
@@ -52,7 +51,7 @@ public class FieldConfig {
     /**
      * 设置字段是否参与 UPDATE，等价于 {@code @Column(updatable = ...)}
      */
-    public FieldConfig updatable(boolean updatable) {
+    public FieldOptions updatable(boolean updatable) {
         this.updatable = updatable;
         return this;
     }
@@ -60,7 +59,7 @@ public class FieldConfig {
     /**
      * 设置字段是否参与 SELECT，等价于 {@code @Column(selectable = ...)}
      */
-    public FieldConfig selectable(boolean selectable) {
+    public FieldOptions selectable(boolean selectable) {
         this.selectable = selectable;
         return this;
     }
@@ -74,7 +73,7 @@ public class FieldConfig {
      * <p>
      * 注解无属性时使用此方法；有属性时请使用 {@link #autoFill(Annotation)}。
      */
-    public FieldConfig autoFill(Class<? extends Annotation> annotationType) {
+    public FieldOptions autoFill(Class<? extends Annotation> annotationType) {
         Annotation annotation = AnnotationUtils.synthesizeAnnotation(annotationType);
         return this.autoFill(annotation);
     }
@@ -84,7 +83,7 @@ public class FieldConfig {
      * <p>
      * 用于传入带属性的注解实例，框架通过 {@link dev.simpleframework.crud.helper.DataFillStrategy#toParam(Annotation)} 提取策略参数。
      */
-    public FieldConfig autoFill(Annotation annotation) {
+    public FieldOptions autoFill(Annotation annotation) {
         this.autoFill = annotation;
         return this;
     }

@@ -1,6 +1,6 @@
 package dev.simpleframework.crud.info.dynamic;
 
-import dev.simpleframework.crud.core.FieldConfig;
+import dev.simpleframework.crud.core.FieldOptions;
 import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.crud.info.AbstractModelField;
 
@@ -22,7 +22,7 @@ public class DynamicModelField extends AbstractModelField<Map<String, Object>> {
     public DynamicModelField(String fieldName, String column, Class<?> fieldType, Class<?> fieldComponentType) {
         super();
         super.setColumn(column, fieldName, fieldType, fieldComponentType);
-        FieldConfig config = new FieldConfig()
+        FieldOptions config = new FieldOptions()
                 .name(column)
                 .insertable(true)
                 .updatable(true)
@@ -43,7 +43,7 @@ public class DynamicModelField extends AbstractModelField<Map<String, Object>> {
     }
 
     @Override
-    public void config(FieldConfig config) {
+    public void config(FieldOptions config) {
         super.config(config);
     }
 

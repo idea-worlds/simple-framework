@@ -12,12 +12,12 @@ import java.util.function.Consumer;
 /**
  * 模型字段策略覆盖配置，用于在系统启动时统一声明模型字段的注解行为覆盖。
  * <p>
- * 注册为 Spring Bean 后，框架在启动时（{@code SimpleCrudAutoConfiguration.afterPropertiesSet}）自动应用所有 {@code ModelFieldConfig} bean
+ * 注册为 Spring Bean 后，框架在启动时（{@code SimpleCrudAutoConfiguration.afterPropertiesSet}）自动应用所有 {@code FieldCustomizer} bean
  *
  * <pre>{@code
  * @Bean
- * public ModelFieldConfig<User> userFieldConfig() {
- *     return ModelFieldConfig.of(User.class)
+ * public FieldCustomizer<User> userFieldOptions() {
+ *     return FieldCustomizer.of(User.class)
  *         .field(User::getId,          f -> f.id(Id.Type.SNOWFLAKE).updatable(false))
  *         .field(User::getCreatedTime, f -> f.autoFill(DataOperateDate.class).insertable(false).updatable(false))
  *         .field(User::getUpdatedTime, f -> f.autoFill(DataOperateDate.class));
@@ -26,19 +26,19 @@ import java.util.function.Consumer;
  *
  * @param <T> 模型实体类型
  * @author loyayz (loyayz@foxmail.com)
- * @see FieldConfig
+ * @see FieldOptions
  * @see dev.simpleframework.crud.Models
  */
-public class ModelFieldConfig<T> {
+public class FieldCustomizer<T> {
 
     private final Class<T> modelClass;
     private final List<FieldEntry> entries = new ArrayList<>();
 
-    public static <T> ModelFieldConfig<T> of(Class<T> modelClass) {
-        return new ModelFieldConfig<>(modelClass);
+    public static <T> FieldCustomizer<T> of(Class<T> modelClass) {
+        return new FieldCustomizer<>(modelClass);
     }
 
-    private ModelFieldConfig(Class<T> modelClass) {
+    private FieldCustomizer(Class<T> modelClass) {
         this.modelClass = modelClass;
     }
 
@@ -46,12 +46,12 @@ public class ModelFieldConfig<T> {
      * 覆盖指定字段的配置。
      *
      * @param fieldFunc 字段方法引用，如 {@code User::getId}
-     * @param consumer  字段配置，通过 {@link FieldConfig} 链式调用设置覆盖项
+     * @param consumer  字段配置，通过 {@link FieldOptions} 链式调用设置覆盖项
      * @return this，支持链式调用
      */
-    public ModelFieldConfig<T> field(SerializedFunction<T, ?> fieldFunc, Consumer<FieldConfig> consumer) {
+    public FieldCustomizer<T> field(SerializedFunction<T, ?> fieldFunc, Consumer<FieldOptions> consumer) {
         String fieldName = Functions.getLambdaFieldName(fieldFunc);
-        FieldConfig config = new FieldConfig();
+        FieldOptions config = new FieldOptions();
         consumer.accept(config);
         this.entries.add(new FieldEntry(fieldName, config));
         return this;
@@ -64,11 +64,11 @@ public class ModelFieldConfig<T> {
     public void apply() {
         AbstractModelInfo info = (AbstractModelInfo) ModelCache.info(this.modelClass);
         for (FieldEntry entry : this.entries) {
-            info.changeFieldConfig(entry.fieldName, entry.config);
+            info.changeFieldOptions(entry.fieldName, entry.config);
         }
     }
 
-    private record FieldEntry(String fieldName, FieldConfig config) {
+    private record FieldEntry(String fieldName, FieldOptions config) {
     }
 
 }

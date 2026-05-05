@@ -1,7 +1,7 @@
 package dev.simpleframework.crud.info.clazz;
 
 import dev.simpleframework.crud.annotation.Column;
-import dev.simpleframework.crud.core.FieldConfig;
+import dev.simpleframework.crud.core.FieldOptions;
 import dev.simpleframework.crud.info.AbstractModelField;
 import dev.simpleframework.crud.util.ModelCache;
 import dev.simpleframework.util.Classes;
@@ -25,7 +25,7 @@ public class ClassModelField<T> extends AbstractModelField<T> {
         this.field = field;
         field.setAccessible(true);
         String fieldName = field.getName();
-        FieldConfig config = this.buildConfig();
+        FieldOptions config = this.buildConfig();
         if (config.getColumnName() == null) {
             config.name(Strings.camelToUnderline(fieldName).toUpperCase());
         }
@@ -52,7 +52,7 @@ public class ClassModelField<T> extends AbstractModelField<T> {
         return this.field;
     }
 
-    private FieldConfig buildConfig() {
+    private FieldOptions buildConfig() {
         boolean insertable = true;
         boolean updatable = true;
         boolean selectable = true;
@@ -68,7 +68,7 @@ public class ClassModelField<T> extends AbstractModelField<T> {
                 .filter(a -> ModelCache.fillStrategy(a.annotationType()) != null)
                 .min(Comparator.comparingInt(a -> ModelCache.fillStrategy(a.annotationType()).order()))
                 .orElse(null);
-        return new FieldConfig()
+        return new FieldOptions()
                 .name(columnName)
                 .insertable(insertable)
                 .updatable(updatable)

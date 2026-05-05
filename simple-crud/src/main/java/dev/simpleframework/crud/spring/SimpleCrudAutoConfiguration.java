@@ -1,6 +1,6 @@
 package dev.simpleframework.crud.spring;
 
-import dev.simpleframework.crud.core.ModelFieldConfig;
+import dev.simpleframework.crud.core.FieldCustomizer;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.helper.DatasourceProvider;
 import dev.simpleframework.crud.helper.provider.DefaultSpringMybatisProvider;
@@ -12,6 +12,8 @@ import dev.simpleframework.util.SimpleSpringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
@@ -21,13 +23,27 @@ import org.springframework.core.annotation.Order;
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SimpleCrudAutoConfiguration implements InitializingBean {
+    private volatile boolean modelRegistered;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         this.setDatasourceProvider();
         this.setDataFillStrategy();
+    }
+
+    /**
+     * 在 Spring 容器 refresh 完成后注册模型并应用字段覆盖。
+     * 此时 SqlSession 等 MyBatis bean 已就绪，{@link #afterPropertiesSet} 中如果立即注册，
+     * 会因为 MyBatis 自动配置未完成导致 {@code getBean(SqlSession.class)} 失败。
+     */
+    @EventListener(ContextRefreshedEvent.class)
+    public void onContextRefreshed() {
+        if (modelRegistered) {
+            return;
+        }
+        modelRegistered = true;
         ModelRegistrar.register();
-        this.applyModelFieldConfigs();
+        this.applyFieldCustomizers();
     }
 
     private void setDatasourceProvider() {
@@ -42,8 +58,8 @@ public class SimpleCrudAutoConfiguration implements InitializingBean {
         SimpleSpringUtils.getBeans(DataFillStrategy.class).forEach(ModelCache::registerFillStrategy);
     }
 
-    private void applyModelFieldConfigs() {
-        SimpleSpringUtils.getBeans(ModelFieldConfig.class).forEach(ModelFieldConfig::apply);
+    private void applyFieldCustomizers() {
+        SimpleSpringUtils.getBeans(FieldCustomizer.class).forEach(FieldCustomizer::apply);
     }
 
 }

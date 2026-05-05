@@ -4,7 +4,7 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.annotation.Id;
 import dev.simpleframework.crud.core.DatasourceType;
-import dev.simpleframework.crud.core.FieldConfig;
+import dev.simpleframework.crud.core.FieldOptions;
 import dev.simpleframework.crud.exception.ModelRegisterException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -162,7 +162,7 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
      * @param fieldName 字段名（Java 类中的字段名，非列名）
      * @param config    字段覆盖配置
      */
-    public void changeFieldConfig(String fieldName, FieldConfig config) {
+    public void changeFieldOptions(String fieldName, FieldOptions config) {
         ModelField<T> raw = this.fields.get(fieldName);
         if (!(raw instanceof AbstractModelField<T> field)) {
             return;

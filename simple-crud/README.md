@@ -467,14 +467,14 @@ public class CurrentUserFillStrategy implements DataFillStrategy {
 
 ---
 
-### `ModelFieldConfig`：模型字段策略覆盖配置
+### `FieldCustomizer`：模型字段策略覆盖配置
 
-当实体类无法添加注解时，通过注册 `ModelFieldConfig` Spring Bean 在启动时统一声明字段策略：
+当实体类无法添加注解时，通过注册 `FieldCustomizer` Spring Bean 在启动时统一声明字段策略：
 
 ```java
 @Bean
-public ModelFieldConfig<User> userFieldConfig() {
-    return ModelFieldConfig.of(User.class)
+public FieldCustomizer<User> userFieldOptions() {
+    return FieldCustomizer.of(User.class)
         .field(User::getId,          f -> f.id(Id.Type.SNOWFLAKE).updatable(false))
         .field(User::getCreatedTime, f -> f.autoFill(DataOperateDate.class).insertable(false).updatable(false))
         .field(User::getUpdatedTime, f -> f.autoFill(DataOperateDate.class))
@@ -482,7 +482,7 @@ public ModelFieldConfig<User> userFieldConfig() {
 }
 ```
 
-`FieldConfig` 可链式调用的配置项：
+`FieldOptions` 可链式调用的配置项：
 
 | 方法 | 等价注解 |
 |------|---------|

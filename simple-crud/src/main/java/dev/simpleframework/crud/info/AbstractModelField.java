@@ -2,7 +2,7 @@ package dev.simpleframework.crud.info;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.annotation.Id;
-import dev.simpleframework.crud.core.FieldConfig;
+import dev.simpleframework.crud.core.FieldOptions;
 import dev.simpleframework.crud.helper.DataFillStrategy;
 import dev.simpleframework.crud.helper.DataFillStrategy.FillType;
 import dev.simpleframework.crud.util.ModelCache;
@@ -105,11 +105,11 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
     }
 
     /**
-     * 将 {@link FieldConfig} 中的非 null 配置项应用到此字段。
+     * 将 {@link FieldOptions} 中的非 null 配置项应用到此字段。
      * <p>
      * 仅覆盖 config 中显式设置的项，未设置（null）的项保持不变。
      */
-    protected void config(FieldConfig config) {
+    protected void config(FieldOptions config) {
         if (config.getColumnName() != null) {
             this.column = config.getColumnName();
         }
