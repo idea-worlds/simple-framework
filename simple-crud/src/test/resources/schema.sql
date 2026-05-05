@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS SYS_USER (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100),
+    age INT,
+    email VARCHAR(200)
+);
