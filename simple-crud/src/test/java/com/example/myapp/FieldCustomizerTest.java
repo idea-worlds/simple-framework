@@ -1,5 +1,6 @@
 package com.example.myapp;
 
+import com.example.myapp.model.DateModel;
 import com.example.myapp.model.UserModel;
 import com.example.operator.model.UserPojo;
 import dev.simpleframework.crud.DynamicModel;
@@ -118,6 +119,64 @@ public class FieldCustomizerTest {
         DynamicModel.register(info);
         assertNotNull(DynamicModel.of("dyn_fc").info());
         DynamicModel.removeRegistered("dyn_fc");
+    }
+
+    // ==================== selectable ====================
+
+    @Test
+    public void testBaseModelSelectableFalseShouldNotReturnField() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(UserModel.class)
+                    .field(UserModel::getName, f -> f.selectable(false)).apply();
+            try {
+                var user = new UserModel(); user.setName("Hidden"); user.setAge(1); user.insert();
+                var found = new UserModel().findById(user.getId());
+                assertNull(found.getName(), "name should be null because selectable=false");
+                assertEquals(1, found.getAge(), "age should still be returned");
+            } finally {
+                FieldCustomizer.of(UserModel.class)
+                        .field(UserModel::getName, f -> f.selectable(true)).apply();
+            }
+        }
+    }
+
+    // ==================== column name override ====================
+
+    @Test
+    public void testBaseModelNameOverrideShouldMapToDifferentColumn() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(UserModel.class)
+                    .field(UserModel::getName, f -> f.name("name2")).apply();
+            try {
+                var user = new UserModel(); user.setName("Mapped"); user.setAge(1); user.insert();
+                var found = new UserModel().findById(user.getId());
+                assertEquals("Mapped", found.getName(),
+                        "name field is mapped to name2 column");
+            } finally {
+                FieldCustomizer.of(UserModel.class)
+                        .field(UserModel::getName, f -> f.name("name")).apply();
+            }
+        }
+    }
+
+    // ==================== ModelOperator selectable ====================
+
+    @Test
+    public void testOperatorSelectableFalseShouldNotReturnField() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(UserPojo.class)
+                    .field(UserPojo::getEmail, f -> f.selectable(false)).apply();
+            try {
+                var pojo = new UserPojo(); pojo.setName("Op"); pojo.setEmail("hidden@test.com");
+                Models.wrap(pojo).insert();
+                var found = Models.wrap(UserPojo.class).findById(pojo.getId());
+                assertNull(found.getEmail(),
+                        "email should be null because selectable=false");
+            } finally {
+                FieldCustomizer.of(UserPojo.class)
+                        .field(UserPojo::getEmail, f -> f.selectable(true)).apply();
+            }
+        }
     }
 
 }

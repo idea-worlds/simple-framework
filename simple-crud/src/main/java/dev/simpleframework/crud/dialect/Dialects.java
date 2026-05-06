@@ -19,6 +19,7 @@ import java.util.Map;
 public final class Dialects {
     private static final List<SqlDataSourceDatasourceUrlExtractor<?>> DS_URLS = new ArrayList<>();
     private static final Map<String, ConditionDialect> JDBC_CONDITIONS = new LinkedHashMap<>();
+    private static volatile boolean quoteColumnNames = false;
 
     static {
         try {
@@ -85,6 +86,18 @@ public final class Dialects {
             }
         }
         return PgConditionDialect.DEFAULT;
+    }
+
+    /**
+     * 是否使用带引号的列名，解决字段名与 SQL 关键字冲突问题。
+     * 默认 false。开启后 {@code @Column(name)} 必须与 DB 实际列名大小写一致。
+     */
+    public static void setQuoteColumnNames(boolean quote) {
+        Dialects.quoteColumnNames = quote;
+    }
+
+    public static boolean isQuoteColumnNames() {
+        return quoteColumnNames;
     }
 
 }

@@ -114,4 +114,20 @@ public interface ConditionDialect {
      */
     String jsonExistKeyAll(ModelField<?> field, String value, boolean xml);
 
+    /**
+     * 引用标识符（列别名等），默认双引号（SQL 标准）
+     */
+    default String quot(String identifier) {
+        return "\"" + identifier + "\"";
+    }
+
+    /**
+     * 条件/别名中的列名引用。根据 {@code Dialects.isQuoteColumnNames()} 决定是否用 quot() 包裹。
+     * 默认 false（保持现有行为）。开启后解决 SQL 关键字冲突，需保证 @Column(name) 与 DB 实际列名一致。
+     */
+    default String column(ModelField<?> field) {
+        String name = field.columnName();
+        return dev.simpleframework.crud.dialect.Dialects.isQuoteColumnNames() ? quot(name) : name;
+    }
+
 }

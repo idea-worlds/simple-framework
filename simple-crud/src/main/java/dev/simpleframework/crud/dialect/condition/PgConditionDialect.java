@@ -14,7 +14,7 @@ public class PgConditionDialect extends SqlConditionDialect {
 
     @Override
     public String arrayContains(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("@>", xml);
         String result = column + operator + value;
         if (String.class.isAssignableFrom(field.fieldComponentType())) {
@@ -25,7 +25,7 @@ public class PgConditionDialect extends SqlConditionDialect {
 
     @Override
     public String arrayContainedBy(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("<@", xml);
         String result = column + operator + value;
         if (String.class.isAssignableFrom(field.fieldComponentType())) {
@@ -36,7 +36,7 @@ public class PgConditionDialect extends SqlConditionDialect {
 
     @Override
     public String arrayOverlap(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("&&", xml);
         String result = column + operator + value;
         if (String.class.isAssignableFrom(field.fieldComponentType())) {
@@ -47,35 +47,35 @@ public class PgConditionDialect extends SqlConditionDialect {
 
     @Override
     public String jsonContains(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("@>", xml);
         return column + operator + value;
     }
 
     @Override
     public String jsonContainedBy(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("<@", xml);
         return column + operator + value;
     }
 
     @Override
     public String jsonExistKey(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("??", xml);
         return column + operator + value;
     }
 
     @Override
     public String jsonExistKeyAny(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("??|", xml);
         return column + operator + value;
     }
 
     @Override
     public String jsonExistKeyAll(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("??&", xml);
         return column + operator + value;
     }

@@ -2,6 +2,8 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryConditions;
+import dev.simpleframework.crud.dialect.Dialects;
+import dev.simpleframework.crud.dialect.condition.ConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlCommandType;
@@ -19,12 +21,13 @@ public final class MybatisUpdateByConditionsMethod {
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.UPDATE, Integer.class,
                 (configuration, param) -> {
+                    ConditionDialect dialect = Dialects.condition(configuration.getEnvironment().getDataSource());
                     Map<String, Object> params = (Map<String, Object>) param;
                     QueryConditions conditions = (QueryConditions) params.get("config");
                     String column = info.getUpdateFields().stream()
                             .map(field -> {
                                 String fieldName = "model." + field.fieldName();
-                                String tmp = String.format("%s = #{%s},", field.columnName(), MybatisTypeHandler.resolveFieldName(field, fieldName));
+                                String tmp = String.format("%s = #{%s},", dialect.column(field), MybatisTypeHandler.resolveFieldName(field, fieldName));
                                 return MybatisScripts.wrapperIf("model", field, tmp);
                             })
                             .collect(Collectors.joining("\n"));

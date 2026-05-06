@@ -2,10 +2,15 @@ package com.example.myapp;
 
 import com.example.operator.model.UserPojo;
 import dev.simpleframework.crud.Models;
+import dev.simpleframework.crud.core.ConditionType;
+import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.core.QueryConfig;
+import dev.simpleframework.crud.core.QuerySorters;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -108,6 +113,57 @@ public class ModelOperatorCrudIntegrationTest {
         new UserPojo() {{ setName("OpB"); setAge(2); Models.wrap(this).insert(); }};
         assertEquals(1, Models.wrap(UserPojo.class).listByConditions(
                 QueryConfig.of().addCondition("name", "OpA")).size());
+    }
+
+    // ========== updateByConditions / deleteByIds / count / page ==========
+
+    @Test
+    public void testUpdateByConditionsShouldModifyMatched() {
+        new UserPojo() {{ setName("Old"); setAge(10); Models.wrap(this).insert(); }};
+        new UserPojo() {{ setName("Old"); setAge(20); Models.wrap(this).insert(); }};
+        var keep = new UserPojo(); keep.setName("Keep"); keep.setAge(10); Models.wrap(keep).insert();
+
+        var update = new UserPojo(); update.setName("New");
+        int count = Models.wrap(update).updateByConditions(
+                QueryConditions.and().add("name", "Old"));
+        assertEquals(2, count);
+        assertEquals(2, Models.wrap(UserPojo.class).listByConditions(
+                QueryConfig.of().addCondition("name", "New")).size());
+        assertEquals("Keep", Models.wrap(UserPojo.class).findById(keep.getId()).getName());
+    }
+
+    @Test
+    public void testDeleteByIdsShouldRemoveTargets() {
+        var a = new UserPojo(); a.setName("A"); Models.wrap(a).insert();
+        var b = new UserPojo(); b.setName("B"); Models.wrap(b).insert();
+        var c = new UserPojo(); c.setName("C"); Models.wrap(c).insert();
+
+        assertTrue(Models.wrap(UserPojo.class).deleteByIds(List.of(a.getId(), c.getId())));
+
+        assertNull(Models.wrap(UserPojo.class).findById(a.getId()));
+        assertNotNull(Models.wrap(UserPojo.class).findById(b.getId()));
+        assertNull(Models.wrap(UserPojo.class).findById(c.getId()));
+    }
+
+    @Test
+    public void testCountByConditionsShouldReturnCount() {
+        for (int i = 0; i < 3; i++) {
+            var p = new UserPojo(); p.setName("Cnt"); p.setAge(20 + i); Models.wrap(p).insert();
+        }
+        long count = Models.wrap(UserPojo.class).countByConditions(
+                QueryConditions.and().add("age", ConditionType.greater_equal, 21));
+        assertEquals(2, count);
+    }
+
+    @Test
+    public void testPageByConditionsShouldNotThrow() {
+        for (int i = 0; i < 5; i++) {
+            var p = new UserPojo(); p.setName("Pg" + i); p.setAge(i); Models.wrap(p).insert();
+        }
+        assertDoesNotThrow(() -> Models.wrap(UserPojo.class).pageByConditions(1, 3,
+                QueryConfig.of()
+                        .addCondition("age", ConditionType.greater_equal, 0)
+                        .addSorter(QuerySorters.asc("age"))));
     }
 
 }

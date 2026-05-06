@@ -136,11 +136,10 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
      * @param type 主键策略。默认 SNOWFLAKE
      */
     void changeToId(Id.Type type) {
-        if (type == null) {
-            type = Id.Type.SNOWFLAKE;
-        }
         if (this.fillStrategy == null || this.fillStrategy.support() != Id.class) {
             this.fillStrategy = ModelCache.fillStrategy(Id.class);
+            this.fillStrategyParam = type != null ? type : Id.Type.SNOWFLAKE;
+        } else if (type != null) {
             this.fillStrategyParam = type;
         }
     }

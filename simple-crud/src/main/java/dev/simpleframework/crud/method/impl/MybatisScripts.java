@@ -55,15 +55,10 @@ public final class MybatisScripts {
      *
      * @param fields 模型字段
      */
-    public static String columnScript(List<? extends ModelField<?>> fields) {
+    public static String columnScript(List<? extends ModelField<?>> fields, ConditionDialect dialect) {
         return fields.stream()
-                .map(field -> {
-                    String column = field.columnName();
-                    String fieldName = field.fieldName();
-                    return column.equals(fieldName) ?
-                            column :
-                            String.format("%s AS %s", column, fieldName);
-                })
+                .map(field -> String.format("%s AS %s",
+                        dialect.column(field), dialect.quot(field.fieldName())))
                 .collect(Collectors.joining(","));
     }
 

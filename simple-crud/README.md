@@ -14,6 +14,7 @@
 - [第三方模型](#第三方模型)
 - [扩展点](#扩展点)
 - [Spring Boot 集成](#spring-boot-集成)
+- [FAQ](#faq)
 - [架构说明](#架构说明)
 
 ---
@@ -84,6 +85,16 @@ user.deleteById(user.getId());
 | `pagehelper` | 分页支持（`pageByConditions`、`findOneByConditions` 优先路径） |
 | `spring-boot-autoconfigure` | Spring Boot 自动配置 |
 | HikariCP / Druid / DBCP2 / Tomcat JDBC | 连接池 URL 提取（用于方言自动匹配） |
+
+**版本兼容性：**
+
+| 组件 | 最低版本 |
+|------|------|
+| Java | 17 |
+| Spring Boot | 3.x |
+| MyBatis | 3.5.x |
+| MyBatis Spring | 3.x |
+| PageHelper | 5.x（可选） |
 
 ---
 
@@ -176,6 +187,17 @@ QueryConditions cond = QueryConditions.fromAnnotation(query);
 
 同一字段可叠加多个 `@Condition`（或用 `@Conditions` 容器），每个独立生效。
 
+**`@Conditions` 容器示例：**
+
+```java
+// 单字段多条件 — 用 @Conditions 包裹
+@Conditions({
+    @Condition(field = "user_age", defaultValueIfNull = "1"),
+    @Condition(field = "person_age")
+})
+private Integer age;
+```
+
 ---
 
 ### `@DataOperateDate` / `@DataOperateUser`
@@ -239,7 +261,7 @@ BaseModel<T>
 | `updateById()` | 按主键更新，非 null 字段才参与 UPDATE（动态 SQL） |
 | `updateByConditions(model, cond)` | 按条件批量更新 |
 | `findById(id)` | 按主键查询单条 |
-| `findOneByConditions(config)` | 按条件查询第一条（有 PageHelper 时用分页限 1，否则全量取首条） |
+| `findOneByConditions(config)` | 按条件查询第一条。**有 PageHelper 时**用分页 `LIMIT 1` 避免全表扫描；**无 PageHelper 时**全量查询后取首条（大数据量下建议引入 PageHelper） |
 | `listByIds(ids)` | 按主键集合查询 |
 | `listByConditions(config)` | 按条件查询列表 |
 | `pageByConditions(num, size, config)` | 分页查询（需 PageHelper） |
@@ -527,6 +549,15 @@ Dialects.registerConditionDialect("postgresql", new PostgreSQLConditionDialect()
 
 方言根据 JDBC URL 中的数据库标识（如 `:postgresql:`）自动匹配。默认使用通用 ANSI SQL 方言。
 
+**列名 SQL 关键字保护**：如果字段名与 SQL 关键字冲突（如 `order`、`group`），可通过以下开关开启列名引号包裹：
+
+```java
+// 在应用启动时设置
+Dialects.setQuoteColumnNames(true);
+```
+
+开启后所有列名会用数据库特定的引号包裹（PG/H2 双引号 `"order"`，MySQL 反引号 `` `order` ``），避免关键字冲突。注意：开启后 `@Column(name)` 必须与 DB 实际列名大小写一致。
+
 ---
 
 ## Spring Boot 集成
@@ -562,6 +593,36 @@ Dialects.registerConditionDialect("postgresql", new PostgreSQLConditionDialect()
     @ModelScan(value = "com.example.primary"),
     @ModelScan(value = "com.example.secondary", datasourceName = "secondary")
 })
+```
+
+---
+
+## FAQ
+
+**Q: 调用 CRUD 方法时报 "Class is not registered"，怎么办？**
+
+A: 检查以下三项：
+1. 实体类是否在 `@ModelScan` 扫描路径下
+2. 实体类是否实现了 `BaseModel` 接口（或继承 `SimpleModel`）
+3. 对于 POJO 模式，`@ModelScan` 的 `operatorClass` 是否设为 `Models.class`
+
+**Q: 分页查询 `pageByConditions` 不生效或返回空？**
+
+A: `pageByConditions` 依赖 PageHelper。确保已引入 `pagehelper` 依赖，且 PageHelper 拦截器已正确配置。在 `@Transactional` 方法内使用时，PageHelper 可能因 ThreadLocal 机制返回空 items——这是已知限制。
+
+**Q: 如何让 `@DataOperateUser` 自动填充当前用户 ID？**
+
+A: 框架不提供默认用户填充策略。需自定义 `DataFillStrategy` 实现，注册为 Spring Bean，从当前请求上下文（如 `SecurityContext`）获取用户 ID。
+
+**Q: `@Column` 的 `name` 属性不填时，列名是什么？**
+
+A: 默认将 Java 字段名转为下划线大写（如 `userName` → `USER_NAME`）。省略 `@Column` 注解效果相同。
+
+**Q: 如何切换数据库方言？**
+
+A: 框架根据 JDBC URL 自动匹配内置方言（`postgresql` / `mysql` / `h2`）。其他数据库需手动注册：
+```java
+Dialects.registerConditionDialect("oracle", new MyOracleConditionDialect());
 ```
 
 ---

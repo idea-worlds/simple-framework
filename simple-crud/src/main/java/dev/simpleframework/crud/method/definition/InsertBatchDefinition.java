@@ -31,10 +31,10 @@ public class InsertBatchDefinition implements ModelMethodDefinition {
         ModelInfo<T> info = ModelCache.info(models.get(0));
         fillValue(info, models);
 
-        String methodId = methodId(info);
+        String insertMethodId = ModelMethodDefinition.methodId(info, InsertDefinition.METHOD_NAME);
         DatasourceType datasourceType = info.datasourceType();
         if (datasourceType == DatasourceType.Mybatis) {
-            return MybatisInsertBatchMethod.exec(info, methodId, models);
+            return MybatisInsertBatchMethod.exec(info, insertMethodId, models);
         }
         return false;
     }

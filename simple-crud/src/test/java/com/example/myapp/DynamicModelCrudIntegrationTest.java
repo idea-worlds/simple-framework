@@ -90,8 +90,8 @@ public class DynamicModelCrudIntegrationTest {
         // 2. findById
         Map<String, Object> result = DynamicModel.of("sys_user").findById(id);
         assertNotNull(result);
-        assertEquals("Target", result.get("NAME"));
-        assertEquals(10, result.get("AGE"));
+        assertEquals("Target", result.get("name"));
+        assertEquals(10, result.get("age"));
 
         DynamicModel.removeRegistered("sys_user");
     }
@@ -125,8 +125,8 @@ public class DynamicModelCrudIntegrationTest {
 
         // 3. 验证
         Map<String, Object> found = DynamicModel.of("sys_user").findById(id);
-        assertEquals("NewName", found.get("NAME"));
-        assertEquals(10, found.get("AGE"), "age should remain unchanged");
+        assertEquals("NewName", found.get("name"));
+        assertEquals(10, found.get("age"), "age should remain unchanged");
 
         DynamicModel.removeRegistered("sys_user");
     }
@@ -153,7 +153,7 @@ public class DynamicModelCrudIntegrationTest {
         var config = QueryConfig.of().addCondition("name", "Keep");
         List<Map<String, Object>> list = DynamicModel.of("sys_user").listByConditions(config);
         assertEquals(1, list.size());
-        assertEquals("Keep", list.get(0).get("NAME"));
+        assertEquals("Keep", list.get(0).get("name"));
 
         DynamicModel.removeRegistered("sys_user");
     }
@@ -200,6 +200,49 @@ public class DynamicModelCrudIntegrationTest {
 
         DynamicModel.removeRegistered("tmp");
         assertThrows(ModelExecuteException.class, () -> DynamicModel.of("tmp").info());
+    }
+
+    // ========== 动态模型 count / page ==========
+
+    @Test
+    public void testCountByConditionsShouldReturnCount() {
+        var info = new DynamicModelInfo("sys_user", DatasourceType.Mybatis);
+        info.addField("name", "name");
+        info.addField("age", "age", Integer.class);
+        info.addField("id", "id", Long.class);
+        info.setId("id");
+        DynamicModel.register(info);
+
+        for (int i = 0; i < 5; i++) {
+            var m = DynamicModel.of("sys_user");
+            m.put("name", "C" + i); m.put("age", 10 + i); m.insert();
+        }
+        long count = DynamicModel.of("sys_user").countByConditions(
+                QueryConditions.and().add("age", ConditionType.greater_than, 12));
+        assertEquals(2, count);
+
+        DynamicModel.removeRegistered("sys_user");
+    }
+
+    @Test
+    public void testPageByConditionsShouldNotThrow() {
+        var info = new DynamicModelInfo("sys_user", DatasourceType.Mybatis);
+        info.addField("name", "name");
+        info.addField("age", "age", Integer.class);
+        info.addField("id", "id", Long.class);
+        info.setId("id");
+        DynamicModel.register(info);
+
+        for (int i = 0; i < 5; i++) {
+            var m = DynamicModel.of("sys_user");
+            m.put("name", "P" + i); m.put("age", i); m.insert();
+        }
+        assertDoesNotThrow(() -> DynamicModel.of("sys_user").pageByConditions(1, 3,
+                QueryConfig.of()
+                        .addCondition("age", ConditionType.greater_equal, 0)
+                        .addSorter(QuerySorters.asc("age"))));
+
+        DynamicModel.removeRegistered("sys_user");
     }
 
 }

@@ -2,6 +2,8 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryFields;
+import dev.simpleframework.crud.dialect.Dialects;
+import dev.simpleframework.crud.dialect.condition.ConditionDialect;
 import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import org.apache.ibatis.mapping.SqlCommandType;
@@ -20,9 +22,10 @@ public final class MybatisListByIdsMethod {
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.SELECT, info.modelClass(),
                 (configuration, param) -> {
+                    ConditionDialect dialect = Dialects.condition(configuration.getEnvironment().getDataSource());
                     Map<String, Object> params = (Map<String, Object>) param;
                     QueryFields fields = (QueryFields) params.get("config");
-                    String column = MybatisScripts.columnScript(fields.find(info.getSelectFields()));
+                    String column = MybatisScripts.columnScript(fields.find(info.getSelectFields()), dialect);
                     String idParam = MybatisScripts.foreach("ids", "_id");
                     String condition = PgConditionDialect.DEFAULT.in(info.id(), idParam, true);
                     return String.format("<script>SELECT %s FROM %s WHERE \n %s</script>",

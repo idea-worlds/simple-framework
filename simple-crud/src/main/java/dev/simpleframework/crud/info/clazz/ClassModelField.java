@@ -26,7 +26,7 @@ public class ClassModelField<T> extends AbstractModelField<T> {
         field.setAccessible(true);
         String fieldName = field.getName();
         FieldOptions config = this.buildConfig();
-        if (config.getColumnName() == null) {
+        if (config.getColumnName() == null || config.getColumnName().isBlank()) {
             config.name(Strings.camelToUnderline(fieldName).toUpperCase());
         }
         super.config(config);

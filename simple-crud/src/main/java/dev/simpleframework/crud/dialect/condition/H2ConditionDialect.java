@@ -13,21 +13,21 @@ public class H2ConditionDialect extends PgConditionDialect {
 
     @Override
     public String arrayContains(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("@>", xml);
         return column + operator + value;
     }
 
     @Override
     public String arrayContainedBy(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("<@", xml);
         return column + operator + value;
     }
 
     @Override
     public String arrayOverlap(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         String operator = parseOperator("&&", xml);
         return column + operator + value;
     }

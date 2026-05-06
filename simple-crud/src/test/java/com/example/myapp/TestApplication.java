@@ -11,5 +11,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
         superClass = Object.class,
         operatorClass = Models.class
 )
+@ModelScan(
+        basePackages = "com.example.multids.model",
+        datasourceName = "second"
+)
 public class TestApplication {
 }

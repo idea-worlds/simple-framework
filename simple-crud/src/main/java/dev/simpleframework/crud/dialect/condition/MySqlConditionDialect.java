@@ -11,23 +11,28 @@ import dev.simpleframework.crud.ModelField;
 public class MySqlConditionDialect extends SqlConditionDialect {
     public static final MySqlConditionDialect DEFAULT = new MySqlConditionDialect();
 
+    @Override
+    public String quot(String identifier) {
+        return "`" + identifier + "`";
+    }
+
     // ──── 数组条件 → JSON 函数 ────
 
     @Override
     public String arrayContains(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_CONTAINS(" + column + ", " + value + ")";
     }
 
     @Override
     public String arrayContainedBy(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_CONTAINS(" + value + ", " + column + ")";
     }
 
     @Override
     public String arrayOverlap(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_OVERLAPS(" + column + ", " + value + ")";
     }
 
@@ -35,31 +40,31 @@ public class MySqlConditionDialect extends SqlConditionDialect {
 
     @Override
     public String jsonContains(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_CONTAINS(" + column + ", " + value + ")";
     }
 
     @Override
     public String jsonContainedBy(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_CONTAINS(" + value + ", " + column + ")";
     }
 
     @Override
     public String jsonExistKey(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_CONTAINS_PATH(" + column + ", 'one', " + value + ")";
     }
 
     @Override
     public String jsonExistKeyAny(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_CONTAINS_PATH(" + column + ", 'one', " + value + ")";
     }
 
     @Override
     public String jsonExistKeyAll(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
+        String column = column(field);
         return "JSON_CONTAINS_PATH(" + column + ", 'all', " + value + ")";
     }
 

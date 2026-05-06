@@ -2,6 +2,8 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
+import dev.simpleframework.crud.dialect.Dialects;
+import dev.simpleframework.crud.dialect.condition.ConditionDialect;
 import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
@@ -17,10 +19,11 @@ public final class MybatisUpdateByIdMethod {
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.UPDATE, Integer.class,
                 (configuration, param) -> {
+                    ConditionDialect dialect = Dialects.condition(configuration.getEnvironment().getDataSource());
                     String script = info.getUpdateFields().stream()
                             .map(field -> {
                                 String fieldName = MybatisTypeHandler.resolveFieldName(field, field.fieldName());
-                                String tmp = String.format("%s = #{%s},", field.columnName(), fieldName);
+                                String tmp = String.format("%s = #{%s},", dialect.column(field), fieldName);
                                 return MybatisScripts.wrapperIf(field, tmp);
                             })
                             .collect(Collectors.joining("\n"));

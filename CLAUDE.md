@@ -126,6 +126,12 @@ Spring Boot 自动配置位于 `simple-token-spring-boot-autoconfigure`。
 ## 协作约定
 
 - 开始实现任何新功能前，必须先向用户确认，获得明确同意后再动手。
+- **代码与文档同步更新**：测试通过后、`git add` 前，必须暂停并自问：这次改动影响了哪些文档？对照以下 checklist 逐个检查：
+  - 改注解/接口/扩展点/行为 → `simple-crud/README.md` + `simple-crud/docs/implementation-models.md`
+  - 改测试（新增/修改/删除）→ `simple-crud/docs/integration-test-coverage.md`
+  - 改其他模块同样逻辑，对照模块名找对应文档
+  检查完、文档改完之后，再 `git add`。不在 commit 前检查——commit 太快没有停顿；
+  在 `git add` 前检查——那是代码写完、测试通过后的自然停顿点。
 
 ## 关键约定
 

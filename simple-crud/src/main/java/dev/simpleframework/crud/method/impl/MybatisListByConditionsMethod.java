@@ -4,6 +4,8 @@ import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.QueryConditions;
 import dev.simpleframework.crud.core.QueryConfig;
+import dev.simpleframework.crud.dialect.Dialects;
+import dev.simpleframework.crud.dialect.condition.ConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import org.apache.ibatis.mapping.SqlCommandType;
 
@@ -21,10 +23,11 @@ public final class MybatisListByConditionsMethod {
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.SELECT, info.modelClass(),
                 (configuration, param) -> {
+                    ConditionDialect dialect = Dialects.condition(configuration.getEnvironment().getDataSource());
                     Map<String, Object> params = (Map<String, Object>) param;
                     QueryConfig queryConfig = (QueryConfig) params.get("config");
                     List<? extends ModelField<?>> allFields = info.getAllFields();
-                    String column = MybatisScripts.columnScript(queryConfig.getFields().find(info.getSelectFields()));
+                    String column = MybatisScripts.columnScript(queryConfig.getFields().find(info.getSelectFields()), dialect);
                     String condition = MybatisScripts.conditionScript(configuration, allFields, queryConfig.getConditions());
                     String sort = MybatisScripts.sortScript(allFields, queryConfig.getSorters());
                     return String.format("<script>SELECT %s FROM %s %s %s</script>",

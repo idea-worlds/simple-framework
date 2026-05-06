@@ -2,6 +2,8 @@ package dev.simpleframework.crud.method.impl;
 
 import dev.simpleframework.crud.ModelField;
 import dev.simpleframework.crud.ModelInfo;
+import dev.simpleframework.crud.dialect.Dialects;
+import dev.simpleframework.crud.dialect.condition.ConditionDialect;
 import dev.simpleframework.crud.util.MybatisHelper;
 import dev.simpleframework.crud.util.MybatisTypeHandler;
 import org.apache.ibatis.mapping.SqlCommandType;
@@ -17,9 +19,10 @@ public final class MybatisInsertMethod {
     public static void register(ModelInfo<?> info, String methodId) {
         MybatisHelper.addMappedStatement(info, methodId, SqlCommandType.INSERT, Integer.class,
                 (configuration, param) -> {
+                    ConditionDialect dialect = Dialects.condition(configuration.getEnvironment().getDataSource());
                     List<? extends ModelField<?>> fields = info.getInsertFields();
                     String columnScript = fields.stream()
-                            .map(field -> MybatisScripts.wrapperIf(field, field.columnName() + ","))
+                            .map(field -> MybatisScripts.wrapperIf(field, dialect.column(field) + ","))
                             .collect(Collectors.joining("\n"));
                     columnScript = String.format("\n<trim prefix=\"(\" suffix=\")\" suffixOverrides=\",\">\n%s\n</trim>\n", columnScript);
 

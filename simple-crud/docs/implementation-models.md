@@ -573,6 +573,11 @@ public FieldCustomizer<User> userFieldOptions() {
 | `selectable(boolean)` | `@Column(selectable=...)` |
 | `autoFill(Class<? extends Annotation>)` | `@DataOperateDate` / `@DataOperateUser` |
 
+> `id(Id.Type)` 在字段已有 `@Id` 注解时**会切换**主键策略（如 UUID32 → UUID36）；
+> 在字段无 `@Id` 时为字段新增主键策略。实现上通过 `changeToId()` 将
+> `fillStrategy` 的初始化与 `fillStrategyParam` 的更新分离，确保注解默认值不被
+> 覆盖的同时允许显式切换。
+
 **执行时机**：`SimpleCrudAutoConfiguration.afterPropertiesSet()` 中，`ModelRegistrar.register()` 执行完毕后，统一调用所有 `FieldCustomizer` Bean 的 `apply()` 方法。这确保覆盖发生在模型注册之后、业务调用之前。
 
 ```java
@@ -744,16 +749,140 @@ public String arrayContains(ModelField<?> field, String value, boolean xml) {
 }
 ```
 
-框架已内置并自动注册三种方言（通过 JDBC URL 子协议 `postgresql` / `mysql` / `h2` 匹配）。若使用其他数据库，需手动调用 `Dialects.registerConditionDialect()` 注册自定义实现：
+框架已内置并自动注册三种方言（通过 JDBC URL 子协议 `postgresql` / `mysql` / `h2` 匹配）。若使用其他数据库，需自定义 `ConditionDialect` 实现并注册。
+
+**自定义方言完整示例（Oracle）：**
 
 ```java
-// 注册自定义方言（如 H2、Oracle 等）
-Dialects.registerConditionDialect("h2", new MyCustomConditionDialect());
+import dev.simpleframework.crud.ModelField;
+import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
+
+/**
+ * Oracle 条件方言：重写 LIKE 相关方法适应 Oracle 的 || 字符串拼接语法。
+ * 标准 SQL（SqlConditionDialect）使用 concat() 函数，Oracle 中需替换为 || 运算符。
+ */
+public class OracleConditionDialect extends SqlConditionDialect {
+
+    @Override
+    public String likeAll(ModelField<?> field, String value, boolean xml) {
+        String column = field.columnName();
+        return column + " LIKE '%' || " + value + " || '%'";
+    }
+
+    @Override
+    public String likeLeft(ModelField<?> field, String value, boolean xml) {
+        String column = field.columnName();
+        return column + " LIKE '%' || " + value;
+    }
+
+    @Override
+    public String likeRight(ModelField<?> field, String value, boolean xml) {
+        String column = field.columnName();
+        return column + " LIKE " + value + " || '%'";
+    }
+}
+
+// 在应用启动时注册 — 注册后 JDBC URL 中包含 :oracle: 的 DataSource 自动生效
+Dialects.registerConditionDialect("oracle", new OracleConditionDialect());
 ```
+
+`SqlConditionDialect` 提供通用 ANSI SQL 实现作为基类，自定义方言只需重写与标准 SQL 不同的方法（如 `likeAll`、`arrayContains` 等 21 个方法均可按需覆盖）。匹配规则：框架从 JDBC URL 中提取 `:<key>:` 子串与注册 key 比对。
 
 当 `xml = true` 时，`>`、`<`、`>=`、`<=` 等运算符用 `<![CDATA[...]]>` 包裹以通过 XML 解析。
 
-### 5.4 完整生命周期
+**列名 SQL 关键字保护**：`ConditionDialect.column(field)` 是框架中所有列名的统一入口。通过 `Dialects.setQuoteColumnNames(true)` 可全局开启列名引号包裹，防止字段名（如 `order`、`group`）与 SQL 关键字冲突：
+
+```java
+// 应用启动时设置一次即可
+Dialects.setQuoteColumnNames(true);
+```
+
+开启后 `column(field)` 自动调用 `quot(columnName)`，各数据库用各自的引号语法（`"order"` / `` `order` ``）。默认关闭，保持向后兼容。
+
+### 5.4 @Condition 注解条件构建
+
+`@Condition` 和 `@Conditions` 允许在 POJO（VO/DTO）字段上声明查询条件，通过 `QueryConditions.fromAnnotation()` 批量解析，避免手动编写 `QueryConditions.and().add(...)` 的样板代码。
+
+**注解定义：**
+
+```java
+@Target(FIELD)
+@Retention(RUNTIME)
+@Repeatable(Conditions.class)
+public @interface Condition {
+    String field() default "";           // 数据库字段名，默认取 Java 字段名
+    ConditionType type() default equal;  // 条件类型
+    String defaultValueIfNull() default ""; // 字段值为 null 时的默认值（自动类型转换）
+}
+```
+
+**解析流程：**
+
+```
+UserQuery (POJO with @Condition)
+  │
+  ▼
+QueryConditions.fromAnnotation(query)
+  │  Classes.getFieldsByAnnotations() → 反射扫描带 @Condition 的字段
+  │  按类缓存结果（CONDITION_CACHES），同类型只扫描一次
+  ▼
+annotationConditionFields()
+  │  遍历每个字段的 @Condition 注解（支持 @Repeatable 多注解）
+  │  读取字段值，为 null 时检查 defaultValueIfNull
+  │  构建 QueryConditionField(name, type, value)
+  ▼
+QueryConditions.add(fieldName, type, value)
+  │  同名字段去重：后出现的 key 自动加后缀 (name → name1 → name2)
+  │  transToValue() 规范化值：Collection → 展平为 List
+  ▼
+条件树 → MybatisScripts.conditionScript() 生成 WHERE 子句
+```
+
+**关键行为：**
+
+| 场景 | 行为 |
+|------|------|
+| `@Condition` 无 `field` 属性 | 条件字段名 = Java 字段名 |
+| `@Condition(field="db_col")` | 条件字段名 = `"db_col"`，与 POJO 字段名解耦 |
+| 字段值非 null | 使用实际字段值作为条件值 |
+| 字段值 null，有 `defaultValueIfNull` | 用 `Strings.cast(str, fieldType)` 转换后作为条件值 |
+| 字段值 null，无 `defaultValueIfNull` | 条件被跳过（动态条件，不生成 SQL） |
+| `@Conditions({...})` 容器 | 同一字段多个条件，每个独立生效 |
+| `@Condition(type=in)` + List 值 | `transToValue` 展平嵌套 Collection |
+| `json_exist_key` + 多值 | 自动升级为 `json_exist_key_all` |
+
+**使用示例：**
+
+```java
+// POJO 定义
+public class UserQuery {
+    @Condition
+    private Long id;                              // id = ?
+
+    @Condition(field = "name", type = ConditionType.like_all)
+    private String keyword;                       // name LIKE '%keyword%'
+
+    @Condition(type = ConditionType.greater_equal, defaultValueIfNull = "18")
+    private Integer age;                          // age >= 18（字段为 null 时用默认值）
+
+    @Condition(type = ConditionType.in)
+    private List<Long> ids;                       // id IN (1,2,3)
+
+    @Conditions({
+        @Condition(field = "start_time", type = ConditionType.greater_equal),
+        @Condition(field = "end_time", type = ConditionType.less_equal)
+    })
+    private Date createTime;                      // start_time >= ? AND end_time <= ?
+}
+
+// 使用
+UserQuery query = new UserQuery();
+query.setKeyword("Alice");
+QueryConditions conditions = QueryConditions.fromAnnotation(query);
+// → AND name LIKE '%Alice%' AND age >= 18
+```
+
+### 5.5 完整生命周期
 
 从应用启动到 SQL 执行的全链路时序图：
 

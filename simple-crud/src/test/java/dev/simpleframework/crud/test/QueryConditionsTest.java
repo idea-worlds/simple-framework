@@ -109,4 +109,100 @@ public class QueryConditionsTest {
         assertFalse(QueryConditions.and().add("name", "Zhang").isEmpty());
     }
 
+    // ========== 复杂嵌套 ==========
+
+    /**
+     * 场景：三级嵌套 — AND( OR( AND(a=1) ) )。
+     * 验证点：subConditions 树深度正确，叶子条件在正确的层级。
+     */
+    @Test
+    public void testThreeLevelNesting_shouldBuildCorrectTree() {
+        QueryConditions leaf = QueryConditions.and().add("a", 1);
+        QueryConditions mid = QueryConditions.or().add(leaf);
+        QueryConditions root = QueryConditions.and().add("name", "T").add(mid);
+
+        // root: AND( name="T" field + OR( AND(a=1) sub ) sub )
+        assertEquals(1, root.getFields().size());
+        assertEquals(1, root.getSubConditions().size());
+
+        QueryConditions midNode = root.getSubConditions().get(0);
+        assertEquals("OR", midNode.getType());
+        assertEquals(0, midNode.getFields().size());
+        assertEquals(1, midNode.getSubConditions().size());
+
+        QueryConditions leafNode = midNode.getSubConditions().get(0);
+        assertEquals("AND", leafNode.getType());
+        assertEquals(1, leafNode.getFields().size());
+        assertEquals("a", leafNode.getFields().get(0).getName());
+    }
+
+    /**
+     * 场景：多个平行子条件 — AND( OR(a=1, a=2), OR(b=3, b=4) )。
+     * 验证点：多个 subConditions 均进入列表，各自独立。
+     */
+    @Test
+    public void testMultipleParallelSubConditions_shouldPreserveOrder() {
+        QueryConditions or1 = QueryConditions.or().add("a", 1).add("a", 2);
+        QueryConditions or2 = QueryConditions.or().add("b", 3).add("b", 4);
+        QueryConditions root = QueryConditions.and().add(or1).add(or2);
+
+        assertEquals(2, root.getSubConditions().size());
+        assertEquals(0, root.getFields().size());
+
+        // or1: a=1 OR a=2
+        assertEquals(2, root.getSubConditions().get(0).getFields().size());
+        // or2: b=3 OR b=4
+        assertEquals(2, root.getSubConditions().get(1).getFields().size());
+    }
+
+    /**
+     * 场景：OR 根节点包含 AND 子条件 — OR( AND(a=1, b=2), AND(a=3, b=4) )。
+     * 验证点：与常见的 AND(OR(...)) 相反的方向也能正确构建。
+     */
+    @Test
+    public void testOrRootWithAndChildren_shouldBuildCorrectly() {
+        QueryConditions and1 = QueryConditions.and().add("a", 1).add("b", 2);
+        QueryConditions and2 = QueryConditions.and().add("a", 3).add("b", 4);
+        QueryConditions root = QueryConditions.or().add(and1).add(and2);
+
+        assertEquals("OR", root.getType());
+        assertEquals(2, root.getSubConditions().size());
+        assertEquals(0, root.getFields().size());
+
+        assertEquals("AND", root.getSubConditions().get(0).getType());
+        assertEquals(2, root.getSubConditions().get(0).getFields().size());
+    }
+
+    /**
+     * 场景：同名字段跨层级出现 — 父和子都有 name 字段。
+     * 验证点：flushFieldKey 跨层级去重，子条件的 name key 被加后缀。
+     */
+    @Test
+    public void testSameFieldNameAcrossLevels_shouldDedupKeys() {
+        QueryConditions sub = QueryConditions.or().add("name", "SubName");
+        QueryConditions root = QueryConditions.and().add("name", "ParentName").add(sub);
+
+        // 父层 name → key="name"；子层 name → flushFieldKey 后 key="name1"
+        assertEquals("name", root.getFields().get(0).getKey());
+        QueryConditions subNode = root.getSubConditions().get(0);
+        assertEquals("name1", subNode.getFields().get(0).getKey());
+    }
+
+    /**
+     * 场景：空子条件被 add 后不应出现在 subConditions 中。
+     * 验证点：isEmpty() 为 true 的 QueryConditions 作为子条件传入时，实际不参与。
+     * 注意：QueryConditions.add(QueryConditions) 不检查子条件是否 isEmpty，因此空子条件仍被加入列表。
+     * 此测试验证当前行为——SQL 生成层有责任跳过空条件。
+     */
+    @Test
+    public void testEmptySubCondition_shouldStillBeAddedToList() {
+        QueryConditions emptyOr = QueryConditions.or(); // no fields added
+        assertTrue(emptyOr.isEmpty());
+        QueryConditions root = QueryConditions.and().add("a", 1).add(emptyOr);
+
+        // 当前实现：空子条件仍进入 subConditions，SQL 生成层负责跳过
+        assertEquals(1, root.getSubConditions().size());
+        assertTrue(root.getSubConditions().get(0).isEmpty());
+    }
+
 }
