@@ -3,6 +3,7 @@ package dev.simpleframework.crud.dialect;
 import dev.simpleframework.crud.dialect.condition.ConditionDialect;
 import dev.simpleframework.crud.dialect.condition.H2ConditionDialect;
 import dev.simpleframework.crud.dialect.condition.MySqlConditionDialect;
+import dev.simpleframework.crud.dialect.condition.OracleConditionDialect;
 import dev.simpleframework.crud.dialect.condition.PgConditionDialect;
 import dev.simpleframework.crud.dialect.url.*;
 import dev.simpleframework.util.Strings;
@@ -43,6 +44,7 @@ public final class Dialects {
         registerConditionDialect("postgresql", PgConditionDialect.DEFAULT);
         registerConditionDialect("mysql", MySqlConditionDialect.DEFAULT);
         registerConditionDialect("h2", H2ConditionDialect.DEFAULT);
+        registerConditionDialect("oracle", OracleConditionDialect.DEFAULT);
     }
 
     /**

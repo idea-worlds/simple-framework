@@ -182,9 +182,11 @@
 |------|------|
 | `PgConditionDialectTest` | array_contains, array_contained_by, array_overlap, json_contains, json_contained_by, json_exist_key/any/all |
 | `MySqlConditionDialectTest` | 同上，MySQL JSON 函数版本 |
+| `H2ConditionDialectTest` | array_contains, array_contained_by, array_overlap |
+| `OracleConditionDialectTest` | LIKE（|| 拼接）、数组/JSON（JSON_EXISTS 函数） |
 | `H2ConditionDialectTest` | array_contains, array_contained_by, array_overlap（无 `::text[]` 转换） |
 | `SqlConditionDialectTest` | equal, not_equal, like, greater/less, in, notIn, isNull, notNull |
 
 ---
 
-**总计**: 97 集成测试 + 79 单元测试 = 176 测试，全 PASS。
+**总计**: 97 集成测试 + 89 单元测试 = 186 测试，全 PASS。

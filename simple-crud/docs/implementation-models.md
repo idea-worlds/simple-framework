@@ -749,41 +749,46 @@ public String arrayContains(ModelField<?> field, String value, boolean xml) {
 }
 ```
 
-框架已内置并自动注册三种方言（通过 JDBC URL 子协议 `postgresql` / `mysql` / `h2` 匹配）。若使用其他数据库，需自定义 `ConditionDialect` 实现并注册。
+框架已内置并自动注册四种方言（通过 JDBC URL 子协议匹配）：
 
-**自定义方言完整示例（Oracle）：**
+| 方言 | JDBC URL 匹配 | 特点 |
+|------|:---:|------|
+| `PgConditionDialect` | `:postgresql:` | PostgreSQL，默认方言 |
+| `MySqlConditionDialect` | `:mysql:` | MySQL 5.7+ JSON 函数 |
+| `H2ConditionDialect` | `:h2:` | H2 PostgreSQL 兼容模式 |
+| `OracleConditionDialect` | `:oracle:` | Oracle 12c+，LIKE 用 `\|\|` 拼接，JSON 用 `JSON_EXISTS` |
+
+若使用其他数据库，需自定义 `ConditionDialect` 实现并注册。
+
+**自定义方言完整示例（SQL Server）：**
 
 ```java
-import dev.simpleframework.crud.ModelField;
-import dev.simpleframework.crud.dialect.condition.SqlConditionDialect;
-
 /**
- * Oracle 条件方言：重写 LIKE 相关方法适应 Oracle 的 || 字符串拼接语法。
- * 标准 SQL（SqlConditionDialect）使用 concat() 函数，Oracle 中需替换为 || 运算符。
+ * SQL Server 条件方言：将 LIKE 中的 concat() 替换为 + 运算符。
  */
-public class OracleConditionDialect extends SqlConditionDialect {
+public class SqlServerConditionDialect extends SqlConditionDialect {
 
     @Override
     public String likeAll(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        return column + " LIKE '%' || " + value + " || '%'";
+        String column = column(field);
+        return column + " LIKE '%' + " + value + " + '%'";
     }
 
     @Override
     public String likeLeft(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        return column + " LIKE '%' || " + value;
+        String column = column(field);
+        return column + " LIKE '%' + " + value;
     }
 
     @Override
     public String likeRight(ModelField<?> field, String value, boolean xml) {
-        String column = field.columnName();
-        return column + " LIKE " + value + " || '%'";
+        String column = column(field);
+        return column + " LIKE " + value + " + '%'";
     }
 }
 
-// 在应用启动时注册 — 注册后 JDBC URL 中包含 :oracle: 的 DataSource 自动生效
-Dialects.registerConditionDialect("oracle", new OracleConditionDialect());
+// 在应用启动时注册 — JDBC URL 中包含 :sqlserver: 的 DataSource 自动生效
+Dialects.registerConditionDialect("sqlserver", new SqlServerConditionDialect());
 ```
 
 `SqlConditionDialect` 提供通用 ANSI SQL 实现作为基类，自定义方言只需重写与标准 SQL 不同的方法（如 `likeAll`、`arrayContains` 等 21 个方法均可按需覆盖）。匹配规则：框架从 JDBC URL 中提取 `:<key>:` 子串与注册 key 比对。

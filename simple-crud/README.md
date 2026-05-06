@@ -547,7 +547,7 @@ public class SecondaryMybatisProvider implements DatasourceProvider<SqlSession> 
 Dialects.registerConditionDialect("postgresql", new PostgreSQLConditionDialect());
 ```
 
-方言根据 JDBC URL 中的数据库标识（如 `:postgresql:`）自动匹配。默认使用通用 ANSI SQL 方言。
+方言根据 JDBC URL 中的数据库标识（如 `:postgresql:`）自动匹配。框架内置了 PostgreSQL、MySQL、H2、Oracle 四种方言，无匹配时回退到通用 ANSI SQL 方言（Pg）。
 
 **列名 SQL 关键字保护**：如果字段名与 SQL 关键字冲突（如 `order`、`group`），可通过以下开关开启列名引号包裹：
 
@@ -646,7 +646,7 @@ MyBatis 实现层    MybatisScripts（动态 SQL 生成）
                   MybatisHelper（MappedStatement 注册 / SqlSession 管理 / 分页）
     ↓
 方言层            Dialects（JDBC URL → ConditionDialect 路由）
-                  PgConditionDialect（PostgreSQL，默认）/ MySqlConditionDialect（MySQL 5.7+）/ H2ConditionDialect（H2）
+                  PgConditionDialect（PostgreSQL，默认）/ MySqlConditionDialect（MySQL 5.7+）/ H2ConditionDialect（H2）/ OracleConditionDialect（Oracle 12c+）
     ↓
 缓存层            ModelCache（ModelInfo / DatasourceProvider / DataFillStrategy）
 ```
