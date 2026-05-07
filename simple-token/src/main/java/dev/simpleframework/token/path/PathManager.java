@@ -19,13 +19,13 @@ public final class PathManager {
     /**
      * 路径前缀，实际要匹配的上下文请求路径将裁剪掉该前缀
      */
-    private static String pathPrefix;
+    private static volatile String pathPrefix;
     /**
      * 所有自定义路径方法执行器
      */
     private static List<PathActionExecutor> CUSTOM_ACTION_EXECUTOR = PathActionInit.DEFAULT.init();
 
-    public static void registerActionInit(PathActionInit builder) {
+    public synchronized static void registerActionInit(PathActionInit builder) {
         if (builder == null) {
             return;
         }

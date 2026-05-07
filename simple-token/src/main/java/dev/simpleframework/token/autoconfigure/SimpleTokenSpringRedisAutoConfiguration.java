@@ -2,6 +2,7 @@ package dev.simpleframework.token.autoconfigure;
 
 import dev.simpleframework.token.session.SessionStore;
 import dev.simpleframework.token.session.impl.SpringRedisDefaultSessionStore;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -25,6 +26,7 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
+@Slf4j
 @Configuration
 @ConditionalOnClass(name = "org.springframework.data.redis.connection.RedisConnectionFactory")
 public class SimpleTokenSpringRedisAutoConfiguration {
@@ -43,10 +45,10 @@ public class SimpleTokenSpringRedisAutoConfiguration {
     @ConditionalOnMissingBean(SessionStore.class)
     @ConditionalOnBean(RedisConnectionFactory.class)
     public SessionStore simpleTokenSessionStore(RedisConnectionFactory connectionFactory) {
-        // 优先使用 jackson 序列化
         if (jacksonExist) {
+            log.info("Using Jackson serializer for Redis session store");
             PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
-                    .allowIfBaseType(Object.class)
+                    .allowIfBaseType(java.io.Serializable.class)
                     .build();
             ObjectMapper objectMapper = JsonMapper.builder()
                     .enable(
@@ -76,6 +78,7 @@ public class SimpleTokenSpringRedisAutoConfiguration {
         }
         // 无 json 依赖时使用 jdk 序列化
         else {
+            log.warn("Jackson not found, falling back to JDK serializer for Redis session store");
             RedisSerializer<Object> valueSerializer = new JdkSerializationRedisSerializer();
             RedisTemplate<String, Object> template = buildRedisTemplate(connectionFactory, valueSerializer);
             return new SpringRedisDefaultSessionStore(template);

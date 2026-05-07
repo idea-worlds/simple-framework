@@ -13,17 +13,17 @@ import java.util.List;
  */
 public final class ContextManager {
 
-    public static FrameworkContext FRAMEWORK_CONTEXT = null;
-    public static List<RpcContext> RPC_CONTEXTS = null;
+    private static volatile FrameworkContext FRAMEWORK_CONTEXT = null;
+    private static volatile List<RpcContext> RPC_CONTEXTS = null;
 
-    public static void registerFrameworkContext(FrameworkContext context) {
+    public synchronized static void registerFrameworkContext(FrameworkContext context) {
         if (context == null) {
             return;
         }
         FRAMEWORK_CONTEXT = context;
     }
 
-    public static void registerRpcContext(List<RpcContext> contexts) {
+    public synchronized static void registerRpcContext(List<RpcContext> contexts) {
         if (contexts == null) {
             return;
         }
@@ -33,7 +33,7 @@ public final class ContextManager {
         RPC_CONTEXTS.addAll(contexts);
     }
 
-    public static void registerRpcContext(RpcContext context) {
+    public synchronized static void registerRpcContext(RpcContext context) {
         if (context == null) {
             return;
         }

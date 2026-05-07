@@ -31,7 +31,6 @@ import java.io.IOException;
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @AutoConfigureAfter(SimpleTokenSpringRegisterAutoConfiguration.class)
-@Order(Ordered.LOWEST_PRECEDENCE - 100)
 public class SimpleTokenSpringWebmvcAutoConfiguration implements InitializingBean {
 
     @Value("${server.servlet.context-path:}")

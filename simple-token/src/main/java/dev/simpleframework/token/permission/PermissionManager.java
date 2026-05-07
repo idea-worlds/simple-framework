@@ -12,9 +12,9 @@ import java.util.List;
  * @author loyayz (loyayz@foxmail.com)
  */
 public final class PermissionManager {
-    private static PermissionQuery QUERY = PermissionQuery.DEFAULT;
+    private static volatile PermissionQuery QUERY = PermissionQuery.DEFAULT;
 
-    public static void registerQuery(PermissionQuery query) {
+    public synchronized static void registerQuery(PermissionQuery query) {
         QUERY = query;
     }
 

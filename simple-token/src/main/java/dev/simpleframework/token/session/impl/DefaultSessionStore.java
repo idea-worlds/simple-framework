@@ -30,13 +30,26 @@ public class DefaultSessionStore extends AbstractSessionStore {
     @Override
     protected SessionInfo getInfoData(String key) {
         log.error("This is just an example and is not recommended for use in prod {}", this.getClass());
-        return (SessionInfo) CACHE.get(key);
+        SessionInfo session = (SessionInfo) CACHE.get(key);
+        if (session != null && session.getExpiredTime() <= System.currentTimeMillis()) {
+            CACHE.remove(key);
+            return null;
+        }
+        return session;
     }
 
     @Override
     protected SessionPerson getPersonData(String key) {
         log.error("This is just an example and is not recommended for use in prod {}", this.getClass());
-        return (SessionPerson) CACHE.get(key);
+        SessionPerson person = (SessionPerson) CACHE.get(key);
+        if (person != null) {
+            person.removeExpired();
+            if (person.getClients().isEmpty()) {
+                CACHE.remove(key);
+                return null;
+            }
+        }
+        return person;
     }
 
     @Override

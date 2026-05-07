@@ -26,8 +26,12 @@ public abstract class AbstractSessionStore implements SessionStore {
     @Override
     public void setSession(SessionInfo session) {
         String key = this.toSessionKey(session.getToken());
-        Duration timeout = Duration.ofMillis(session.getExpiredTime() - System.currentTimeMillis());
-        this.setInfoData(key, session, timeout);
+        long timeout = session.getExpiredTime() - System.currentTimeMillis();
+        if (timeout <= 0) {
+            this.remove(key);
+        } else {
+            this.setInfoData(key, session, Duration.ofMillis(timeout));
+        }
     }
 
     @Override

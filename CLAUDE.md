@@ -125,7 +125,9 @@ Spring Boot 自动配置位于 `simple-token-spring-boot-autoconfigure`。
 
 ## 协作约定
 
-- 开始实现任何新功能前，必须先向用户确认，获得明确同意后再动手。
+- **任何代码修改前，必须先说明要改什么、为什么改、怎么改，获得用户明确同意后再动手。** 新功能、bug fix、小修改均适用，无一例外。
+- **写完方案/设计文档后，禁止在同一轮中立即实施。** 必须在下一轮交互中明确询问「方案是否确认？」，等待用户回复后再动手改代码。
+- **调用 Edit/Write 工具前，必须在文本输出中明确写出「方案：... 改吗？」，等待用户回复确认后才能执行。** 分析完成 ≠ 可以动手，确认是独立的一步。
 - **代码与文档同步更新**：测试通过后、`git add` 前，必须暂停并自问：这次改动影响了哪些文档？对照以下 checklist 逐个检查：
   - 改注解/接口/扩展点/行为 → `simple-crud/README.md` + `simple-crud/docs/implementation-models.md`
   - 改测试（新增/修改/删除）→ `simple-crud/docs/integration-test-coverage.md`

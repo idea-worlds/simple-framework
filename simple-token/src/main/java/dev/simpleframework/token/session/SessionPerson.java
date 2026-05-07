@@ -36,27 +36,24 @@ public class SessionPerson implements Serializable {
      * 添加客户端信息
      */
     public void addClient(String client, String token, Long createTime, Long expiredTime) {
-        List<TokenClient> clients = this.clients.get(client);
-        if (clients == null) {
-            clients = new ArrayList<>();
-        }
+        List<TokenClient> clients = this.clients.computeIfAbsent(client, k -> new ArrayList<>());
+        clients.removeIf(c -> token.equals(c.getToken()));
         TokenClient c = new TokenClient();
         c.setToken(token);
         c.setCreateTime(createTime);
         c.setExpiredTime(expiredTime);
         clients.add(c);
-        this.clients.put(client, clients);
     }
 
     /**
-     * 清除过期的数据，延迟 0.5 秒避免网络抖动之类的问题导致缓存查无数据
+     * 清除过期的数据
      */
     public void removeExpired() {
-        long now = System.currentTimeMillis() + 500;
+        long now = System.currentTimeMillis();
         Map<String, List<String>> expired = new HashMap<>();
         this.clients.forEach((k, v) -> {
             List<String> expiredTokens = v.stream()
-                    .filter(client -> client.getExpiredTime() <= now)
+                    .filter(client -> client.getExpiredTime() < now)
                     .map(TokenClient::getToken)
                     .toList();
             expired.put(k, expiredTokens);
