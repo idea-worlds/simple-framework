@@ -35,6 +35,21 @@ public class SimpleTokenPersonTest {
     }
 
     @Test
+    public void removeExpiredAllTokensExpired() {
+        long now = System.currentTimeMillis();
+        SessionPerson person = new SessionPerson();
+        person.addClient("1", UUID.randomUUID().toString(), now, now - 5000);
+        person.addClient("1", UUID.randomUUID().toString(), now, now - 3000);
+        person.addClient("2", UUID.randomUUID().toString(), now, now + 5000);
+        Assertions.assertEquals(person.getClients().size(), 2);
+
+        person.removeExpired();
+        Assertions.assertNull(person.getClients().get("1"), "client with all expired tokens should be removed");
+        Assertions.assertEquals(person.getClients().size(), 1);
+        Assertions.assertEquals(person.getClients().get("2").size(), 1);
+    }
+
+    @Test
     public void removeTokens() {
         long now = System.currentTimeMillis();
         SessionPerson person = new SessionPerson();

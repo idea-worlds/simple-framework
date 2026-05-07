@@ -3,6 +3,7 @@ package dev.simpleframework.token.session.entity;
 import dev.simpleframework.token.SimpleTokens;
 import dev.simpleframework.token.config.SimpleTokenLoginConfig;
 import dev.simpleframework.token.context.ContextManager;
+import dev.simpleframework.token.exception.LoginRejectException;
 import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.LoginSetting;
 import dev.simpleframework.token.session.SessionInfo;
@@ -53,6 +54,14 @@ public class SessionLogin {
     }
 
     public void exec() {
+        if (this.config.getMaxNum() == 0) {
+            throw new LoginRejectException("Login is currently disabled");
+        }
+        SimpleTokenLoginConfig.TokenClientConfig clientConfig = this.config.findClientConfig(this.client);
+        if (clientConfig.getMaxNum() == 0) {
+            throw new LoginRejectException("Login is not supported for this client");
+        }
+
         UserInfo user = UserManager.findInfoById(this.id);
         // 过期时间
         long expiredTime = this.timeout.toMillis() + this.now;

@@ -171,86 +171,81 @@ public class SessionPerson implements Serializable {
     }
 
     /**
-     * 根据配置清除应该淘汰的数据
+     * 按配置淘汰超出上限的会话，用于登录时的并发控制。
+     *
+     * <p>分两个阶段执行：
+     * <ol>
+     * <li>客户端配额：在同客户端（{@code currentClient}）内按客户端配置淘汰，
+     *     确保该客户端 token 数 ≤ clientMax。</li>
+     * <li>全局配额：在阶段 1 清理后的所有客户端 token 上按全局配置淘汰，
+     *     确保总数 ≤ globalMax。全局上限是最终约束，可覆盖客户端配额的结果。</li>
+     * </ol>
+     * {@code maxNum <= 0} 时跳过对应阶段（≤ 0 的检查已在 {@code SessionLogin} 入口完成）。
+     * 当前登录的 token 不会被淘汰。
      *
      * @param config        登录配置
-     * @param currentClient 当前客户端
-     * @param currentToken  当前 token
-     * @return 应该淘汰的 token
+     * @param currentClient 当前登录的客户端
+     * @param currentToken  当前登录的 token
+     * @return 本次淘汰的 token 列表（用于后续清除对应的 SessionInfo）
      */
     public List<String> removeExpiredByConfig(SimpleTokenLoginConfig config, String currentClient, String currentToken) {
         Set<String> result = new HashSet<>();
-        // 先淘汰同客户端的数据
-        List<TokenClient> clients = this.clients.get(currentClient);
-        SimpleTokenLoginConfig.TokenClientConfig clientConfig = config.findClientConfig(currentClient);
-        List<String> expiredTokens = findExpiredTokensByStrategy(clients, currentToken, clientConfig.getMaxStrategy(), clientConfig.getMaxNum());
-        result.addAll(expiredTokens);
-        this.removeTokens(expiredTokens);
 
-        // 再淘汰所有客户端的数据
-        clients = new ArrayList<>();
-        for (List<TokenClient> clientList : this.clients.values()) {
-            clients.addAll(clientList);
+        // 阶段 1：客户端配额
+        SimpleTokenLoginConfig.TokenClientConfig clientConfig = config.findClientConfig(currentClient);
+        int clientMax = clientConfig.getMaxNum();
+        if (clientMax > 0) {
+            List<TokenClient> clients = this.clients.get(currentClient);
+            List<String> toRemove = findTokensToRemove(clients, currentToken, clientMax, clientConfig.getMaxStrategy());
+            result.addAll(toRemove);
+            this.removeTokens(toRemove);
         }
-        expiredTokens = findExpiredTokensByStrategy(clients, currentToken, config.getMaxStrategy(), config.getMaxNum());
-        result.addAll(expiredTokens);
-        this.removeTokens(expiredTokens);
+
+        // 阶段 2：全局配额
+        int globalMax = config.getMaxNum();
+        if (globalMax > 0) {
+            List<TokenClient> clients = new ArrayList<>();
+            for (List<TokenClient> clientList : this.clients.values()) {
+                clients.addAll(clientList);
+            }
+            List<String> toRemove = findTokensToRemove(clients, currentToken, globalMax, config.getMaxStrategy());
+            result.addAll(toRemove);
+            this.removeTokens(toRemove);
+        }
         return result.stream().toList();
     }
 
-    private static List<String> findExpiredTokensByStrategy(List<TokenClient> clients, String currentToken, LoginMaxStrategy strategy, int max) {
+    private static List<String> findTokensToRemove(List<TokenClient> clients, String currentToken, int max, LoginMaxStrategy strategy) {
         if (clients == null || clients.isEmpty()) {
             return Collections.emptyList();
         }
-        if (max < 0) {
-            // 不限数量
-            return Collections.emptyList();
-        }
-        if (max == 0) {
-            // 不许登录
-            throw new LoginRejectException("number limit");
-        }
-        if (max == 1) {
-            List<String> result = new ArrayList<>();
-            // 只许单个登陆：非当前登录的都设为过期
-            clients.forEach(client -> {
-                if (!currentToken.equals(client.getToken())) {
-                    result.add(client.getToken());
-                }
-            });
-            return result;
-        }
-        // 允许多地登录：超过允许的最大数时，根据策略查找数据
         int outNum = clients.size() - max;
         if (outNum <= 0) {
             return Collections.emptyList();
         }
-        List<String> result = Collections.emptyList();
+        List<String> result;
         if (strategy == LoginMaxStrategy.KICK_OUT_FIRST_CREATE) {
             result = clients.stream()
                     .sorted(Comparator.comparing(TokenClient::getCreateTime))
                     .map(TokenClient::getToken)
                     .filter(token -> !currentToken.equals(token))
                     .toList();
-            if (outNum < result.size()) {
-                result = result.subList(0, outNum);
-            }
         } else if (strategy == LoginMaxStrategy.KICK_OUT_FIRST_EXPIRE) {
             result = clients.stream()
                     .sorted(Comparator.comparing(TokenClient::getExpiredTime))
                     .map(TokenClient::getToken)
                     .filter(token -> !currentToken.equals(token))
                     .toList();
-            if (outNum < result.size()) {
-                result = result.subList(0, outNum);
-            }
         } else if (strategy == LoginMaxStrategy.KICK_OUT_ALL) {
             result = clients.stream()
                     .map(TokenClient::getToken)
                     .filter(token -> !currentToken.equals(token))
                     .toList();
-        } else if (strategy == LoginMaxStrategy.REJECT) {
-            throw new LoginRejectException("number exceeded");
+        } else {
+            throw new LoginRejectException("Maximum number of logins reached");
+        }
+        if (outNum < result.size()) {
+            result = result.subList(0, outNum);
         }
         return result;
     }
