@@ -68,6 +68,8 @@ public class SessionPerson implements Serializable {
                     .collect(Collectors.toList());
             if (!clients.isEmpty()) {
                 this.clients.put(client, clients);
+            } else {
+                this.clients.remove(client);
             }
         });
     }

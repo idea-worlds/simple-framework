@@ -1,6 +1,5 @@
 package dev.simpleframework.token.session;
 
-import dev.simpleframework.token.user.UserInfo;
 import lombok.Data;
 
 import java.io.Serial;
@@ -46,13 +45,6 @@ public class SessionInfo implements Serializable {
 
     public SessionInfo() {
         this.createTime = System.currentTimeMillis();
-        this.attrs = new HashMap<>();
-    }
-
-    public SessionInfo(String loginId, long createTime, long expiredTime) {
-        this.loginId = loginId;
-        this.createTime = createTime;
-        this.expiredTime = expiredTime;
         this.attrs = new HashMap<>();
     }
 

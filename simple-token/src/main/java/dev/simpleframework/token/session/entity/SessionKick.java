@@ -1,9 +1,13 @@
 package dev.simpleframework.token.session.entity;
 
+import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.session.SessionManager;
 import dev.simpleframework.token.session.SessionPerson;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -47,14 +51,24 @@ public class SessionKick {
     }
 
     public void execByToken(List<String> tokens) {
-        this.setPerson();
+        // 先查出各 token 对应的 loginId（删除前查，否则 session 已不存在）
+        Map<String, List<String>> tokensByLogin = new HashMap<>();
+        for (String token : tokens) {
+            SessionInfo session = SessionManager.findSession(token);
+            if (session != null) {
+                tokensByLogin.computeIfAbsent(session.getLoginId(), k -> new ArrayList<>()).add(token);
+            }
+        }
         // 删除 session
         SessionManager.removeSessionByToken(tokens);
-        // 删除用户所有会话中对应的 token
-        if (this.person != null) {
-            this.person.removeTokens(tokens);
-            SessionManager.storePerson(this.person);
-        }
+        // 删除各用户 SessionPerson 中对应的 token
+        tokensByLogin.forEach((loginId, tokenList) -> {
+            SessionPerson person = SessionManager.findPerson(loginId);
+            if (person != null) {
+                person.removeTokens(tokenList);
+                SessionManager.storePerson(person);
+            }
+        });
     }
 
     private void setPerson() {

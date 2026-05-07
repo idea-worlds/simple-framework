@@ -1,9 +1,10 @@
 package dev.simpleframework.token.session.impl;
 
 import dev.simpleframework.token.session.SessionGenerator;
-import dev.simpleframework.token.session.SessionInfo;
 import dev.simpleframework.token.user.UserInfo;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -14,15 +15,13 @@ import java.util.UUID;
 public class DefaultSessionGenerator implements SessionGenerator {
 
     @Override
-    public SessionInfo generate(UserInfo user, long createTime, long expiredTime) {
-        SessionInfo session = new SessionInfo(user.getId(), createTime, expiredTime);
-        this.changeAttrs(session, user);
-        session.setToken(UUID.randomUUID().toString().replace("-", ""));
-        return session;
+    public Map<String, Object> generateAttrs(UserInfo user, long createTime, long expiredTime) {
+        return Collections.emptyMap();
     }
 
-    protected void changeAttrs(SessionInfo session, UserInfo user) {
-
+    @Override
+    public String generateToken(UserInfo user, Map<String, Object> attrs) {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
 }

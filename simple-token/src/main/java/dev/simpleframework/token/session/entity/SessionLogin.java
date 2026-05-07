@@ -68,19 +68,18 @@ public class SessionLogin {
             this.session = SessionManager.findSession(shareToken);
         }
 
-        // 创建一个新的 session
-        SessionInfo newSession = SessionManager.createSession(user, this.now, expiredTime);
         if (this.session == null) {
             if (shareToken != null) {
                 // 有共享 token 又查无对应的会话值，说明是垃圾数据，应清除
                 this.person.removeToken(shareToken);
                 shareToken = null;
             }
-            this.session = newSession;
+            // 创建一个新的 session
+            this.session = SessionManager.createSession(user, this.now, expiredTime);
         } else {
             // 共享 token 时替换新的属性值
             this.session.setExpiredTime(expiredTime);
-            this.session.setAttrs(newSession.getAttrs());
+            this.session.setAttrs(SessionManager.createSessionAttrs(user, this.now, expiredTime));
         }
         this.session.setLoginType(this.accountType);
         // 非共享 token 时添加客户端会话信息，并根据配置的策略获取过期的 token 用于登录后踢出

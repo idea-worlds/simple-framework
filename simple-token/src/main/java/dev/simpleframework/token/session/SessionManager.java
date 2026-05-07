@@ -1,26 +1,35 @@
 package dev.simpleframework.token.session;
 
 import dev.simpleframework.token.exception.ImplementationNotFoundException;
+import dev.simpleframework.token.exception.SimpleTokenException;
 import dev.simpleframework.token.session.impl.DefaultSessionGenerator;
 import dev.simpleframework.token.session.impl.DefaultSessionStore;
 import dev.simpleframework.token.user.UserInfo;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
  */
 public final class SessionManager {
-    private static SessionGenerator GENERATOR = new DefaultSessionGenerator();
-    private static SessionStore STORE = new DefaultSessionStore();
+    private static volatile SessionGenerator GENERATOR = new DefaultSessionGenerator();
+    private static volatile SessionStore STORE = new DefaultSessionStore();
+    private static boolean GENERATOR_REGISTERED = false;
+    private static boolean STORE_REGISTERED = false;
 
     /**
      * 注册会话值生成器
      *
      * @param generator 会话值生成器
      */
-    public static void registerGenerator(SessionGenerator generator) {
+    public synchronized static void registerGenerator(SessionGenerator generator) {
+        if (GENERATOR_REGISTERED) {
+            throw new SimpleTokenException("SessionGenerator has been registered");
+        }
         GENERATOR = generator;
+        GENERATOR_REGISTERED = true;
     }
 
     /**
@@ -28,8 +37,12 @@ public final class SessionManager {
      *
      * @param store 会话值存储器
      */
-    public static void registerStore(SessionStore store) {
+    public synchronized static void registerStore(SessionStore store) {
+        if (STORE_REGISTERED) {
+            throw new SimpleTokenException("SessionStore has been registered");
+        }
         STORE = store;
+        STORE_REGISTERED = true;
     }
 
     /**
@@ -56,11 +69,28 @@ public final class SessionManager {
      */
     public static SessionInfo createSession(UserInfo user, long createTime, long expiredTime) {
         validGenerator();
-        SessionInfo session = GENERATOR.generate(user, createTime, expiredTime);
+        Map<String, Object> attrs = createSessionAttrs(user, createTime, expiredTime);
+        String token = GENERATOR.generateToken(user, attrs);
+        SessionInfo session = new SessionInfo();
         session.setLoginId(user.getId());
         session.setCreateTime(createTime);
         session.setExpiredTime(expiredTime);
+        session.setToken(token);
+        session.setAttrs(attrs);
         return session;
+    }
+
+    /**
+     * 构建一个新的会话值自定义属性
+     *
+     * @param user        用户信息
+     * @param createTime  创建时间
+     * @param expiredTime 过期时间
+     * @return 会话值自定义属性
+     */
+    public static Map<String, Object> createSessionAttrs(UserInfo user, long createTime, long expiredTime) {
+        Map<String, Object> attrs = GENERATOR.generateAttrs(user, createTime, expiredTime);
+        return attrs == null ? Collections.emptyMap() : attrs;
     }
 
     /**
@@ -126,7 +156,7 @@ public final class SessionManager {
     /**
      * 存储用户的所有会话值
      *
-     * @param person  会话值
+     * @param person 会话值
      */
     public static void storePerson(SessionPerson person) {
         if (person == null) {
