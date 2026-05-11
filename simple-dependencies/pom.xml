@@ -43,7 +43,7 @@
         <mybatis-spring-boot-starter.version>4.0.1</mybatis-spring-boot-starter.version>
         <pagehelper.version>6.1.1</pagehelper.version>
         <pagehelper-spring-boot-starter.version>4.0.0</pagehelper-spring-boot-starter.version>
-        <druid.version>1.2.23</druid.version>
+        <druid.version>1.2.28</druid.version>
         <disruptor.version>4.0.0</disruptor.version>
         <aviator.version>5.4.3</aviator.version>
     </properties>
