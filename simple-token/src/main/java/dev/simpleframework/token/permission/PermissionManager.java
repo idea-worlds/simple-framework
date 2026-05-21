@@ -39,7 +39,7 @@ public final class PermissionManager {
     }
 
     /**
-     * 校验方法上的注解权限
+     * 校验注解权限，最小权限向上叠加，任一失败都抛异常
      */
     public static void checkAnnotation(Method method) {
         Class<?> clazz = method.getDeclaringClass();
@@ -56,7 +56,7 @@ public final class PermissionManager {
         switch (permission.mode()) {
             case ANY -> SimpleTokens.checkAnyPermission(permission.value());
             case ALL -> SimpleTokens.checkHasPermission(permission.value());
-            case NOT -> SimpleTokens.checkNotPermission(permission.value());
+            case NO -> SimpleTokens.checkNoPermission(permission.value());
         }
     }
 
@@ -67,7 +67,7 @@ public final class PermissionManager {
         switch (role.mode()) {
             case ANY -> SimpleTokens.checkAnyRole(role.value());
             case ALL -> SimpleTokens.checkHasRole(role.value());
-            case NOT -> SimpleTokens.checkNotRole(role.value());
+            case NO -> SimpleTokens.checkNotRole(role.value());
         }
     }
 

@@ -5,6 +5,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,7 +13,6 @@ import java.util.List;
  *
  * @author loyayz (loyayz@foxmail.com)
  */
-@Getter
 public class PathActionExecutor {
 
     /**
@@ -26,10 +26,19 @@ public class PathActionExecutor {
     /**
      * 匹配成功后执行的方法
      */
+    @Getter
     private Action action;
 
     public static PathActionExecutor of() {
         return new PathActionExecutor();
+    }
+
+    public List<PathInfo> getIncludes() {
+        return Collections.unmodifiableList(includes);
+    }
+
+    public List<PathInfo> getExcludes() {
+        return Collections.unmodifiableList(excludes);
     }
 
     public PathActionExecutor anyMatch(String... patterns) {
@@ -76,7 +85,7 @@ public class PathActionExecutor {
         return this;
     }
 
-    public PathActionExecutor notMatch(String... patterns) {
+    public PathActionExecutor noMatch(String... patterns) {
         if (patterns != null) {
             List<PathInfo> paths = Arrays.stream(patterns).map(PathInfo::new).toList();
             this.excludes.addAll(paths);
@@ -84,7 +93,7 @@ public class PathActionExecutor {
         return this;
     }
 
-    public PathActionExecutor notMatch(List<String> patterns) {
+    public PathActionExecutor noMatch(List<String> patterns) {
         if (patterns != null) {
             List<PathInfo> paths = patterns.stream().map(PathInfo::new).toList();
             this.excludes.addAll(paths);
@@ -92,28 +101,28 @@ public class PathActionExecutor {
         return this;
     }
 
-    public PathActionExecutor notMatchInfo(PathInfo... paths) {
+    public PathActionExecutor noMatchInfo(PathInfo... paths) {
         if (paths != null) {
             this.excludes.addAll(Arrays.asList(paths));
         }
         return this;
     }
 
-    public PathActionExecutor notMatchInfo(List<PathInfo> paths) {
+    public PathActionExecutor noMatchInfo(List<PathInfo> paths) {
         if (paths != null) {
             this.excludes.addAll(paths);
         }
         return this;
     }
 
-    public PathActionExecutor notMatchMethod(String pattern, HttpMethod... methods) {
+    public PathActionExecutor noMatchMethod(String pattern, HttpMethod... methods) {
         if (pattern != null) {
             this.excludes.add(new PathInfo(pattern, methods));
         }
         return this;
     }
 
-    public PathActionExecutor notMatchMethod(String pattern, List<HttpMethod> methods) {
+    public PathActionExecutor noMatchMethod(String pattern, List<HttpMethod> methods) {
         if (pattern != null) {
             this.excludes.add(new PathInfo(pattern, methods));
         }

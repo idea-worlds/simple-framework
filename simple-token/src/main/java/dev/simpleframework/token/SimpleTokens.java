@@ -450,7 +450,7 @@ public final class SimpleTokens {
      *
      * @param permissions 权限
      */
-    public static void checkNotPermission(String... permissions) {
+    public static void checkNoPermission(String... permissions) {
         if (permissions == null) {
             return;
         }
@@ -465,11 +465,11 @@ public final class SimpleTokens {
      *
      * @param permissions 权限
      */
-    public static void checkNotPermission(List<String> permissions) {
+    public static void checkNoPermission(List<String> permissions) {
         if (permissions == null || permissions.isEmpty()) {
             return;
         }
-        checkNotPermission(permissions.toArray(new String[0]));
+        checkNoPermission(permissions.toArray(new String[0]));
     }
 
     /**

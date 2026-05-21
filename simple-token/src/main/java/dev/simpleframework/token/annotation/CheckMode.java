@@ -18,6 +18,6 @@ public enum CheckMode {
     /**
      * 没有指定的元素
      */
-    NOT
+    NO
 
 }

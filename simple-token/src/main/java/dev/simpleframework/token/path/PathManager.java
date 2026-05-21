@@ -21,6 +21,10 @@ public final class PathManager {
      */
     private static volatile String pathPrefix;
     /**
+     * 配置级路径方法执行器缓存
+     */
+    private static volatile List<PathActionExecutor> cachedConfigExecutors;
+    /**
      * 所有自定义路径方法执行器
      */
     private static List<PathActionExecutor> CUSTOM_ACTION_EXECUTOR = PathActionInit.DEFAULT.init();
@@ -102,29 +106,40 @@ public final class PathManager {
     }
 
     private static List<PathActionExecutor> buildConfigActionExecutors() {
-        SimpleTokenPathConfig pathConfig = SimpleTokens.getGlobalConfig().getPath();
-        PathActionExecutor configExecutor = PathActionExecutor.of()
-                // 不匹配不需要鉴权的路径才执行回调
-                .notMatchInfo(pathConfig.getAllPermitPaths())
-                .action(() -> {
-                    // 校验登录
-                    SimpleTokens.checkLogin();
+        List<PathActionExecutor> cached = cachedConfigExecutors;
+        if (cached != null) {
+            return cached;
+        }
+        synchronized (PathManager.class) {
+            cached = cachedConfigExecutors;
+            if (cached != null) {
+                return cached;
+            }
+            SimpleTokenPathConfig pathConfig = SimpleTokens.getGlobalConfig().getPath();
+            PathActionExecutor configExecutor = PathActionExecutor.of()
+                    // 不匹配不需要鉴权的路径才执行回调
+                    .noMatchInfo(pathConfig.getAllPermitPaths())
+                    .action(() -> {
+                        // 校验登录
+                        SimpleTokens.checkLogin();
 
-                    // 校验权限
-                    List<PathActionExecutor> permissionExecutors = new ArrayList<>();
-                    PathActionExecutor permissionExecutor;
-                    for (PathPermission permission : pathConfig.getPermissions()) {
-                        permissionExecutor = PathActionExecutor.of()
-                                .anyMatchMethod(permission.getPath(), permission.getHttpMethods())
-                                .action(() -> {
-                                    SimpleTokens.checkAnyPermission(permission.getPermissions());
-                                    SimpleTokens.checkAnyRole(permission.getRoles());
-                                });
-                        permissionExecutors.add(permissionExecutor);
-                    }
-                    execAction(permissionExecutors);
-                });
-        return Collections.singletonList(configExecutor);
+                        // 校验权限
+                        List<PathActionExecutor> permissionExecutors = new ArrayList<>();
+                        PathActionExecutor permissionExecutor;
+                        for (PathPermission permission : pathConfig.getPermissions()) {
+                            permissionExecutor = PathActionExecutor.of()
+                                    .anyMatchMethod(permission.getPath(), permission.getHttpMethods())
+                                    .action(() -> {
+                                        SimpleTokens.checkAnyPermission(permission.getPermissions());
+                                        SimpleTokens.checkAnyRole(permission.getRoles());
+                                    });
+                            permissionExecutors.add(permissionExecutor);
+                        }
+                        execAction(permissionExecutors);
+                    });
+            cachedConfigExecutors = Collections.singletonList(configExecutor);
+            return cachedConfigExecutors;
+        }
     }
 
     private static String cutPath(String path) {

@@ -116,7 +116,7 @@ public class PermissionInfo {
     }
 
     /**
-     * copy from simple-core - Strings.like()
+     * 与 simple-core Strings.like() 保持同步
      */
     private static boolean like(String pattern, String str) {
         String likeStr = "*";
