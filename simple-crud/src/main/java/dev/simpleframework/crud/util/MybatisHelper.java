@@ -58,6 +58,11 @@ public final class MybatisHelper {
         }
     }
 
+    public static boolean hasInterceptor(DatasourceType datasourceType, String datasourceName, Class<?> interceptorClass) {
+        return exec(datasourceType, datasourceName,
+                session -> session.getConfiguration().getInterceptors().stream().anyMatch(interceptorClass::isInstance));
+    }
+
     /**
      * 向 MyBatis Configuration 动态注册一条 MappedStatement（模型注册阶段调用，非热路径）。
      * <p>

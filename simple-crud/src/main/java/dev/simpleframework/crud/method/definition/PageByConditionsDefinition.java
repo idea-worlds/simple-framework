@@ -1,5 +1,6 @@
 package dev.simpleframework.crud.method.definition;
 
+import com.github.pagehelper.PageInterceptor;
 import dev.simpleframework.crud.ModelInfo;
 import dev.simpleframework.crud.core.DatasourceType;
 import dev.simpleframework.crud.core.Page;
@@ -23,20 +24,25 @@ public class PageByConditionsDefinition implements ModelMethodDefinition {
     }
 
     public static <T, R extends T> Page<R> exec(T model, int pageNum, int pageSize, boolean needCount, QueryConfig queryConfig) {
+        ModelInfo<T> info = ModelCache.info(model);
+
+        DatasourceType datasourceType = info.datasourceType();
+        if (datasourceType != DatasourceType.Mybatis) {
+            throw new ModelRegisterException(info.modelClass(), "PageByConditions only support MyBatis");
+        }
+        if (!Constants.pageHelperPresent) {
+            throw new ModelRegisterException(info.modelClass(), "PageByConditions only support PageHelper");
+        }
+        if (!MybatisHelper.hasInterceptor(datasourceType, info.datasourceName(), PageInterceptor.class)) {
+            throw new ModelRegisterException(info.modelClass(),
+                    "PageByConditions requires PageHelper PageInterceptor to be registered in MyBatis Configuration");
+        }
+
         long total = needCount ? CountByConditionsDefinition.exec(model, queryConfig.getConditions()) : 0;
         if (needCount && total == 0) {
             return Page.of(pageNum, pageSize, total);
         }
-        ModelInfo<T> info = ModelCache.info(model);
-
-        String methodId = methodId(info);
-        DatasourceType datasourceType = info.datasourceType();
-        if (datasourceType == DatasourceType.Mybatis) {
-            if (Constants.pageHelperPresent) {
-                return MybatisHelper.doSelectPage(pageNum, pageSize, () -> ListByConditionsDefinition.exec(model, queryConfig), total);
-            }
-        }
-        throw new ModelRegisterException(info.modelClass(), "PageByConditions only support PageHelper");
+        return MybatisHelper.doSelectPage(pageNum, pageSize, () -> ListByConditionsDefinition.exec(model, queryConfig), total);
     }
 
     private static String methodId(ModelInfo<?> info) {

@@ -12,10 +12,11 @@ import java.util.List;
 public interface InsertBatch<T> {
 
     /**
-     * 批量新增（所有字段）
+     * 批量新增（逐条复用 Insert）
      *
      * @param models 要新增的模型列表
      * @return 是否操作成功
+     * @see Insert
      */
     default boolean insertBatch(List<? extends T> models) {
         return InsertBatchDefinition.exec(models);

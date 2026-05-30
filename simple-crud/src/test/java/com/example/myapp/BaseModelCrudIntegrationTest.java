@@ -6,6 +6,7 @@ import dev.simpleframework.crud.core.*;
 import dev.simpleframework.crud.exception.ModelExecuteException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -21,6 +22,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Transactional
 public class BaseModelCrudIntegrationTest {
+
+    private static final Object FIELD_CUSTOMIZER_LOCK = new Object();
+
 
     // ========== 增删改查——模拟真实使用流程 ==========
 
@@ -146,17 +150,30 @@ public class BaseModelCrudIntegrationTest {
 
     /**
      * 场景：分页查询。
-     * 验证点：API 不抛异常（PageHelper 在 @Transactional 下 items 可能为空）。
+     * 验证点：分页元数据、总数、当前页数据均正确。
      */
     @Test
-    public void testPageByConditionsShouldNotThrow() {
-        for (int i = 0; i < 3; i++) {
-            var u = new UserModel(); u.setName("P" + i); u.setAge(i); u.insert();
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testPageByConditionsShouldReturnMatchedPage() {
+        String prefix = "PageMatched_";
+        try {
+            for (int i = 0; i < 3; i++) {
+                var u = new UserModel(); u.setName(prefix + i); u.setAge(i); u.insert();
+            }
+            var config = QueryConfig.of()
+                    .addCondition("name", ConditionType.like_right, prefix)
+                    .addSorter(QuerySorters.asc("age"));
+            Page<UserModel> page = new UserModel().pageByConditions(1, 10, config);
+            assertEquals(1, page.getPageNum());
+            assertEquals(10, page.getPageSize());
+            assertEquals(3, page.getTotal());
+            assertEquals(1, page.getPages());
+            assertEquals(3, page.getItems().size());
+            assertEquals(List.of(0, 1, 2), page.getItems().stream().map(UserModel::getAge).toList());
+        } finally {
+            new UserModel().deleteByConditions(
+                    QueryConditions.and().add("name", ConditionType.like_right, prefix));
         }
-        var config = QueryConfig.of()
-                .addCondition("name", ConditionType.like_all, "P")
-                .addSorter(QuerySorters.asc("age"));
-        assertDoesNotThrow(() -> new UserModel().pageByConditions(1, 10, config));
     }
 
     // ========== QueryFields：控制 SELECT 列子集 ==========
@@ -370,18 +387,29 @@ public class BaseModelCrudIntegrationTest {
     }
 
     @Test
-    public void testInsertBatchVsInsertNullHandling() {
-        // insertBatch: email=null 显式写入 SQL，DB 中为 null
-        var batch = new UserModel(); batch.setName("Batch"); batch.setAge(1);
-        new UserModel().insertBatch(List.of(batch));
-        var foundBatch = new UserModel().findById(batch.getId());
-        assertNull(foundBatch.getEmail(), "insertBatch writes null explicitly");
+    public void testInsertBatchShouldApplyDatabaseDefaultWhenNullFieldSkippedLikeInsert() {
+        synchronized (FIELD_CUSTOMIZER_LOCK) {
+            FieldCustomizer.of(UserModel.class)
+                    .field(UserModel::getEmail, f -> f.name("name2")).apply();
+            try {
+                // insertBatch 逐条复用 insert，以支持自增 ID 回填；null 字段同样跳过，DB 默认值生效
+                var batch = new UserModel(); batch.setName("Batch"); batch.setAge(1);
+                new UserModel().insertBatch(List.of(batch));
+                var foundBatch = new UserModel().findById(batch.getId());
+                assertEquals("default-name2", foundBatch.getEmail(),
+                        "insertBatch reuses insert and lets the DB default apply");
 
-        // insert: email=null 被跳过（动态 SQL <if test>），DB 默认值生效
-        var single = new UserModel(); single.setName("Single"); single.setAge(1);
-        single.insert();
-        var foundSingle = new UserModel().findById(single.getId());
-        assertNull(foundSingle.getEmail(), "insert skips null, DB default is null");
+                // insert: email=null 被跳过（动态 SQL <if test>），DB 默认值生效
+                var single = new UserModel(); single.setName("Single"); single.setAge(1);
+                single.insert();
+                var foundSingle = new UserModel().findById(single.getId());
+                assertEquals("default-name2", foundSingle.getEmail(),
+                        "insert skips null fields and lets the DB default apply");
+            } finally {
+                FieldCustomizer.of(UserModel.class)
+                        .field(UserModel::getEmail, f -> f.name("email")).apply();
+            }
+        }
     }
 
     // ========== count / exist ==========
@@ -459,12 +487,22 @@ public class BaseModelCrudIntegrationTest {
     // ========== findOneByConditions ==========
 
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testFindOneByConditionsShouldReturnSingle() {
-        new UserModel() {{ setName("Match1"); setAge(10); insert(); }};
-        new UserModel() {{ setName("Noise"); setAge(99); insert(); }};
-        // PageHelper 在 @Transactional 下可能返回空，验证 API 不抛异常
-        assertDoesNotThrow(() -> new UserModel().findOneByConditions(
-                QueryConfig.of().addCondition("name", "Match1")));
+        try {
+            new UserModel() {{ setName("FindOneMatch"); setAge(10); insert(); }};
+            new UserModel() {{ setName("FindOneNoise"); setAge(99); insert(); }};
+            var config = QueryConfig.of().addCondition("name", "FindOneMatch");
+            List<UserModel> list = new UserModel().listByConditions(config);
+            assertEquals(1, list.size());
+            UserModel found = new UserModel().findOneByConditions(config);
+            assertNotNull(found);
+            assertEquals("FindOneMatch", found.getName());
+            assertEquals(10, found.getAge());
+        } finally {
+            new UserModel().deleteByConditions(
+                    QueryConditions.and().add("name", ConditionType.in, "FindOneMatch", "FindOneNoise"));
+        }
     }
 
     @Test
@@ -478,31 +516,51 @@ public class BaseModelCrudIntegrationTest {
     // ========== 分页正确性 ==========
 
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testPageByConditionsShouldReturnCorrectPage() {
-        for (int i = 0; i < 15; i++) {
-            var u = new UserModel(); u.setName("P" + i); u.setAge(i); u.insert();
+        String prefix = "PageCorrect_";
+        try {
+            for (int i = 0; i < 15; i++) {
+                var u = new UserModel(); u.setName(prefix + i); u.setAge(i); u.insert();
+            }
+            var page = new UserModel().pageByConditions(1, 5,
+                    QueryConfig.of()
+                            .addCondition("name", ConditionType.like_right, prefix)
+                            .addCondition("age", ConditionType.greater_equal, 0)
+                            .addSorter(QuerySorters.asc("age")));
+            assertNotNull(page);
+            assertEquals(1, page.getPageNum());
+            assertEquals(5, page.getPageSize());
+            assertEquals(15, page.getTotal());
+            assertEquals(3, page.getPages());
+            assertEquals(5, page.getItems().size());
+            assertEquals(List.of(0, 1, 2, 3, 4), page.getItems().stream().map(UserModel::getAge).toList());
+        } finally {
+            new UserModel().deleteByConditions(
+                    QueryConditions.and().add("name", ConditionType.like_right, prefix));
         }
-        var page = new UserModel().pageByConditions(1, 5,
-                QueryConfig.of()
-                        .addCondition("age", ConditionType.greater_equal, 0)
-                        .addSorter(QuerySorters.asc("age")));
-        // PageHelper 在 @Transactional 下 items 可能为空，但 Page 对象结构和 API 正确
-        assertNotNull(page);
-        assertEquals(1, page.getPageNum());
-        assertEquals(5, page.getPageSize());
-        assertDoesNotThrow(page::getTotal);
     }
 
     @Test
-    public void testPageByConditionsWithSortingShouldNotThrow() {
-        for (int i = 10; i >= 1; i--) {
-            var u = new UserModel(); u.setName("S" + i); u.setAge(i); u.insert();
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testPageByConditionsWithSortingShouldReturnSortedPage() {
+        String prefix = "PageSorted_";
+        try {
+            for (int i = 10; i >= 1; i--) {
+                var u = new UserModel(); u.setName(prefix + i); u.setAge(i); u.insert();
+            }
+            Page<UserModel> page = new UserModel().pageByConditions(1, 3,
+                    QueryConfig.of()
+                            .addCondition("name", ConditionType.like_right, prefix)
+                            .addCondition("age", ConditionType.greater_equal, 0)
+                            .addSorter(QuerySorters.desc("age")));
+            assertEquals(10, page.getTotal());
+            assertEquals(3, page.getItems().size());
+            assertEquals(List.of(10, 9, 8), page.getItems().stream().map(UserModel::getAge).toList());
+        } finally {
+            new UserModel().deleteByConditions(
+                    QueryConditions.and().add("name", ConditionType.like_right, prefix));
         }
-        // 验证分页+排序组合 API 可调用不抛异常
-        assertDoesNotThrow(() -> new UserModel().pageByConditions(1, 3,
-                QueryConfig.of()
-                        .addCondition("age", ConditionType.greater_equal, 0)
-                        .addSorter(QuerySorters.desc("age"))));
     }
 
     // ========== 边界 / 异常 ==========

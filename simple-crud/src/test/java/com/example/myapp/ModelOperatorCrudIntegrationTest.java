@@ -8,6 +8,7 @@ import dev.simpleframework.crud.core.QueryConfig;
 import dev.simpleframework.crud.core.QuerySorters;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -156,14 +157,28 @@ public class ModelOperatorCrudIntegrationTest {
     }
 
     @Test
-    public void testPageByConditionsShouldNotThrow() {
-        for (int i = 0; i < 5; i++) {
-            var p = new UserPojo(); p.setName("Pg" + i); p.setAge(i); Models.wrap(p).insert();
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testPageByConditionsShouldReturnSortedPage() {
+        String prefix = "OpPage_";
+        try {
+            for (int i = 0; i < 5; i++) {
+                var p = new UserPojo(); p.setName(prefix + i); p.setAge(i); Models.wrap(p).insert();
+            }
+            var page = Models.wrap(UserPojo.class).pageByConditions(1, 3,
+                    QueryConfig.of()
+                            .addCondition("name", ConditionType.like_right, prefix)
+                            .addCondition("age", ConditionType.greater_equal, 0)
+                            .addSorter(QuerySorters.asc("age")));
+            assertEquals(1, page.getPageNum());
+            assertEquals(3, page.getPageSize());
+            assertEquals(5, page.getTotal());
+            assertEquals(2, page.getPages());
+            assertEquals(3, page.getItems().size());
+            assertEquals(List.of(0, 1, 2), page.getItems().stream().map(UserPojo::getAge).toList());
+        } finally {
+            Models.wrap(UserPojo.class).deleteByConditions(
+                    QueryConditions.and().add("name", ConditionType.like_right, prefix));
         }
-        assertDoesNotThrow(() -> Models.wrap(UserPojo.class).pageByConditions(1, 3,
-                QueryConfig.of()
-                        .addCondition("age", ConditionType.greater_equal, 0)
-                        .addSorter(QuerySorters.asc("age"))));
     }
 
 }

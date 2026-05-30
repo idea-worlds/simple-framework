@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,9 +41,11 @@ public class ConditionAnnotationIntegrationTest {
 
     @Data
     public static class UserQueryMultiCondition {
-        @Condition(field = "name")
-        @Condition(field = "name", type = ConditionType.not_equal)
-        private String keyword;
+        @Condition(field = "age", type = ConditionType.greater_equal)
+        private Integer minAge;
+
+        @Condition(field = "age", type = ConditionType.less_equal)
+        private Integer maxAge;
     }
 
     @Test
@@ -77,15 +78,17 @@ public class ConditionAnnotationIntegrationTest {
 
     @Test
     public void testFromAnnotationWithMultipleConditionsOnSameField() {
-        new UserModel() {{ setName("SameName"); setAge(1); insert(); }};
-        new UserModel() {{ setName("Other"); setAge(2); insert(); }};
+        new UserModel() {{ setName("TooYoung"); setAge(17); insert(); }};
+        new UserModel() {{ setName("Adult"); setAge(18); insert(); }};
+        new UserModel() {{ setName("Middle"); setAge(30); insert(); }};
+        new UserModel() {{ setName("TooOld"); setAge(61); insert(); }};
 
         var query = new UserQueryMultiCondition();
-        query.setKeyword("SameName");
-        // name = 'SameName' AND name != 'SameName' → 矛盾条件
+        query.setMinAge(18);
+        query.setMaxAge(60);
         var config = QueryConfig.of().addCondition(QueryConditions.fromAnnotation(query));
         List<UserModel> list = new UserModel().listByConditions(config);
-        assertEquals(0, list.size());
+        assertEquals(2, list.size());
     }
 
     // ========== in / not_in ==========

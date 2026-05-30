@@ -6,6 +6,7 @@ import dev.simpleframework.crud.exception.ModelExecuteException;
 import dev.simpleframework.crud.info.dynamic.DynamicModelInfo;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -225,7 +226,8 @@ public class DynamicModelCrudIntegrationTest {
     }
 
     @Test
-    public void testPageByConditionsShouldNotThrow() {
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testPageByConditionsShouldReturnSortedPage() {
         var info = new DynamicModelInfo("sys_user", DatasourceType.Mybatis);
         info.addField("name", "name");
         info.addField("age", "age", Integer.class);
@@ -233,16 +235,28 @@ public class DynamicModelCrudIntegrationTest {
         info.setId("id");
         DynamicModel.register(info);
 
-        for (int i = 0; i < 5; i++) {
-            var m = DynamicModel.of("sys_user");
-            m.put("name", "P" + i); m.put("age", i); m.insert();
+        String prefix = "DynPage_";
+        try {
+            for (int i = 0; i < 5; i++) {
+                var m = DynamicModel.of("sys_user");
+                m.put("name", prefix + i); m.put("age", i); m.insert();
+            }
+            Page<Map<String, Object>> page = DynamicModel.of("sys_user").pageByConditions(1, 3,
+                    QueryConfig.of()
+                            .addCondition("name", ConditionType.like_right, prefix)
+                            .addCondition("age", ConditionType.greater_equal, 0)
+                            .addSorter(QuerySorters.asc("age")));
+            assertEquals(1, page.getPageNum());
+            assertEquals(3, page.getPageSize());
+            assertEquals(5, page.getTotal());
+            assertEquals(2, page.getPages());
+            assertEquals(3, page.getItems().size());
+            assertEquals(List.of(0, 1, 2), page.getItems().stream().map(item -> item.get("age")).toList());
+        } finally {
+            DynamicModel.of("sys_user").deleteByConditions(
+                    QueryConditions.and().add("name", ConditionType.like_right, prefix));
+            DynamicModel.removeRegistered("sys_user");
         }
-        assertDoesNotThrow(() -> DynamicModel.of("sys_user").pageByConditions(1, 3,
-                QueryConfig.of()
-                        .addCondition("age", ConditionType.greater_equal, 0)
-                        .addSorter(QuerySorters.asc("age"))));
-
-        DynamicModel.removeRegistered("sys_user");
     }
 
 }

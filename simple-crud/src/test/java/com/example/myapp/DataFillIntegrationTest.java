@@ -22,10 +22,19 @@ public class DataFillIntegrationTest {
     public void testInsertShouldAutoFillTimeFields() {
         var model = new DateModel();
         model.setName("TimeTest");
+        Date beforeInsert = new Date();
         assertTrue(model.insert());
+        Date afterInsert = new Date();
         assertNotNull(model.getCreatedTime());
         assertNotNull(model.getUpdatedTime());
-        assertEquals(model.getCreatedTime(), model.getUpdatedTime());
+        assertFalse(model.getCreatedTime().before(beforeInsert),
+                "createdTime should be filled during insert");
+        assertFalse(model.getCreatedTime().after(afterInsert),
+                "createdTime should be filled during insert");
+        assertFalse(model.getUpdatedTime().before(beforeInsert),
+                "updatedTime should be filled during insert");
+        assertFalse(model.getUpdatedTime().after(afterInsert),
+                "updatedTime should be filled during insert");
     }
 
     @Test

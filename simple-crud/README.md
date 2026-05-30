@@ -254,7 +254,7 @@ BaseModel<T>
 | 方法 | 说明 |
 |------|------|
 | `insert()` | 新增单条，非 null 字段才参与 INSERT（动态 SQL） |
-| `insertBatch(List)` | 批量新增，**所有 insertable 字段**均参与（固定列） |
+| `insertBatch(List)` | 批量新增，逐条复用 `insert` 逻辑以支持自增 ID 回填 |
 | `deleteById(id)` | 按主键删除 |
 | `deleteByIds(ids)` | 按主键集合批量删除 |
 | `deleteByConditions(cond)` | 按条件删除 |
@@ -268,9 +268,8 @@ BaseModel<T>
 | `countByConditions(cond)` | 按条件统计数量 |
 | `existByConditions(cond)` | 按条件判断是否存在 |
 
-> **注意**：`insert` 与 `insertBatch` 的 null 字段处理不同：
-> - `insert`：跳过 null 字段（`<if test="field != null">`），利于设置数据库默认值；
-> - `insertBatch`：所有 insertable 字段均写入（含 null），适合批量场景。
+> **注意**：`insertBatch` 为了兼容数据库自增 ID 回填，当前实现会逐条复用 `insert` 逻辑执行。
+> 因此它与 `insert` 的 null 字段处理一致：跳过 null 字段（`<if test="field != null">`），利于设置数据库默认值。
 
 ---
 
@@ -371,7 +370,7 @@ DynamicModelInfo info = new DynamicModelInfo("t_log", DatasourceType.Mybatis)
 DynamicModel.register(info);
 
 // 通过 DynamicModel 执行操作
-DynamicModel model = new DynamicModel(info);
+DynamicModel model = DynamicModel.of("t_log");
 model.put("content", "hello");
 model.insert();
 

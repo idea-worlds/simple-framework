@@ -32,9 +32,7 @@
 | `testDeleteByIdShouldRemoveEntity` | `entity.deleteById(id)` → 返回 true，findById 返回 null |
 | `testDeleteByConditionsShouldRemoveMatched` | `entity.deleteByConditions(conditions)` → 返回删除行数 |
 | `testListByConditionsShouldReturnMatchedOnly` | `entity.listByConditions(config)` → 只返回匹配条件的数据 |
-| `testPageByConditionsShouldPaginateAndSort`* | `entity.pageByConditions(...)` → 不抛异常 |
-
-> *PageHelper 在 `@Transactional` 下行为受限，仅验证 API 不抛异常。
+| `testPageByConditionsShouldReturnMatchedPage` | `entity.pageByConditions(...)` → 返回匹配数据的分页元数据和当前页 items |
 
 ### 3. QueryFields 字段选择 (1)
 
@@ -111,7 +109,7 @@
 | 测试方法 | 验证点 |
 |------|------|
 | `testCountByConditionsShouldReturnCount` | countByConditions → 计数正确 |
-| `testPageByConditionsShouldNotThrow` | pageByConditions → API 不抛异常 |
+| `testPageByConditionsShouldReturnSortedPage` | pageByConditions → 分页元数据、总数、当前页 items 和排序正确 |
 
 ### 9. @Condition 注解查询 (9)
 
@@ -119,7 +117,7 @@
 |------|------|
 | `testFromAnnotationShouldFilterByConditions` | 多条件注解 → listByConditions 过滤正确 |
 | `testFromAnnotationWithDefaultValueIfNull` | defaultValueIfNull → 默认值生效 |
-| `testFromAnnotationWithMultipleConditionsOnSameField` | @Conditions 容器 → 矛盾条件返回 0 |
+| `testFromAnnotationWithMultipleConditionsOnSameField` | 多个 Java 字段映射到同一 DB 字段 → 年龄区间过滤正确 |
 | `testFromAnnotationWithInCondition` | in 类型 + List 值 → WHERE IN 过滤 |
 | `testFromAnnotationWithLikeAllCondition` | like_all + field 映射 → 模糊匹配 |
 | `testFromAnnotationWithIsNullCondition` | is_null → 无需值，匹配 null 行 |

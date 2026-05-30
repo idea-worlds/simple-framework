@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS SYS_USER (
     create_user BIGINT,
     created_time TIMESTAMP,
     updated_time TIMESTAMP,
-    name2 VARCHAR(100)
+    name2 VARCHAR(100) DEFAULT 'default-name2'
 );
 
 CREATE TABLE IF NOT EXISTS SYS_USER_UUID (
