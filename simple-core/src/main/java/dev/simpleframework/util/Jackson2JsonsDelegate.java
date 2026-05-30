@@ -90,9 +90,14 @@ class Jackson2JsonsDelegate implements Jsons.JsonsDelegate {
     }
 
     @Override
+    @SneakyThrows
     public <K, V> Map<K, V> toMap(Object obj, Class<K> keyClass, Class<V> valueClass) {
         MapType type = OBJECT_MAPPER.getTypeFactory().constructMapType(LinkedHashMap.class, keyClass, valueClass);
-        return OBJECT_MAPPER.convertValue(obj, type);
+        if (obj instanceof String) {
+            return OBJECT_MAPPER.readValue(obj.toString(), type);
+        } else{
+            return OBJECT_MAPPER.convertValue(obj, type);
+        }
     }
 
     @Override
