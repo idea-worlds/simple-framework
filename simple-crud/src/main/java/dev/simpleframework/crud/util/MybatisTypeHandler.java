@@ -127,7 +127,6 @@ public final class MybatisTypeHandler {
             Object[] objects = ((Collection<?>) parameter).toArray();
             Array array = ps.getConnection().createArrayOf(jdbcType.name(), objects);
             ps.setArray(i, array);
-            array.free();
         }
 
         @Override

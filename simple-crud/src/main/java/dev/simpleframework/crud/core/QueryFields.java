@@ -71,7 +71,7 @@ public class QueryFields {
     }
 
     public QueryFields add(Collection<String> fieldNames) {
-        if (fieldNames.isEmpty()) {
+        if (fieldNames == null || fieldNames.isEmpty()) {
             return this;
         }
         this.fieldNames.addAll(fieldNames);

@@ -1,4 +1,4 @@
-package com.example.multids.model;
+package com.example.myapp.model;
 
 import dev.simpleframework.crud.BaseModel;
 import dev.simpleframework.crud.annotation.Column;
@@ -9,11 +9,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Table(name = "t_second")
-public class SecondDsUserModel implements BaseModel<SecondDsUserModel> {
-    @Id
+@Table(name = "t_uuid32")
+public class Uuid32Model implements BaseModel<Uuid32Model> {
+    @Id(type = Id.Type.UUID32)
     @Column(name = "id", updatable = false)
-    private Long id;
+    private String id;
     @Column(name = "name")
     private String name;
     @Column(name = "age")

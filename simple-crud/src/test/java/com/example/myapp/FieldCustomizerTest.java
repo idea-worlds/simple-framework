@@ -1,6 +1,5 @@
 package com.example.myapp;
 
-import com.example.myapp.model.DateModel;
 import com.example.myapp.model.UserModel;
 import com.example.operator.model.UserPojo;
 import dev.simpleframework.crud.DynamicModel;
@@ -15,13 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * FieldCustomizer 字段策略覆盖集成测试。
- *
- * 注意：FieldCustomizer.apply() 修改 ModelCache 全局状态。
- * 每次操作用 synchronized 锁保护，try-finally 确保恢复原始配置。
- * @Execution(SAME_THREAD) 防止并发执行下的竞态。
- */
 @SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Transactional
 @Execution(ExecutionMode.SAME_THREAD)
@@ -29,7 +21,7 @@ public class FieldCustomizerTest {
 
     private static final Object LOCK = new Object();
 
-    // ==================== BaseModel ====================
+    // ==================== insertable ====================
 
     @Test
     public void testBaseModelInsertableFalseShouldSkipField() {
@@ -40,14 +32,31 @@ public class FieldCustomizerTest {
                 var user = new UserModel();
                 user.setName("Test"); user.setAge(1); user.setEmail("ignored@test.com");
                 assertTrue(user.insert());
-                assertNull(user.findById(user.getId()).getEmail(),
-                        "email should be null because insertable=false");
+                assertNull(user.findById(user.getId()).getEmail());
             } finally {
                 FieldCustomizer.of(UserModel.class)
                         .field(UserModel::getEmail, f -> f.insertable(true)).apply();
             }
         }
     }
+
+    @Test
+    public void testOperatorInsertableFalseShouldSkipField() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(UserPojo.class)
+                    .field(UserPojo::getEmail, f -> f.insertable(false)).apply();
+            try {
+                var pojo = new UserPojo(); pojo.setName("Op"); pojo.setEmail("ignored@test.com");
+                Models.wrap(pojo).insert();
+                assertNull(Models.wrap(UserPojo.class).findById(pojo.getId()).getEmail());
+            } finally {
+                FieldCustomizer.of(UserPojo.class)
+                        .field(UserPojo::getEmail, f -> f.insertable(true)).apply();
+            }
+        }
+    }
+
+    // ==================== updatable ====================
 
     @Test
     public void testBaseModelUpdatableFalseShouldRetainOriginal() {
@@ -60,30 +69,11 @@ public class FieldCustomizerTest {
                 var update = new UserModel(); update.setId(id); update.setName("New"); update.setAge(99);
                 assertTrue(update.updateById());
                 var found = new UserModel().findById(id);
-                assertEquals("Original", found.getName(), "name should remain unchanged");
-                assertEquals(99, found.getAge(), "age should be updated");
+                assertEquals("Original", found.getName());
+                assertEquals(99, found.getAge());
             } finally {
                 FieldCustomizer.of(UserModel.class)
                         .field(UserModel::getName, f -> f.updatable(true)).apply();
-            }
-        }
-    }
-
-    // ==================== ModelOperator ====================
-
-    @Test
-    public void testOperatorInsertableFalseShouldSkipField() {
-        synchronized (LOCK) {
-            FieldCustomizer.of(UserPojo.class)
-                    .field(UserPojo::getEmail, f -> f.insertable(false)).apply();
-            try {
-                var pojo = new UserPojo(); pojo.setName("Op"); pojo.setEmail("ignored@test.com");
-                Models.wrap(pojo).insert();
-                assertNull(Models.wrap(UserPojo.class).findById(pojo.getId()).getEmail(),
-                        "email should be null because insertable=false");
-            } finally {
-                FieldCustomizer.of(UserPojo.class)
-                        .field(UserPojo::getEmail, f -> f.insertable(true)).apply();
             }
         }
     }
@@ -99,11 +89,66 @@ public class FieldCustomizerTest {
                 var update = new UserPojo(); update.setId(id); update.setName("NewName"); update.setAge(99);
                 assertTrue(Models.wrap(update).updateById());
                 var found = Models.wrap(UserPojo.class).findById(id);
-                assertEquals("NewName", found.getName(), "name should be updated");
-                assertEquals(10, found.getAge(), "age should remain unchanged");
+                assertEquals("NewName", found.getName());
+                assertEquals(10, found.getAge());
             } finally {
                 FieldCustomizer.of(UserPojo.class)
                         .field(UserPojo::getAge, f -> f.updatable(true)).apply();
+            }
+        }
+    }
+
+    // ==================== selectable ====================
+
+    @Test
+    public void testBaseModelSelectableFalseShouldNotReturnField() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(UserModel.class)
+                    .field(UserModel::getName, f -> f.selectable(false)).apply();
+            try {
+                var user = new UserModel(); user.setName("Hidden"); user.setAge(1); user.insert();
+                var found = new UserModel().findById(user.getId());
+                assertNull(found.getName());
+                assertEquals(1, found.getAge());
+            } finally {
+                FieldCustomizer.of(UserModel.class)
+                        .field(UserModel::getName, f -> f.selectable(true)).apply();
+            }
+        }
+    }
+
+    @Test
+    public void testOperatorSelectableFalseShouldNotReturnField() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(UserPojo.class)
+                    .field(UserPojo::getEmail, f -> f.selectable(false)).apply();
+            try {
+                var pojo = new UserPojo(); pojo.setName("Op"); pojo.setEmail("hidden@test.com");
+                Models.wrap(pojo).insert();
+                var found = Models.wrap(UserPojo.class).findById(pojo.getId());
+                assertNull(found.getEmail());
+            } finally {
+                FieldCustomizer.of(UserPojo.class)
+                        .field(UserPojo::getEmail, f -> f.selectable(true)).apply();
+            }
+        }
+    }
+
+    // ==================== column name override ====================
+
+    @Test
+    public void testBaseModelNameOverrideShouldMapToDifferentColumn() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(UserModel.class)
+                    .field(UserModel::getName, f -> f.name("email")).apply();
+            try {
+                var user = new UserModel(); user.setName("MappedToEmail"); user.setAge(1); user.insert();
+                var found = new UserModel().findById(user.getId());
+                assertEquals("MappedToEmail", found.getName());
+                assertEquals("MappedToEmail", found.getEmail());
+            } finally {
+                FieldCustomizer.of(UserModel.class)
+                        .field(UserModel::getName, f -> f.name("name")).apply();
             }
         }
     }
@@ -119,64 +164,6 @@ public class FieldCustomizerTest {
         DynamicModel.register(info);
         assertNotNull(DynamicModel.of("dyn_fc").info());
         DynamicModel.removeRegistered("dyn_fc");
-    }
-
-    // ==================== selectable ====================
-
-    @Test
-    public void testBaseModelSelectableFalseShouldNotReturnField() {
-        synchronized (LOCK) {
-            FieldCustomizer.of(UserModel.class)
-                    .field(UserModel::getName, f -> f.selectable(false)).apply();
-            try {
-                var user = new UserModel(); user.setName("Hidden"); user.setAge(1); user.insert();
-                var found = new UserModel().findById(user.getId());
-                assertNull(found.getName(), "name should be null because selectable=false");
-                assertEquals(1, found.getAge(), "age should still be returned");
-            } finally {
-                FieldCustomizer.of(UserModel.class)
-                        .field(UserModel::getName, f -> f.selectable(true)).apply();
-            }
-        }
-    }
-
-    // ==================== column name override ====================
-
-    @Test
-    public void testBaseModelNameOverrideShouldMapToDifferentColumn() {
-        synchronized (LOCK) {
-            FieldCustomizer.of(UserModel.class)
-                    .field(UserModel::getName, f -> f.name("name2")).apply();
-            try {
-                var user = new UserModel(); user.setName("Mapped"); user.setAge(1); user.insert();
-                var found = new UserModel().findById(user.getId());
-                assertEquals("Mapped", found.getName(),
-                        "name field is mapped to name2 column");
-            } finally {
-                FieldCustomizer.of(UserModel.class)
-                        .field(UserModel::getName, f -> f.name("name")).apply();
-            }
-        }
-    }
-
-    // ==================== ModelOperator selectable ====================
-
-    @Test
-    public void testOperatorSelectableFalseShouldNotReturnField() {
-        synchronized (LOCK) {
-            FieldCustomizer.of(UserPojo.class)
-                    .field(UserPojo::getEmail, f -> f.selectable(false)).apply();
-            try {
-                var pojo = new UserPojo(); pojo.setName("Op"); pojo.setEmail("hidden@test.com");
-                Models.wrap(pojo).insert();
-                var found = Models.wrap(UserPojo.class).findById(pojo.getId());
-                assertNull(found.getEmail(),
-                        "email should be null because selectable=false");
-            } finally {
-                FieldCustomizer.of(UserPojo.class)
-                        .field(UserPojo::getEmail, f -> f.selectable(true)).apply();
-            }
-        }
     }
 
 }

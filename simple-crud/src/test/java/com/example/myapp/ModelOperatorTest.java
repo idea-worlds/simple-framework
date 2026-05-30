@@ -15,20 +15,36 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * ModelOperator 模式集成测试：零侵入 POJO，不实现 BaseModel 即可使用 CRUD。
- * 模拟真实场景——POJO 来自外部 JAR 或框架约束不允许修改源码，
- * 通过 Models.wrap(entity) / Models.wrap(Class) 接入。
- * 增删改查全部使用独立实例，符合真实业务代码习惯。
- */
 @SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Transactional
-public class ModelOperatorCrudIntegrationTest {
+public class ModelOperatorTest {
 
-    /**
-     * 场景：用户创建 POJO，通过 Models.wrap(pojo).insert() 写入。
-     * 验证点：返回 true，雪花 ID 自动填充到 pojo.id。
-     */
+    // ========== defensive null input ==========
+
+    @Test
+    public void testWrapWithNullEntityShouldThrowNpe() {
+        assertThrows(NullPointerException.class, () -> Models.wrap(null));
+    }
+
+    @Test
+    public void testWrapWithNullClassShouldThrowNpe() {
+        assertThrows(NullPointerException.class, () -> Models.wrap((Class<?>) null));
+    }
+
+    @Test
+    public void testClassBoundInsertShouldThrow() {
+        assertThrows(dev.simpleframework.crud.exception.ModelExecuteException.class,
+                () -> Models.wrap(UserPojo.class).insert());
+    }
+
+    @Test
+    public void testClassBoundUpdateByIdShouldThrow() {
+        assertThrows(dev.simpleframework.crud.exception.ModelExecuteException.class,
+                () -> Models.wrap(UserPojo.class).updateById());
+    }
+
+    // ========== normal CRUD ==========
+
     @Test
     public void testInsertShouldPersistAndGenerateSnowflakeId() {
         var pojo = new UserPojo();
@@ -38,13 +54,8 @@ public class ModelOperatorCrudIntegrationTest {
         assertNotNull(pojo.getId());
     }
 
-    /**
-     * 场景：插入后用 Models.wrap(Class).findById(id) 查询——不需要实体实例。
-     * 验证点：返回完整 POJO，所有字段值与插入一致。
-     */
     @Test
     public void testFindByIdShouldReturnCompleteEntity() {
-        // 1. 插入
         var inserted = new UserPojo();
         inserted.setName("OpFind");
         inserted.setAge(99);
@@ -52,7 +63,6 @@ public class ModelOperatorCrudIntegrationTest {
         Models.wrap(inserted).insert();
         Long id = inserted.getId();
 
-        // 2. 用独立 API 查询
         var found = Models.wrap(UserPojo.class).findById(id);
         assertNotNull(found);
         assertEquals("OpFind", found.getName());
@@ -60,14 +70,8 @@ public class ModelOperatorCrudIntegrationTest {
         assertEquals("opfind@test.com", found.getEmail());
     }
 
-    /**
-     * 场景：updateById 只修改非空字段。真实场景中用户创建新 POJO，
-     *       仅设 id + 要改的字段，其余字段为 null 不覆盖。
-     * 验证点：name 已改，age 和 email 保持原值。
-     */
     @Test
     public void testUpdateByIdShouldOnlyModifyNonNullFields() {
-        // 1. 插入：所有字段有值
         var inserted = new UserPojo();
         inserted.setName("OldName");
         inserted.setAge(10);
@@ -75,39 +79,27 @@ public class ModelOperatorCrudIntegrationTest {
         Models.wrap(inserted).insert();
         Long id = inserted.getId();
 
-        // 2. 更新：新 POJO 只设 id + name，age 和 email 不设（应为 null，不覆盖）
         var update = new UserPojo();
         update.setId(id);
         update.setName("NewName");
         assertTrue(Models.wrap(update).updateById());
 
-        // 3. 验证：name 改了，age 和 email 未变
         var found = Models.wrap(UserPojo.class).findById(id);
         assertEquals("NewName", found.getName());
-        assertEquals(10, found.getAge(), "age should remain unchanged");
-        assertEquals("old@test.com", found.getEmail(), "email should remain unchanged");
+        assertEquals(10, found.getAge());
+        assertEquals("old@test.com", found.getEmail());
     }
 
-    /**
-     * 场景：插入多条后，通过 Models.wrap(Class).deleteById(id) 删除其中一条。
-     * 验证点：目标行被删除，其他行不受影响。
-     * 为什么插入多条：证明 WHERE id=? 生效而非全表删。
-     */
     @Test
     public void testDeleteByIdShouldRemoveOnlyTarget() {
         var a = new UserPojo(); a.setName("Keep"); Models.wrap(a).insert();
         var b = new UserPojo(); b.setName("Del"); Models.wrap(b).insert();
 
         assertTrue(Models.wrap(UserPojo.class).deleteById(b.getId()));
-
         assertNotNull(Models.wrap(UserPojo.class).findById(a.getId()));
         assertNull(Models.wrap(UserPojo.class).findById(b.getId()));
     }
 
-    /**
-     * 场景：Models.wrap(Class).listByConditions(config) 条件查询。
-     * 验证点：只返回匹配条件的记录。
-     */
     @Test
     public void testListByConditionsShouldFilterResults() {
         new UserPojo() {{ setName("OpA"); setAge(1); Models.wrap(this).insert(); }};
@@ -116,8 +108,6 @@ public class ModelOperatorCrudIntegrationTest {
                 QueryConfig.of().addCondition("name", "OpA")).size());
     }
 
-    // ========== updateByConditions / deleteByIds / count / page ==========
-
     @Test
     public void testUpdateByConditionsShouldModifyMatched() {
         new UserPojo() {{ setName("Old"); setAge(10); Models.wrap(this).insert(); }};
@@ -125,8 +115,7 @@ public class ModelOperatorCrudIntegrationTest {
         var keep = new UserPojo(); keep.setName("Keep"); keep.setAge(10); Models.wrap(keep).insert();
 
         var update = new UserPojo(); update.setName("New");
-        int count = Models.wrap(update).updateByConditions(
-                QueryConditions.and().add("name", "Old"));
+        int count = Models.wrap(update).updateByConditions(QueryConditions.and().add("name", "Old"));
         assertEquals(2, count);
         assertEquals(2, Models.wrap(UserPojo.class).listByConditions(
                 QueryConfig.of().addCondition("name", "New")).size());
@@ -140,7 +129,6 @@ public class ModelOperatorCrudIntegrationTest {
         var c = new UserPojo(); c.setName("C"); Models.wrap(c).insert();
 
         assertTrue(Models.wrap(UserPojo.class).deleteByIds(List.of(a.getId(), c.getId())));
-
         assertNull(Models.wrap(UserPojo.class).findById(a.getId()));
         assertNotNull(Models.wrap(UserPojo.class).findById(b.getId()));
         assertNull(Models.wrap(UserPojo.class).findById(c.getId()));

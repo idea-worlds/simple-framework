@@ -40,10 +40,10 @@ public abstract class AbstractModelInfo<T> implements ModelInfo<T> {
      */
     private final Map<String, ModelField<T>> fields;
     // 字段列表缓存，addField/setId 时置 null 失效
-    private List<ModelField<T>> cachedAllFields;
-    private List<ModelField<T>> cachedInsertFields;
-    private List<ModelField<T>> cachedUpdateFields;
-    private List<ModelField<T>> cachedSelectFields;
+    private volatile List<ModelField<T>> cachedAllFields;
+    private volatile List<ModelField<T>> cachedInsertFields;
+    private volatile List<ModelField<T>> cachedUpdateFields;
+    private volatile List<ModelField<T>> cachedSelectFields;
 
     protected AbstractModelInfo(Class<T> modelClass, String modelName, DatasourceType dsType, String dsName) {
         this.modelClass = modelClass;

@@ -9,15 +9,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Table(name = "sys_user_uuid")
-public class UuidModel implements BaseModel<UuidModel> {
-    @Id(type = Id.Type.UUID32)
+@Table(name = "t_uuid36")
+public class Uuid36Model implements BaseModel<Uuid36Model> {
+    @Id(type = Id.Type.UUID36)
     @Column(name = "id", updatable = false)
     private String id;
-
     @Column(name = "name")
     private String name;
-
     @Column(name = "age")
     private Integer age;
 }

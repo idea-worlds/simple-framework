@@ -56,7 +56,7 @@ public class QueryConditions {
     /**
      * 获取条件数据
      */
-    public Map<String, Object> getConditionData() {
+    public synchronized Map<String, Object> getConditionData() {
         Map<String, Object> result = new HashMap<>(8);
         for (QueryConditionField field : this.fields) {
             result.put(field.getKey(), field.getValue());
@@ -141,6 +141,9 @@ public class QueryConditions {
         this.fieldSize.put(fieldName, size + 1);
 
         Object value = transToValue(conditionType, values);
+        if (conditionType == ConditionType.json_exist_key && value instanceof Collection) {
+            conditionType = ConditionType.json_exist_key_all;
+        }
         QueryConditionField field = QueryConditionField.of(fieldName, conditionType, value);
         if (size > 0) {
             // 同名字段后缀数字，避免参数 Map key 冲突

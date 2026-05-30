@@ -25,7 +25,7 @@ public class InsertBatchDefinition implements ModelMethodDefinition {
     }
 
     public static <T> boolean exec(List<? extends T> models) {
-        if (models.isEmpty()) {
+        if (models == null || models.isEmpty()) {
             return false;
         }
         ModelInfo<T> info = ModelCache.info(models.get(0));

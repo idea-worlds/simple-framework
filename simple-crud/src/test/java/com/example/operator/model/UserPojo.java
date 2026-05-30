@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Table(name = "sys_user")
+@Table(name = "t_operator")
 public class UserPojo {
     @Id
     @Column(name = "id", updatable = false)

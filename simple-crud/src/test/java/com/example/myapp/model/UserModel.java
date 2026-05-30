@@ -9,7 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Table(name = "sys_user")
+@Table(name = "t_user")
 public class UserModel implements BaseModel<UserModel> {
     @Id
     @Column(name = "id", updatable = false)

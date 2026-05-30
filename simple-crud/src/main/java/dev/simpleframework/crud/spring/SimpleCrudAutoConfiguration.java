@@ -27,35 +27,21 @@ public class SimpleCrudAutoConfiguration implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        this.setDatasourceProvider();
-        this.setDataFillStrategy();
+        ModelCache.registerProvider(new DefaultSpringMybatisProvider());
+        ModelCache.registerFillStrategy(new DefaultDataIdFillStrategy());
+        ModelCache.registerFillStrategy(new DefaultDataOperateDateFillStrategy());
     }
 
-    /**
-     * 在 Spring 容器 refresh 完成后注册模型并应用字段覆盖。
-     * 此时 SqlSession 等 MyBatis bean 已就绪，{@link #afterPropertiesSet} 中如果立即注册，
-     * 会因为 MyBatis 自动配置未完成导致 {@code getBean(SqlSession.class)} 失败。
-     */
     @EventListener(ContextRefreshedEvent.class)
     public void onContextRefreshed() {
         if (modelRegistered) {
             return;
         }
         modelRegistered = true;
+        SimpleSpringUtils.getBeans(DatasourceProvider.class).forEach(ModelCache::registerProvider);
+        SimpleSpringUtils.getBeans(DataFillStrategy.class).forEach(ModelCache::registerFillStrategy);
         ModelRegistrar.register();
         this.applyFieldCustomizers();
-    }
-
-    private void setDatasourceProvider() {
-        DatasourceProvider<SqlSession> defaultMybatisProvider = new DefaultSpringMybatisProvider();
-        ModelCache.registerProvider(defaultMybatisProvider);
-        SimpleSpringUtils.getBeans(DatasourceProvider.class).forEach(ModelCache::registerProvider);
-    }
-
-    private void setDataFillStrategy() {
-        ModelCache.registerFillStrategy(new DefaultDataIdFillStrategy());
-        ModelCache.registerFillStrategy(new DefaultDataOperateDateFillStrategy());
-        SimpleSpringUtils.getBeans(DataFillStrategy.class).forEach(ModelCache::registerFillStrategy);
     }
 
     private void applyFieldCustomizers() {

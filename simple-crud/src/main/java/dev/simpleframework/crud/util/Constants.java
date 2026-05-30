@@ -5,14 +5,14 @@ package dev.simpleframework.crud.util;
  */
 public final class Constants {
 
-    public static boolean pageHelperPresent;
+    public static final boolean pageHelperPresent = isPageHelperPresent();
 
-    static {
+    private static boolean isPageHelperPresent() {
         try {
             Class.forName("com.github.pagehelper.PageHelper");
-            pageHelperPresent = true;
+            return true;
         } catch (Throwable e) {
-            pageHelperPresent = false;
+            return false;
         }
     }
 

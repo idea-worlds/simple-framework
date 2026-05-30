@@ -55,7 +55,7 @@ public abstract class AbstractModelField<T> implements ModelField<T> {
         if (this.fillStrategy.type() == FillType.ALWAYS ||
                 (this.fillStrategy.type() == FillType.NULL && this.getValue(model) == null)) {
             Object value = this.fillStrategy.get(this.fillStrategyParam);
-            if (String.class.isAssignableFrom(this.fieldType) && !(value instanceof String)) {
+            if (value != null && String.class.isAssignableFrom(this.fieldType) && !(value instanceof String)) {
                 value = String.valueOf(value);
             }
             this.setValue(model, value);

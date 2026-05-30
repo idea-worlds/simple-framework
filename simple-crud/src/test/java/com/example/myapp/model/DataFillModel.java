@@ -8,8 +8,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Table(name = "sys_user")
-public class DateModel extends SimpleModel<DateModel> {
+@Table(name = "t_data_fill")
+public class DataFillModel extends SimpleModel<DataFillModel> {
     @Column(name = "name")
     private String name;
 }
