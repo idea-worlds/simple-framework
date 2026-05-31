@@ -177,9 +177,9 @@ public class SimpleTokenPersonTest {
         String token1 = UUID.randomUUID().toString();
         String token2 = UUID.randomUUID().toString();
         String token3 = UUID.randomUUID().toString(); // current
-        person.addClient("web", token1, now, now + now + 10000);
-        person.addClient("web", token2, now, now + now + 9000);
-        person.addClient("app", token3, now, now + now + 8000);
+        person.addClient("web", token1, now, now + 10000);
+        person.addClient("web", token2, now, now + 9000);
+        person.addClient("app", token3, now, now + 8000);
 
         SimpleTokenLoginConfig config = new SimpleTokenLoginConfig();
         config.setMaxNum(1); // 全局：总共只保留1个
