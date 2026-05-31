@@ -9,6 +9,10 @@ import lombok.Data;
 public class SimpleTokenCookieConfig {
 
     /**
+     * 是否启用 cookie 写入
+     */
+    private Boolean enabled = Boolean.TRUE;
+    /**
      * 作用域
      */
     private String domain;
@@ -19,17 +23,17 @@ public class SimpleTokenCookieConfig {
     /**
      * 是否只在 https 协议下有效
      */
-    private Boolean secure = Boolean.FALSE;
+    private Boolean secure = Boolean.TRUE;
     /**
      * 是否禁止 js 操作 Cookie
      */
-    private Boolean httpOnly = Boolean.FALSE;
+    private Boolean httpOnly = Boolean.TRUE;
     /**
      * 第三方限制级别
      * Strict: 完全禁止
      * Lax: 部分允许
      * None: 不限制
      */
-    private String sameSite;
+    private String sameSite = "Lax";
 
 }

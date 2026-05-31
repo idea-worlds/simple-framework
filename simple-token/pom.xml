@@ -30,6 +30,12 @@
             <artifactId>jackson-databind</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- TTL：可选，子线程上下文传递 -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>

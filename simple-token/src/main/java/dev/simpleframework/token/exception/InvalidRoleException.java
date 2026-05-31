@@ -16,7 +16,7 @@ public class InvalidRoleException extends SimpleTokenException {
     }
 
     public InvalidRoleException(String role, Boolean has) {
-        super(has ? "Has role " : "Not role" + role);
+        super((has ? "Has role " : "Non role ") + role);
         this.role = role;
         this.has = has;
     }

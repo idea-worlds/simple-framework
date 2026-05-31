@@ -20,7 +20,7 @@ public class InvalidPermissionException extends SimpleTokenException {
     }
 
     public InvalidPermissionException(String permission, Boolean has) {
-        super(has ? "Has permission " : "Not permission" + permission);
+        super((has ? "Has permission " : "Non permission ") + permission);
         this.permission = permission;
         this.has = has;
     }

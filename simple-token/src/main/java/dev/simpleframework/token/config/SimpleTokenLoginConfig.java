@@ -49,6 +49,10 @@ public class SimpleTokenLoginConfig {
         return config;
     }
 
+    public boolean getShareToken() {
+        return Boolean.TRUE.equals(this.shareToken);
+    }
+
     @Data
     public static class TokenClientConfig {
         /**

@@ -27,7 +27,7 @@ public final class PathManager {
     /**
      * 所有自定义路径方法执行器
      */
-    private static List<PathActionExecutor> CUSTOM_ACTION_EXECUTOR = PathActionInit.DEFAULT.init();
+    private static volatile List<PathActionExecutor> CUSTOM_ACTION_EXECUTOR = PathActionInit.DEFAULT.init();
 
     public synchronized static void registerActionInit(PathActionInit builder) {
         if (builder == null) {

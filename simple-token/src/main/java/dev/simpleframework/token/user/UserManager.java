@@ -9,8 +9,8 @@ import dev.simpleframework.token.exception.*;
  */
 public final class UserManager {
 
-    private static UserQuery QUERY = UserQuery.DEFAULT;
-    private static UserAccountPasswordValidator VALIDATOR = UserAccountPasswordValidator.DEFAULT;
+    private static volatile UserQuery QUERY = UserQuery.DEFAULT;
+    private static volatile UserAccountPasswordValidator VALIDATOR = UserAccountPasswordValidator.DEFAULT;
 
     private UserManager() {
     }

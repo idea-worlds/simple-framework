@@ -30,10 +30,36 @@ import java.util.List;
  */
 @Slf4j
 public final class SimpleTokens {
-    private static final ThreadLocal<SessionInfo> THREAD_LOCAL_SESSION = new InheritableThreadLocal<>();
-    private static final ThreadLocal<PermissionInfo> THREAD_LOCAL_PERMISSION = new InheritableThreadLocal<>();
+    private static final boolean ttlPresent;
 
-    private static SimpleTokenConfig CONFIG = null;
+    static {
+        boolean present;
+        try {
+            Class.forName("com.alibaba.ttl.TransmittableThreadLocal");
+            present = true;
+        } catch (Throwable e) {
+            present = false;
+        }
+        ttlPresent = present;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static <T> ThreadLocal<T> newThreadLocal() {
+        if (ttlPresent) {
+            try {
+                return (ThreadLocal<T>) Class.forName("com.alibaba.ttl.TransmittableThreadLocal")
+                        .getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                // fallback
+            }
+        }
+        return new InheritableThreadLocal<>();
+    }
+
+    private static final ThreadLocal<SessionInfo> THREAD_LOCAL_SESSION = newThreadLocal();
+    private static final ThreadLocal<PermissionInfo> THREAD_LOCAL_PERMISSION = newThreadLocal();
+
+    private static volatile SimpleTokenConfig CONFIG = null;
 
     private SimpleTokens() {
     }

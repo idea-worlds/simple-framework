@@ -45,10 +45,14 @@ public class SimpleTokenConfig {
         if (token == null) {
             return "";
         }
-        if (this.tokenPrefix == null || this.tokenPrefix.isBlank()) {
+        if (this.tokenPrefix == null) {
             return token;
         }
-        return this.tokenPrefix + token;
+        String prefix = this.tokenPrefix.trim();
+        if (prefix.isEmpty()) {
+            return token;
+        }
+        return prefix + " " + token;
     }
 
     /**
@@ -58,13 +62,17 @@ public class SimpleTokenConfig {
         if (token == null) {
             return "";
         }
-        if (this.tokenPrefix == null || this.tokenPrefix.isBlank()) {
+        if (this.tokenPrefix == null) {
             return token;
         }
-        if (!token.startsWith(this.tokenPrefix + " ")) {
+        String prefix = this.tokenPrefix.trim();
+        if (prefix.isEmpty()) {
+            return token;
+        }
+        if (!token.startsWith(prefix + " ")) {
             throw new InvalidTokenException("don't have the prefix " + this.tokenPrefix);
         }
-        return token.substring(this.tokenPrefix.length() + 1);
+        return token.substring(prefix.length() + 1);
     }
 
 }

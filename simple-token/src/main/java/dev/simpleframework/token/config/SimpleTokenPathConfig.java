@@ -52,16 +52,28 @@ public class SimpleTokenPathConfig {
      */
     public List<PathInfo> getAllPermitPaths() {
         List<PathInfo> result = new ArrayList<>();
-        if (this.permitPublic) {
+        if (getPermitPublic()) {
             result.addAll(this.publicPaths.stream().map(PathInfo::new).toList());
         }
-        if (this.permitStatic) {
+        if (getPermitStatic()) {
             result.addAll(this.staticPaths.stream().map(PathInfo::new).toList());
         }
         if (this.permit != null) {
             result.addAll(this.permit);
         }
         return result;
+    }
+
+    public boolean getPermitPublic() {
+        return Boolean.TRUE.equals(this.permitPublic);
+    }
+
+    public boolean getPermitStatic() {
+        return Boolean.TRUE.equals(this.permitStatic);
+    }
+
+    public boolean getPermitOptionsRequest() {
+        return Boolean.TRUE.equals(this.permitOptionsRequest);
     }
 
 }

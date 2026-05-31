@@ -53,7 +53,7 @@ public class SessionPerson implements Serializable {
         Map<String, List<String>> expired = new HashMap<>();
         this.clients.forEach((k, v) -> {
             List<String> expiredTokens = v.stream()
-                    .filter(client -> client.getExpiredTime() < now)
+                    .filter(client -> client.getExpiredTime() <= now)
                     .map(TokenClient::getToken)
                     .toList();
             expired.put(k, expiredTokens);
@@ -234,7 +234,7 @@ public class SessionPerson implements Serializable {
                     .filter(token -> !currentToken.equals(token))
                     .toList();
         } else if (strategy == LoginMaxStrategy.KICK_OUT_ALL) {
-            result = clients.stream()
+            return clients.stream()
                     .map(TokenClient::getToken)
                     .filter(token -> !currentToken.equals(token))
                     .toList();

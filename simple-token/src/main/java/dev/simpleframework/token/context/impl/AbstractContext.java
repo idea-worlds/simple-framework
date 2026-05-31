@@ -10,7 +10,33 @@ import dev.simpleframework.token.exception.InvalidContextException;
  * @author loyayz (loyayz@foxmail.com)
  */
 public abstract class AbstractContext implements Context {
-    private static final ThreadLocal<ContextData> threadLocal = new InheritableThreadLocal<>();
+    private static final boolean ttlPresent;
+
+    static {
+        boolean present;
+        try {
+            Class.forName("com.alibaba.ttl.TransmittableThreadLocal");
+            present = true;
+        } catch (Throwable e) {
+            present = false;
+        }
+        ttlPresent = present;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static <T> ThreadLocal<T> newThreadLocal() {
+        if (ttlPresent) {
+            try {
+                return (ThreadLocal<T>) Class.forName("com.alibaba.ttl.TransmittableThreadLocal")
+                        .getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                // fallback
+            }
+        }
+        return new InheritableThreadLocal<>();
+    }
+
+    private static final ThreadLocal<ContextData> threadLocal = newThreadLocal();
 
     protected static void setContextData(ContextRequest request, ContextResponse response, ContextStore store) {
         ContextData context = new ContextData(request, response, store);

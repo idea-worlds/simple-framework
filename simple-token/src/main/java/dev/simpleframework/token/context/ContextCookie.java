@@ -118,7 +118,7 @@ public class ContextCookie {
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
-        result.append(this.name).append("=").append(this.value);
+        result.append(this.name).append("=").append(this.value == null ? "" : this.value);
 
         int maxAge = this.getMaxAge();
         if (maxAge >= 0) {

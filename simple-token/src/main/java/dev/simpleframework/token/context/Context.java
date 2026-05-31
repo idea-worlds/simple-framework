@@ -40,8 +40,10 @@ public interface Context {
         ContextResponse response = this.response();
         response.addHeader(tokenName, token);
 
-        int cookieAge = (int) (expiredTime - System.currentTimeMillis()) / 1000;
-        response.addCookie(tokenName, token, cookieAge);
+        if (config.getCookie().getEnabled()) {
+            int cookieAge = (int) ((expiredTime - System.currentTimeMillis()) / 1000);
+            response.addCookie(tokenName, token, cookieAge);
+        }
     }
 
     /**
@@ -84,7 +86,9 @@ public interface Context {
         }
         String key = config.getTokenName();
         this.store().remove(key);
-        this.response().removeCookie(config.getTokenName());
+        if (config.getCookie().getEnabled()) {
+            this.response().removeCookie(config.getTokenName());
+        }
         return token;
     }
 
