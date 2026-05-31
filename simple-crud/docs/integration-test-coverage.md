@@ -149,6 +149,8 @@
 | | `testOperatorSelectableFalseShouldNotReturnField` | Operator 路径 selectable=false |
 | | `testBaseModelNameOverrideShouldMapToDifferentColumn` | name("x") → 列名映射变更 |
 | | `testDynamicFieldCustomizerViaInfoApi` | DynamicModel→info() 可用 |
+| | `testCascadeBaseClassFields` | 基类 FieldCustomizer → 所有子类继承字段策略 |
+| | `testSubclassOverridesBaseFields` | 子类 FieldCustomizer 覆盖基类 cascade |
 
 ### 10. 多数据源
 

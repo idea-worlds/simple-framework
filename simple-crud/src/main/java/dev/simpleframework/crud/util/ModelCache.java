@@ -10,6 +10,7 @@ import dev.simpleframework.crud.helper.DatasourceProvider;
 import dev.simpleframework.util.Classes;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressWarnings("all")
 public final class ModelCache {
-    private static final Map<Class, ModelInfo> INFOS = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, ModelInfo<?>> INFOS = new ConcurrentHashMap<>();
     private static final Map<DatasourceType, DatasourceProvider<?>> PROVIDERS = new ConcurrentHashMap<>();
     private static final Map<Class<?>, DataFillStrategy> FILL_STRATEGY = new ConcurrentHashMap<>();
 
@@ -45,6 +46,13 @@ public final class ModelCache {
             throw new ModelExecuteException(targetClass, "Class is not registered");
         }
         return result;
+    }
+
+    /**
+     * 获取所有已注册的模型类
+     */
+    public static Set<Class<?>> allRegisteredClasses() {
+        return INFOS.keySet();
     }
 
     /**

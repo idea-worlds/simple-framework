@@ -580,6 +580,8 @@ public FieldCustomizer<User> userFieldOptions() {
 
 **执行时机**：`SimpleCrudAutoConfiguration.afterPropertiesSet()` 中，`ModelRegistrar.register()` 执行完毕后，统一调用所有 `FieldCustomizer` Bean 的 `apply()` 方法。这确保覆盖发生在模型注册之后、业务调用之前。
 
+**级联（Cascade）**：`apply()` 遍历 `ModelCache` 中所有已注册模型类，通过 `isAssignableFrom` 匹配 `FieldCustomizer` 绑定的类及其子类，逐一下发配置。针对基类定义一次 `FieldCustomizer`，所有子类实体自动继承字段策略。多个 `FieldCustomizer` 按类继承深度排序执行（基类在先、子类在后），子类配置自然覆盖基类配置。
+
 ```java
 // AbstractModelInfo.changeFieldOptions()
 public void changeFieldOptions(String fieldName, FieldOptions config) {

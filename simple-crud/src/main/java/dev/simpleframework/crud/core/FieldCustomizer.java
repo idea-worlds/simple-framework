@@ -62,10 +62,18 @@ public class FieldCustomizer<T> {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void apply() {
-        AbstractModelInfo info = (AbstractModelInfo) ModelCache.info(this.modelClass);
-        for (FieldEntry entry : this.entries) {
-            info.changeFieldOptions(entry.fieldName, entry.config);
+        for (Class<?> clazz : ModelCache.allRegisteredClasses()) {
+            if (this.modelClass.isAssignableFrom(clazz)) {
+                AbstractModelInfo info = (AbstractModelInfo) ModelCache.info(clazz);
+                for (FieldEntry entry : this.entries) {
+                    info.changeFieldOptions(entry.fieldName, entry.config);
+                }
+            }
         }
+    }
+
+    public Class<T> getModelClass() {
+        return this.modelClass;
     }
 
     private record FieldEntry(String fieldName, FieldOptions config) {

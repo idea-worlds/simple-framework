@@ -44,6 +44,18 @@ CREATE TABLE IF NOT EXISTS t_operator (
     email VARCHAR(200)
 );
 
+-- FieldCustomizer cascade tests
+CREATE TABLE IF NOT EXISTS t_cascade_child1 (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100),
+    created_time TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS t_cascade_child2 (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100),
+    created_time TIMESTAMP
+);
+
 -- DynamicModel tests
 CREATE TABLE IF NOT EXISTS t_dynamic (
     id BIGINT PRIMARY KEY,

@@ -9,13 +9,14 @@ import dev.simpleframework.crud.helper.strategy.DefaultDataOperateDateFillStrate
 import dev.simpleframework.crud.util.ModelCache;
 import dev.simpleframework.crud.util.ModelRegistrar;
 import dev.simpleframework.util.SimpleSpringUtils;
-import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+
+import java.util.Comparator;
 
 /**
  * @author loyayz (loyayz@foxmail.com)
@@ -45,7 +46,19 @@ public class SimpleCrudAutoConfiguration implements InitializingBean {
     }
 
     private void applyFieldCustomizers() {
-        SimpleSpringUtils.getBeans(FieldCustomizer.class).forEach(FieldCustomizer::apply);
+        SimpleSpringUtils.getBeans(FieldCustomizer.class).stream()
+            .sorted(Comparator.comparingInt(c -> getHierarchyDepth(c.getModelClass())))
+            .forEach(FieldCustomizer::apply);
+    }
+
+    private static int getHierarchyDepth(Class<?> clazz) {
+        int depth = 0;
+        Class<?> c = clazz;
+        while (c != null && c != Object.class) {
+            depth++;
+            c = c.getSuperclass();
+        }
+        return depth;
     }
 
 }

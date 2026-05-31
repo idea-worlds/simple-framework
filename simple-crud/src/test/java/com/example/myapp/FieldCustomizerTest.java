@@ -1,8 +1,12 @@
 package com.example.myapp;
 
 import com.example.myapp.model.UserModel;
+import com.example.operator.model.BaseCascadePojo;
+import com.example.operator.model.CascadeChild1Pojo;
+import com.example.operator.model.CascadeChild2Pojo;
 import com.example.operator.model.UserPojo;
 import dev.simpleframework.crud.DynamicModel;
+import dev.simpleframework.crud.annotation.DataOperateDate;
 import dev.simpleframework.crud.Models;
 import dev.simpleframework.crud.core.FieldCustomizer;
 import dev.simpleframework.crud.info.dynamic.DynamicModelInfo;
@@ -149,6 +153,57 @@ public class FieldCustomizerTest {
             } finally {
                 FieldCustomizer.of(UserModel.class)
                         .field(UserModel::getName, f -> f.name("name")).apply();
+            }
+        }
+    }
+
+    // ==================== cascade ====================
+
+    @Test
+    public void testCascadeBaseClassFields() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(BaseCascadePojo.class)
+                    .field(BaseCascadePojo::getCreatedTime, f -> f.autoFill(DataOperateDate.class))
+                    .apply();
+            var child1 = new CascadeChild1Pojo();
+            child1.setName("c1");
+            Models.wrap(child1).insert();
+            var found1 = Models.wrap(CascadeChild1Pojo.class).findById(child1.getId());
+            assertNotNull(found1.getCreatedTime(), "child1 should have auto-filled createdTime");
+
+            var child2 = new CascadeChild2Pojo();
+            child2.setName("c2");
+            Models.wrap(child2).insert();
+            var found2 = Models.wrap(CascadeChild2Pojo.class).findById(child2.getId());
+            assertNotNull(found2.getCreatedTime(), "child2 should have auto-filled createdTime");
+        }
+    }
+
+    @Test
+    public void testSubclassOverridesBaseFields() {
+        synchronized (LOCK) {
+            FieldCustomizer.of(BaseCascadePojo.class)
+                    .field(BaseCascadePojo::getCreatedTime, f -> f.autoFill(DataOperateDate.class))
+                    .apply();
+            FieldCustomizer.of(CascadeChild1Pojo.class)
+                    .field(CascadeChild1Pojo::getCreatedTime, f -> f.insertable(false))
+                    .apply();
+            try {
+                var child1 = new CascadeChild1Pojo();
+                child1.setName("c1");
+                Models.wrap(child1).insert();
+                var found1 = Models.wrap(CascadeChild1Pojo.class).findById(child1.getId());
+                assertNull(found1.getCreatedTime(), "child1's createdTime should NOT be inserted (overridden)");
+
+                var child2 = new CascadeChild2Pojo();
+                child2.setName("c2");
+                Models.wrap(child2).insert();
+                var found2 = Models.wrap(CascadeChild2Pojo.class).findById(child2.getId());
+                assertNotNull(found2.getCreatedTime(), "child2's createdTime should still be auto-filled");
+            } finally {
+                FieldCustomizer.of(CascadeChild1Pojo.class)
+                        .field(CascadeChild1Pojo::getCreatedTime, f -> f.insertable(true))
+                        .apply();
             }
         }
     }

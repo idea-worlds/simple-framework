@@ -503,6 +503,34 @@ public FieldCustomizer<User> userFieldOptions() {
 }
 ```
 
+**级联到子类**：`apply()` 自动将基类的字段策略下发到所有已注册的子类实体，无需为每个实体类重复声明：
+
+```java
+// 公共字段基类：纯 POJO，无需任何框架注解
+@Getter @Setter
+public abstract class BasePojo {
+    private Date createdTime;
+    private Date updatedTime;
+}
+
+// 子类：只声明自己的字段，自动继承基类的 FieldCustomizer 配置
+@Getter @Setter
+public class OrderPojo extends BasePojo {
+    private Long id;
+    private String title;
+}
+
+// 一个 Bean 覆盖所有子类的公共字段策略
+@Bean
+public FieldCustomizer<BasePojo> baseFieldCustomizer() {
+    return FieldCustomizer.of(BasePojo.class)
+        .field(BasePojo::getCreatedTime, f -> f.name("created_time").autoFill(DataOperateDate.class).insertable(false).updatable(false))
+        .field(BasePojo::getUpdatedTime, f -> f.name("updated_time").autoFill(DataOperateDate.class));
+}
+```
+
+多个 `FieldCustomizer` 按类继承深度排序执行（基类在先、子类在后），子类独有的 `FieldCustomizer` 可覆盖基类配置。
+
 `FieldOptions` 可链式调用的配置项：
 
 | 方法 | 等价注解 |
